@@ -29,12 +29,10 @@ fi
 info "Updating apt repositories..."
 apt -y update
 
-exit
-
 info "Checking and installing dependencies..."
 declare -a dependencies=("git", "jq", "ca-certificates", "curl", "gnupg", "lsb-release", "python3")
 for d in "${dependencies[@]}" do
-    info "{CYAN}Checking if ${d} is installed..."
+    info "Checking if ${d} is installed..."
     dpkg -s "$d" &> /dev/null
     if [ $? -ne 0 ]
     then
