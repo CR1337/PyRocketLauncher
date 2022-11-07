@@ -5,7 +5,7 @@ export CYAN="\e[1;36m"
 export GREEN="\e[1;92m"
 export RESET="\e[1;0m"
 
-export BASE_DIR=$PWD  # /opt/rl
+export BASE_DIR=/opt/rl
 export APP_NAME="PyRocketLauncher"
 
 info () {
