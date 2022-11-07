@@ -24,22 +24,15 @@ def run():
         logger.info("Initializing in device mode")
         app.register_blueprint(device_bp)
 
-    logger.info("Running app...")
-    if Mode.debug():
-        app.run(
-            use_debugger=True,
-            use_reloader=True,
-            passthrough_errors=True,
-            port=5000 if Mode.is_master() else 5001,
-            host="0.0.0.0",
-            threaded=True
-        )
-    else:
-        app.run(
-            port=5000 if Mode.is_master() else 5001,
-            host="0.0.0.0",
-            threaded=True
-        )
+    logger.info(
+        f"Running app{' in debug mode' if Mode.debug() else ''}..."
+    )
+    app.run(
+        debug=Mode.debug(),
+        port=5000 if Mode.is_master() else 5001,
+        host="0.0.0.0",
+        threaded=True
+    )
 
 
 if __name__ == "__main__":
