@@ -367,10 +367,6 @@ class RlManager:
         if Check.running():
             was_running = True
             cls.stop()
-        Output.info("Deleting previous docker images...")
-        command = Command(f"docker rmi $(docker images | grep {Ids.IMAGE})")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
         Output.info("Building docker image...")
         command = Command(f"docker build --tag {Ids.IMAGE} {Paths.HOME}")
         if command.get_returncode(show_output=True) != 0:
