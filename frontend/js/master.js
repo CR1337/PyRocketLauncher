@@ -550,7 +550,7 @@ const master_component = {
         }
     },
     created() {
-        request("/devices", 'GET', {}, this._error_callback, this._error_callback, ()=>{})
+        request("/devices", 'GET', {}, this._error_callback, ()=>{})
         .then((devices) => {
             this.devices = devices;
         });
