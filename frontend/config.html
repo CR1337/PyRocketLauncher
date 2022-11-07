@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Config</title>
+    <script src="js/vue.global.js"></script>
+</head>
+<body>
+<div id="app" v-cloak>
+    <h1>{{current_device_id}} Config</h1>
+    <br>
+    <button @click="refresh()" style="width: 150px">Reload</button>
+    <button @click="submit()" style="width: 150px">Submit</button>
+    <br>
+    <h2>Config</h2>
+    <table id="config_table">
+        <tr>
+            <td>Device Id:</td>
+            <td>
+                <input
+                    type="text"
+                    id="device_id_input"
+                    v-model="config.device_id"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Chip amount:</td>
+            <td>
+                <input
+                    type="number"
+                    id="chip_amount_input"
+                    min="1" max="26" step="1"
+                    v-model="config.chip_amount"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+    </table>
+    <br>
+    <h2>Constants</h2>
+    <table id="constants_table">
+        <tr>
+            <td>Bus address:</td>
+            <td>
+                <input
+                    type="number"
+                    id="bus_address_input"
+                    min="0" max="8" step="1"
+                    v-model="constants.bus_address"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Time resolution [s]:</td>
+            <td>
+                <input
+                    type="number"
+                    id="time_resolution_input"
+                    min="0.001" max="1" step="0.001"
+                    v-model="constants.time_resolution"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Ignition duration [s]:</td>
+            <td>
+                <input
+                    type="number"
+                    id="ignition_duration_input"
+                    min="0.1" max="2" step="0.1"
+                    v-model="constants.ignition_duration"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Request timeout [s]:</td>
+            <td>
+                <input
+                    type="number"
+                    id="request_timeout_input"
+                    min="1" max="10" step="0.5"
+                    v-model="constants.request_timeout"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Event stream period [s]:</td>
+            <td>
+                <input
+                    type="number"
+                    id="event_stream_period_input"
+                    min="0.1" max="3" step="0.1"
+                    v-model="constants.event_stream_period"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Event stream retry period [s]:</td>
+            <td>
+                <input
+                    type="number"
+                    id="event_stream_retry_period_input"
+                    min="1" max="60" step="1"
+                    v-model="constants.event_stream_retry_period"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>
+
+<script>
+    const { createApp } = Vue
+    createApp({
+        data() {
+            return {
+                current_device_id: "",
+                config: {
+                    device_id: "",
+                    chip_amount: 0
+                },
+                constants: {
+                    bus_address: 0,
+                    time_resolution: 0.0,
+                    ignition_duration: 0.0,
+                    request_timeout: 0.0,
+                    event_stream_period: 0.0,
+                    event_stream_retry_period: 0.0
+                }
+            }
+        },
+        created() {
+            this._load_config();
+        },
+        methods: {
+            refresh() {
+                this._load_config();
+            },
+
+            submit() {
+                fetch("config", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        'config': this.config,
+                        'constants': this.constants
+                    })
+                    .then((response) => {
+                        if (response.status != 200) {
+                            alert("Subission not successful!\n\nStatus code: " + response.status);
+                            return;
+                        }
+                        this._load_config();
+                        alert("Config was updated.");
+                    })
+                })
+            },
+
+            _load_config() {
+                fetch("config")
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.config = data.config;
+                    this.constants = data.constants;
+                    this.current_device_id = this.config.device_id;
+                    document.title = this.current_device_id + " Config"
+                })
+            }
+        }
+    }).mount('#app')
+</script>
+
+<style>
+    body {
+       transform: scale(1.3);
+       transform-origin: 0 0;
+    }
+    table {
+        margin-left: 4px;
+    }
+</style>

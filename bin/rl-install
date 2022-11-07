@@ -1,0 +1,91 @@
+#!/bin/sh
+
+export RED="\e[1;31m"
+export CYAN="\e[1;36m"
+export GREEN="\e[1;92m"
+export RESET="\e[1;0m"
+
+export BASE_DIR=$PWD  # /opt/rl
+export APP_NAME="PyRocketLauncher"
+
+info () {
+    echo -e "${CYAN}INFO> $1 ${RESET}"
+}
+
+error () {
+    >&2 echo -e "${RED}ERROR> $1 ${RESET}"
+}
+
+success() {
+    echo -e "${GREEN}SUCCESS> $1 ${RESET}"
+}
+
+if [ "$EUID" -ne 0 ]
+then
+    error "Please execute as root!"
+    exit 1
+fi
+
+info "Updating apt repositories..."
+apt -y update
+
+exit
+
+info "Checking and installing dependencies..."
+declare -a dependencies=("git", "jq", "ca-certificates", "curl", "gnupg", "lsb-release", "python3")
+for d in "${dependencies[@]}" do
+    info "{CYAN}Checking if ${d} is installed..."
+    dpkg -s "$d" &> /dev/null
+    if [ $? -ne 0 ]
+    then
+        info "Installing ${d}..."
+        apt -y install "$d"
+    else
+        info "${d} already installed"
+    fi
+done
+
+info "Checking if docker is installed..."^
+docker info
+if [ $? -ne 0 ]
+then
+    info "Docker is not installed."
+
+    info "Adding docker GPG key..."
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    info "Setting up repository..."
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    info "Installing docker..."
+    apt -y update
+    apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+else
+    info "Docker is already installed."
+fi
+
+if [ -d "$BASE/$APP_NAME" ]
+then
+    error "$APP_NAME is already installed!"
+    exit 1
+fi
+
+info "Creating base directory..."
+mkdir -p $BASE_DIR
+
+info "Cloning RL repository from GitHub..."
+git clone "https://github.com/CR1337/$APP_NAME.git"
+
+if [ ":$PATH:" == *":$BASE_DIR/$APP_NAME/bin"* ]
+then
+    info "bin directory already added to PATH."
+else
+    info "Adding bin directory to PATH..."
+    echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /root/.bashrc
+    source /root/.bashrc
+fi
+
+success "Done"

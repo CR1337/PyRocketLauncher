@@ -1,0 +1,7 @@
+config/debug
+config/master
+config/device
+Readme.md
+bin/
+doc/
+.gitignore

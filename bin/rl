@@ -1,0 +1,605 @@
+#!/bin/python3
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from typing import Callable, Dict
+
+
+class Paths:
+
+    SELF: str = os.path.realpath(__file__)
+    HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
+    CONFIG: str = os.path.join(HOME, "config")
+    BIN: str = os.path.join(HOME, "bin")
+    PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
+
+
+class Ids:
+
+    IMAGE: str = "rl_image"
+    DEVICE_CONTAINER: str = 'rl_device_container'
+    MASTER_CONTAINER: str = 'rl_master_container'
+
+
+class Output:
+
+    RED: str = '\033[1;31m'
+    CYAN: str = '\033[1;36m'
+    MAGENTA: str = '\033[1;35m'
+    GREEN: str = '\033[1;92m'
+    ENDC: str = '\033[0m'
+
+    @classmethod
+    def info(cls, message: str):
+        print(f"{cls.CYAN}INFO> {message}{cls.ENDC}")
+
+    @classmethod
+    def important(cls, message: str):
+        print(f"{cls.MAGENTA}IMPORTANT> {message}{cls.ENDC}")
+
+    @classmethod
+    def error(cls, message: str):
+        print(f"{cls.RED}ERROR> {message}{cls.ENDC}", file=sys.stderr)
+        exit(1)
+
+    @classmethod
+    def success(cls, message: str):
+        print(f"{cls.GREEN}SUCCESS> {message}{cls.ENDC}")
+        exit(0)
+
+    @classmethod
+    def wrong_usage(cls):
+        cls.error("Wrong arguments! Run 'rl help' for help.")
+
+    @staticmethod
+    def print_help():
+        with open(
+            os.path.join(Paths.BIN, "rl_help.txt"),
+            'r', encoding='utf-8'
+        ) as file:
+            print(file.read())
+        exit(0)
+
+    @classmethod
+    def unexpected_error(cls):
+        cls.error("Unexpected error!")
+
+
+class Command:
+
+    _command: str
+
+    def __init__(self, command: str):
+        self._command = command
+
+    def run(self, show_output: bool = False):
+        subprocess.run(
+            self._command,
+            shell=True,
+            stdout=(None if show_output else subprocess.DEVNULL),
+            stderr=(None if show_output else subprocess.DEVNULL)
+        )
+
+    def get_output(self) -> str:
+        return subprocess.check_output(
+            self._command,
+            shell=True,
+            stderr=subprocess.DEVNULL
+        ).decode(encoding='ascii')
+
+    def get_returncode(self, show_output: bool = False) -> int:
+        process = subprocess.Popen(
+            self._command,
+            shell=True,
+            stdout=(None if show_output else subprocess.DEVNULL),
+            stderr=(None if show_output else subprocess.DEVNULL)
+        )
+        process.wait()
+        return process.returncode
+
+
+class Ask:
+
+    @staticmethod
+    def string(prompt: str) -> str:
+        return input(prompt)
+
+    @classmethod
+    def boolean(cls, prompt: str) -> bool:
+        while True:
+            answer = cls.string(prompt).lower()
+            if len(answer) == 1 and answer in "yn":
+                return answer == 'y'
+
+    @classmethod
+    def integer(cls, prompt: str, min_value: int = None, max_value: int = None) -> int:
+        while True:
+            answer = cls.string(prompt)
+            try:
+                number = int(answer)
+            except ValueError:
+                pass
+            else:
+                if min_value is not None:
+                    if number < min_value:
+                        continue
+                if max_value is not None:
+                    if number > max_value:
+                        continue
+                return number
+
+
+class Network:
+
+    @staticmethod
+    def get_gateway_ip():
+        command = Command("/sbin/ip route|awk '/default/ { print $3 }'")
+        return command.get_output().strip()
+
+
+class Cronjob:
+
+    @classmethod
+    def register(cls):
+        Output.info("Registering cronjob...")
+        if cls.is_registered():
+            Output.error("A cronjob was already registered!")
+        command = Command(f'crontab -l ; echo "@reboot {Paths.SELF} run" | crontab -')
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
+
+    @classmethod
+    def deregister(cls):
+        Output.info("Deregistering cronjob...")
+        if not cls.is_registered():
+            Output.error("There is no cronjob registered!")
+        command = Command(f"crontab -l | grep -v '{Paths.SELF} run' | crontab -")
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
+
+    @staticmethod
+    def is_registered():
+        command = Command(f'crontab -l | grep -q "@reboot {Paths.SELF} run"')
+        return command.get_returncode() == 0
+
+
+class Check:
+
+    @staticmethod
+    def _check_config(key: str) -> bool:
+        with open(os.path.join(Paths.CONFIG, key), 'r', encoding='ascii') as file:
+            content = file.readline()
+            return content == "1"
+
+    @staticmethod
+    def _is_container_running(container_id: str) -> bool:
+        try:
+            command = Command(f"docker container inspect -f '{{{{.State.Status}}}}' {container_id}")
+            result = command.get_output()
+        except subprocess.CalledProcessError:
+            return False
+        else:
+            if 'running' in result:
+                return True
+        return False
+
+    @classmethod
+    def master(cls) -> bool:
+        return cls._check_config('master')
+
+    @classmethod
+    def device(cls) -> bool:
+        return cls._check_config('device')
+
+    @classmethod
+    def debug(cls) -> bool:
+        return cls._check_config('debug')
+
+    @classmethod
+    def running(cls) -> bool:
+        if cls.device:
+            if cls._is_container_running(Ids.DEVICE_CONTAINER):
+                return True
+        if cls.master:
+            if cls._is_container_running(Ids.MASTER_CONTAINER):
+                return True
+        return False
+
+    @staticmethod
+    def cronjob() -> bool:
+        return Cronjob.is_registered()
+
+    @staticmethod
+    def pi() -> bool:
+        try:
+            with open(
+                "/sys/firmware/devicetree/base/model",
+                'r', encoding='ascii'
+            ) as file:
+                return "pi" in file.read().lower()
+        except FileNotFoundError:
+            return False
+
+    @classmethod
+    def check(cls, key: str) -> bool:
+        if key == 'master':
+            return cls.master()
+        elif key == 'device':
+            return cls.device()
+        elif key == 'debug':
+            return cls.debug()
+        elif key == 'running':
+            return cls.running()
+        elif key == 'cronjob':
+            return cls.cronjob()
+        elif key == 'pi':
+            return cls.pi()
+        else:
+            raise KeyError(f"Unknown key: {key}")
+
+
+class ConfigWizard:
+
+    with open(
+        os.path.join(Paths.CONFIG, 'config.json'),
+        'r', encoding='utf-8'
+    ) as file:
+        config = json.load(file)
+    _device_id: str = config['device_id']
+    _chip_amount: int = config['chip_amount']
+    _master: bool = Check.master()
+    _device: bool = Check.device()
+    _debug: bool = Check.debug()
+
+    _need_rebuild: bool = False
+    _called_from_setup: bool = False
+
+    @classmethod
+    def _print_menu(cls):
+        print()
+        print("Select number of value to change:")
+        print()
+        print(f"[1] Device ID: {cls._device_id}")
+        print(f"[2] Number of installed chips: {cls._chip_amount}")
+        print(f"[3] This is a master: {'yes' if cls._master else 'no'}")
+        print(f"[4] This is a device: {'yes' if cls._device else 'no'}")
+        print(f"[5] Debug mode: {'yes' if cls._debug else 'no'}")
+        print()
+        print("[6] SAVE")
+        print("[7] DISCARD")
+        print()
+
+    @classmethod
+    def _user_selection(cls) -> int:
+        return Ask.integer("> ", 1, 6)
+
+    @classmethod
+    def _update_device_id(cls):
+        cls._device_id = Ask.string("Enter device id> ")
+        cls._need_rebuild = True
+
+    @classmethod
+    def _update_chip_amount(cls):
+        cls._chip_amount = Ask.integer("Enter amount of installed chips> ")
+        cls._need_rebuild = True
+
+    @classmethod
+    def _update_master(cls):
+        cls._master = Ask.boolean("Is this a master? (yn)> ")
+
+    @classmethod
+    def _update_device(cls):
+        cls._device = Ask.boolean("Is this a device? (yn)> ")
+
+    @classmethod
+    def _update_debug(cls):
+        cls._debug = Ask.boolean("Enable debug mode? (yn)> ")
+
+    @classmethod
+    def _save(cls):
+        config = {
+            'device_id': cls._device_id,
+            'chip_amount': cls._chip_amount
+        }
+        with open(
+            os.path.join(Paths.CONFIG, 'config.json'),
+            'w', encoding='utf-8'
+        ) as file:
+            json.dump(config, file, indent=4)
+        with open(
+            os.path.join(Paths.CONFIG, 'master'),
+            'w', encoding='ascii'
+        ) as file:
+            file.write("1" if cls._master else "0")
+        with open(
+            os.path.join(Paths.CONFIG, 'device'),
+            'w', encoding='ascii'
+        ) as file:
+            file.write("1" if cls._device else "0")
+        with open(
+            os.path.join(Paths.CONFIG, 'debug'),
+            'w', encoding='ascii'
+        ) as file:
+            file.write("1" if cls._debug else "0")
+        if cls._need_rebuild and not cls._called_from_setup:
+            Output.important("The image needs to be rebuilt for changes to take effect!")
+            Output.important("Run: rl build")
+        Output.info("Configuration saved.")
+
+    @classmethod
+    def _discard(cls):
+        Output.info("Configuration discarded.")
+
+    @classmethod
+    def run(cls, called_from_setup: bool):
+        cls._called_from_setup = called_from_setup
+        cls._need_rebuild = False
+
+        while True:
+            cls._print_menu()
+            selection = cls._user_selection()
+            if selection == 1:
+                cls._update_device_id()
+            elif selection == 2:
+                cls._update_chip_amount()
+            elif selection == 3:
+                cls._update_master()
+            elif selection == 4:
+                cls._update_device()
+            elif selection == 5:
+                cls._update_debug()
+            elif selection == 6:
+                cls._save()
+                return
+            elif selection == 7:
+                cls._discard()
+                return
+
+
+class RlManager:
+
+    @classmethod
+    def build(cls):
+        was_running = False
+        if Check.running():
+            was_running = True
+            cls.stop()
+        Output.info("Deleting previous docker images...")
+        command = Command(f"docker rmi $(docker images | grep {Ids.IMAGE})")
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
+        Output.info("Building docker image...")
+        command = Command(f"docker build --tag {Ids.IMAGE} {Paths.HOME}")
+        if command.get_returncode(show_output=True) != 0:
+            Output.unexpected_error()
+        if was_running:
+            cls.run()
+
+    @classmethod
+    def run(cls):
+        if Check.running():
+            Output.error("System is already running!")
+        debug_str = "1" if Check.debug() else "0"
+        pi_str = "1" if Check.pi() else "0"
+        if Check.device():
+            Output.info("Starting device...")
+            command = Command(
+                f"docker run --rm --detach --env IS_MASTER=0 --env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
+                f"-p 5001:5001 --name {Ids.DEVICE_CONTAINER} "
+                f"--volume /dev/i2c-1:/dev/i2c-1 {Ids.IMAGE}"
+            )
+            if command.get_returncode() != 0:
+                Output.unexpected_error()
+        if Check.master():
+            Output.info("Starting master...")
+            command = Command(
+                f"docker run --rm --detach --env IS_MASTER=1 --env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
+                f"-p 80:5000 --name {Ids.MASTER_CONTAINER} {Ids.IMAGE}"
+            )
+            if command.get_returncode() != 0:
+                Output.unexpected_error()
+
+    @classmethod
+    def stop(cls):
+        Output.info("Stopping system. Please wait...")
+        if Check.device():
+            Output.info("Stopping device...")
+            command = Command(f"docker stop {Ids.DEVICE_CONTAINER}")
+            if command.get_returncode() != 0:
+                Output.unexpected_error()
+        if Check.master():
+            Output.info("Stopping master...")
+            command = Command(f"docker stop {Ids.MASTER_CONTAINER}")
+            if command.get_returncode() != 0:
+                Output.unexpected_error()
+
+    @classmethod
+    def restart(cls):
+        Output.info("Restarting System...")
+        cls.stop()
+        cls.run()
+
+    @classmethod
+    def update(cls):
+        Output.info("Updating System...")
+        was_running = False
+        if Check.running():
+            was_running = True
+            cls.stop()
+        Output.info("Pulling from repository...")
+        command = Command(f"git -C {Paths.HOME} pull")
+        if command.get_returncode(show_output=True) != 0:
+            Output.unexpected_error()
+        if was_running:
+            cls.run()
+
+    @classmethod
+    def setup(cls):
+        if Check.running():
+            cls.stop()
+        Output.info("Starting configuration wizard...")
+        ConfigWizard.run(called_from_setup=True)
+        cls.build()
+        if not Check.cronjob():
+            Cronjob.register()
+        cls.run()
+
+    @classmethod
+    def uninstall(cls):
+        Output.info("Starting deinstallation process...")
+        if not Check.pi():
+            Output.info("Deinstallation process was cancelled because not running on a Rasperry Pi")
+            return
+        Output.important("Are you sure you want to uninstall?")
+        if not Ask.boolean("Are you sure? (yn)> "):
+            Output.info("Deinstallation process was cancelled.")
+            return
+        answer = input("Type 'uninstall' if you are really sure> ")
+        if answer != 'uninstall':
+            Output.info("Deinstallation process was cancelled.")
+            return
+        if Check.running():
+            cls.stop()
+        if Check.cronjob():
+            cls.deregister_cronjob()
+        try:
+            Output.info("Removing bin directory from PATH...")
+            sys.path.remove(Paths.BIN)
+        except ValueError:
+            Output.info("bin directory not found in PATH.")
+        Output.info("Removing PATH configuration from /root/.bashrc")
+        with open("/root/.bashrc", 'r') as file:
+            lines = file.readlines()
+        with open("/root/.bashrc", 'w') as file:
+            for line in lines:
+                if Paths.BIN not in line.strip("\n"):
+                    file.write(line)
+        Output.info("Copying install script to parent directory...")
+        shutil.copy(os.path.join(Paths.BIN, "rl-install"), Paths.PARENT)
+        Output.info("Removing all files...")
+        shutil.rmtree(Paths.HOME)
+
+
+class UserInterface:
+
+    @classmethod
+    def build(cls):
+        RlManager.build()
+        Output.success("Build step successful.")
+
+    @classmethod
+    def run(cls):
+        RlManager.run()
+        Output.success("System is running.")
+
+    @classmethod
+    def stop(cls):
+        RlManager.stop()
+        Output.success("System stopped.")
+
+    @classmethod
+    def restart(cls):
+        RlManager.restart()
+        Output.success("System restarted.")
+
+    @classmethod
+    def update(cls):
+        RlManager.update()
+        Output.success("Update successfull.")
+
+    @classmethod
+    def setup(cls):
+        RlManager.setup()
+        Output.success("Setup successfull.")
+
+    @classmethod
+    def config(cls):
+        ConfigWizard.run(called_from_setup=False)
+        Output.success("Configuration done.")
+
+    @classmethod
+    def uninstall(cls):
+        RlManager.uninstall()
+        Output.success("Deinstallation successfull.")
+
+    @classmethod
+    def check(cls, key: str):
+        result = Check.check(key)
+        print("1" if result else "0")
+        exit(0)
+
+    @classmethod
+    def register_cronjob(cls):
+        Cronjob.register()
+        Output.success("Cronjob registered.")
+
+    @classmethod
+    def deregister_cronjob(cls):
+        Cronjob.deregister()
+        Output.success("Cronjob deregistered.")
+
+
+COMMAND_MAPPINGS: Dict[str, Callable] = {
+    'setup': UserInterface.setup,
+    'uninstall': UserInterface.uninstall,
+    'config': UserInterface.config,
+    'build': UserInterface.build,
+    'run': UserInterface.run,
+    'stop': UserInterface.stop,
+    'restart': UserInterface.restart,
+    'update': UserInterface.update,
+    'help': Output.print_help
+}
+
+
+def require_root():
+    if os.getuid() != 0:
+        Output.error("Please run as root!")
+
+
+def main():
+    args = sys.argv[1:]
+
+    if len(args) < 1:
+        Output.wrong_usage()
+
+    if args[0] in COMMAND_MAPPINGS.keys():
+        if len(args) != 1:
+            Output.wrong_usage()
+        if args[0] != 'help':
+            require_root()
+        COMMAND_MAPPINGS[args[0]]()
+
+    elif args[0] == 'check':
+        if len(args) != 2:
+            Output.wrong_usage()
+        if args[1] not in ['master', 'device', 'debug', 'running', 'cronjob', 'pi']:
+            Output.wrong_usage()
+        if args[1] in ['running', 'cronjob', 'pi']:
+            require_root()
+        UserInterface.check(args[1])
+
+    elif args[0] == 'cronjob':
+        if len(args) != 2:
+            Output.wrong_usage()
+        if args[1] not in ['register', 'deregister', 'check']:
+            Output.wrong_usage()
+        require_root()
+        if args[1] == 'register':
+            UserInterface.register_cronjob()
+        elif args[1] == 'deregister':
+            UserInterface.deregister_cronjob()
+        elif args[1] == 'check':
+            UserInterface.check('cronjob')
+
+    else:
+        Output.wrong_usage()
+
+
+if __name__ == "__main__":
+    main()

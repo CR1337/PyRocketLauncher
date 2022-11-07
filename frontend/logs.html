@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Logs</title>
+    <script src="js/vue.global.js"></script>
+</head>
+<body>
+<div id="app" v-cloak>
+    <br>
+    <div>
+        Logfile:
+        <select v-model="selected_logfile" @change="load_logfile_content()">
+            <option v-for="logfile in logfiles">{{logfile}}</option>
+        </select>
+        <button @click="load_logfiles()">↺</button>
+        <button @click="download_file()">Download file...</button>
+        <button @click="download_as_json()">Download as JSON...</button>
+    </div>
+    <br>
+    <div>
+        Show:
+        <input type="checkbox" id="time_checkbox" v-model="show['time']">
+        <label for="time_checkbox">Time</label>
+        <input type="checkbox" id="level_checkbox" v-model="show['level']">
+        <label for="level_checkbox">Level</label>
+        <input type="checkbox" id="thread_checkbox" v-model="show['thread']">
+        <label for="thread_checkbox">Thread</label>
+        <input type="checkbox" id="file_checkbox" v-model="show['file']">
+        <label for="file_checkbox">File</label>
+        <input type="checkbox" id="line_checkbox" v-model="show['line']">
+        <label for="line_checkbox">Line</label>
+        <input type="checkbox" id="message_checkbox" v-model="show['message']">
+        <label for="message_checkbox">Message</label>
+    </div>
+    <br>
+    <div>
+        Search operator:
+        <input type="radio" id="and_radio" value="AND" v-model="operator">
+        <label for="and_radio">AND</label>
+        <input type="radio" id="or_radio" value="OR" v-model="operator">
+        <label for="or_radio">OR</label>
+    </div>
+    <br>
+    <table id="log_table">
+        <tr>
+            <th v-if="show['time']">
+                Time<br>
+                <input type="text" id="time_search_input" v-model="search['time']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_time_checkbox" v-model="invert['time']">
+                <label for="invert_time_checkbox">Don't match</label>
+                <input type="checkbox" id="time_case_checkbox" v-model="match_case['time']">
+                <label for="time_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_time" value="includes" v-model="match_type['time']">
+                <label for="includes_radio_time">Includes</label>
+                <input type="radio" id="exact_radio_time" value="exact" v-model="match_type['time']">
+                <label for="exact_radio_time">Exact</label>
+                <input type="radio" id="regex_radio_time" value="regex" v-model="match_type['time']">
+                <label for="regex_radio_time">Regex</label>
+            </th>
+            <th v-if="show['level']">
+                Level<br>
+                <input type="text" id="level_search_input" v-model="search['level']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_level_checkbox" v-model="invert['level']">
+                <label for="invert_level_checkbox">Don't match</label>
+                <input type="checkbox" id="level_case_checkbox" v-model="match_case['level']">
+                <label for="level_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_level" value="includes" v-model="match_type['level']">
+                <label for="includes_radio_level">Includes</label>
+                <input type="radio" id="exact_radio_level" value="exact" v-model="match_type['level']">
+                <label for="exact_radio_level">Exact</label>
+                <input type="radio" id="regex_radio_level" value="regex" v-model="match_type['level']">
+                <label for="regex_radio_level">Regex</label>
+            </th>
+            <th v-if="show['thread']">
+                Thread<br>
+                <input type="text" id="thread_search_input" v-model="search['thread']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_thread_checkbox" v-model="invert['thread']">
+                <label for="invert_thread_checkbox">Don't match</label>
+                <input type="checkbox" id="thread_case_checkbox" v-model="match_case['thread']">
+                <label for="thread_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_thread" value="includes" v-model="match_type['thread']">
+                <label for="includes_radio_thread">Includes</label>
+                <input type="radio" id="exact_radio_thread" value="exact" v-model="match_type['thread']">
+                <label for="exact_radio_thread">Exact</label>
+                <input type="radio" id="regex_radio_thread" value="regex" v-model="match_type['thread']">
+                <label for="regex_radio_thread">Regex</label>
+            </th>
+            <th v-if="show['file']">
+                File<br>
+                <input type="text" id="file_search_input" v-model="search['file']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_file_checkbox" v-model="invert['file']">
+                <label for="invert_file_checkbox">Don't match</label>
+                <input type="checkbox" id="file_case_checkbox" v-model="match_case['file']">
+                <label for="file_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_file" value="includes" v-model="match_type['file']">
+                <label for="includes_radio_file">Includes</label>
+                <input type="radio" id="exact_radio_file" value="exact" v-model="match_type['file']">
+                <label for="exact_radio_file">Exact</label>
+                <input type="radio" id="regex_radio_file" value="regex" v-model="match_type['file']">
+                <label for="regex_radio_file">Regex</label>
+            </th>
+            <th v-if="show['line']">
+                Line<br>
+                <input type="text" id="line_search_input" v-model="search['line']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_line_checkbox" v-model="invert['line']">
+                <label for="invert_line_checkbox">Don't match</label>
+                <input type="checkbox" id="line_case_checkbox" v-model="match_case['line']">
+                <label for="line_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_line" value="includes" v-model="match_type['line']">
+                <label for="includes_radio_line">Includes</label>
+                <input type="radio" id="exact_radio_line" value="exact" v-model="match_type['line']">
+                <label for="exact_radio_line">Exact</label>
+                <input type="radio" id="regex_radio_line" value="regex" v-model="match_type['line']">
+                <label for="regex_radio_line">Regex</label>
+            </th>
+            <th v-if="show['message']">
+                Message<br>
+                <input type="text" id="message_search_input" v-model="search['message']" class="search-field">
+                <br>
+                <input type="checkbox" id="invert_message_checkbox" v-model="invert['message']">
+                <label for="invert_message_checkbox">Don't match</label>
+                <input type="checkbox" id="message_case_checkbox" v-model="match_case['message']">
+                <label for="message_case_checkbox">Match case</label>
+                <br>
+                <input type="radio" id="includes_radio_message" value="includes" v-model="match_type['message']">
+                <label for="includes_radio_message">Includes</label>
+                <input type="radio" id="exact_radio_message" value="exact" v-model="match_type['message']">
+                <label for="exact_radio_message">Exact</label>
+                <input type="radio" id="regex_radio_message" value="regex" v-model="match_type['message']">
+                <label for="regex_radio_message">Regex</label>
+            </th>
+        </tr>
+        <template v-for="(entry, idx) in logfile_entries">
+            <tr v-if="show_row(idx)" :style="entry_style(idx)">
+                <td v-if="show['time']">{{entry.time}}</td>
+                <td v-if="show['level']">{{entry.level}}</td>
+                <td v-if="show['thread']">{{entry.thread}}</td>
+                <td v-if="show['file']">{{entry.file}}</td>
+                <td v-if="show['line']" style="text-align: right;">{{entry.line}}</td>
+                <td v-if="show['message']">{{entry.message}}</td>
+            </tr>
+        </template>
+
+    </table>
+</div>
+<a id="download_anchor_element" style="display:none"></a>
+</body>
+</html>
+
+<script>
+    const { createApp } = Vue
+    createApp({
+        data() {
+            return {
+                device_id: "",
+                logfiles: [],
+                selected_logfile: "",
+                logfile_entries: [],
+                operator: 'AND',
+                search: {
+                    'time': "",
+                    'level': "",
+                    'thread': "",
+                    'file': "",
+                    'line': "",
+                    'message': ""
+                },
+                show: {
+                    'time': true,
+                    'level': true,
+                    'thread': true,
+                    'file': true,
+                    'line': true,
+                    'message': true
+                },
+                invert: {
+                    'time': false,
+                    'level': false,
+                    'thread': false,
+                    'file': false,
+                    'line': false,
+                    'message': false
+                },
+                match_case: {
+                    'time': false,
+                    'level': false,
+                    'thread': false,
+                    'file': false,
+                    'line': false,
+                    'message': false
+                },
+                match_type: {
+                    'time': 'includes',
+                    'level': 'includes',
+                    'thread': 'includes',
+                    'file': 'includes',
+                    'line': 'includes',
+                    'message': 'includes'
+                }
+            }
+        },
+        created() {
+            this._load_device_id();
+            this.load_logfiles();
+        },
+        methods: {
+            _load_device_id() {
+                fetch("/config")
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.device_id = data['config']['device_id'];
+                    document.title = this.device_id + " Logs"
+                })
+            },
+            load_logfiles() {
+                fetch("/logs")
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.logfiles = data.sort();
+                })
+            },
+
+            load_logfile_content() {
+                fetch("/logs/structured/" + this.selected_logfile)
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    this.logfile_entries = data;
+                })
+            },
+
+            entry_style(idx) {
+                switch (this.logfile_entries[idx].level) {
+                    case 'DEBUG':
+                        return "background-color: aliceBlue;";
+                    case 'INFO':
+                        return "background-color: lightBlue;";
+                    case 'WARNING':
+                        return "background-color: bisque;";
+                    case 'ERROR':
+                        return "background-color: salmon;";
+                    case 'CRITICAL':
+                        return "background-color: crimson;";
+                }
+            },
+
+            _match_cell(key, idx) {
+                let to_search = this.logfile_entries[idx][key];
+                let query = this.search[key];
+
+                switch (this.match_type[key]) {
+                    case 'includes':
+                        if (!this.match_case[key]) {
+                            to_search = to_search.toLowerCase();
+                            query = query.toLowerCase();
+                        }
+                        return to_search.includes(query);
+
+                    case 'exact':
+                        if (!this.match_case[key]) {
+                            to_search = to_search.toLowerCase();
+                            query = query.toLowerCase();
+                        }
+                        return to_search == query;
+
+                    case 'regex':
+                        let re = (this.match_case[key])
+                            ? new RegExp(query, "g")
+                            : new RegExp(query, "gi");
+                        return re.test(to_search);
+                }
+            },
+
+            _operator(a, b) {
+                return (this.operator == 'AND')
+                    ? a && b
+                    : a || b;
+            },
+
+            show_row(idx) {
+                let match = (this.operator == 'AND') ? true : false;
+                for (const key in this.show) {
+                    const cell_matched = this._match_cell(key, idx);
+                    match = this._operator(
+                        match,
+                        this.search[key] == ""
+                            || !this.show[key]
+                            || ((this.invert[key])
+                                ? !cell_matched
+                                : cell_matched)
+                    )
+                }
+                return match;
+            },
+
+            download_file() {
+                const url = "logs/" + this.selected_logfile;
+                window.open(url, "_blank");
+            },
+
+            download_as_json() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.logfile_entries));
+                const anchor = document.getElementById('download_anchor_element');
+                anchor.setAttribute("href", dataStr);
+                anchor.setAttribute("download", this.selected_logfile + ".json");
+                anchor.click();
+            }
+        }
+    }).mount('#app')
+</script>
+
+<style>
+    table.floatThead-table {
+        border-top: none;
+        border-bottom: none;
+        background-color: white;
+    }
+
+    th {
+        position: sticky;
+        top: 0px;
+        background: white;
+    }
+
+    .search-field {
+        width: calc(100% - 8px);
+    }
+</style>

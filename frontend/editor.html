@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Fireworks Program Editor</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="js/vue.global.js"></script>
+</head>
+<body>
+<div id="app" v-cloak>
+    <br>
+    <div id="menu">
+        <button @click="new_program()">📄 New</button>
+        <button onclick="document.getElementById('upload_button').click()">📁 Load...</button>
+        <input type='file' id="upload_button" style="display:none" accept=".json" @change="load_program">
+        <button @click="save_program()">💾 Save as...</button>
+    </div>
+    <br>
+    <table id="event_list">
+        <tr>
+            <th>Name</th>
+            <th>Box</th>
+            <th>Address</th>
+            <th>Time [Seconds]</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>Time [mm:ss]</th>
+            <th></th>
+        </tr>
+        <tr v-for="(event, idx) in event_list" :style="event_style(idx)">
+            <td><input type="text" v-model="event.name"></td>
+            <td><select v-model="event.device_id">
+                <option v-for="(leters, device_id) in available_device_ids">{{device_id}}</option>
+            </select></td>
+            <td>
+            <select v-model="event.letter">
+                <option v-for="letter in available_device_ids[event.device_id]">{{letter}}</option>
+            </select>
+            <select v-model="event.number" style="text-align: right;">
+                <option v-for="number in [...Array(16).keys()]">{{number}}</option>
+            </select>
+            </td>
+            <td><input type="number" step="0.1" min="0.0" v-model="event.timestamp" style="text-align: right;"></td>
+            <td><button @click="add_event(idx)">✚</button></td>
+            <td><button @click="del_event(idx)">x</button></td>
+            <td><button @click="move_event_up(idx)">▲</button></td>
+            <td><button @click="move_event_down(idx)">▼</button></td>
+            <td><div style="text-align: right;"><label>{{formatted_time(idx)}}</label></div></td>
+            <td><div style="text-align: right;"><label>{{reason_for_invalid(idx)}}</label></div></td>
+        </tr>
+    </table>
+</div>
+<a id="download_anchor_element" style="display:none"></a>
+</body>
+</html>
+
+<script>
+    const { createApp } = Vue
+    createApp({
+        data() {
+            return {
+                event_list: [],
+                event_prototype: {
+                    'name': "",
+                    'device_id': "main",
+                    'letter': 'A',
+                    'number': 0,
+                    'timestamp': 0.0
+                },
+                available_device_ids: {
+                    'main': ['A', 'B', 'C'],
+                    'field': ['A', 'B', 'C'],
+                    'alice_l': ['A'],
+                    'jessie_r': ['A']
+                }
+            }
+        },
+        created() {
+            this.add_event(0);
+        },
+        methods: {
+            _swap_events(idx1, idx2) {
+                this.event_list[idx1] = this.event_list.splice(idx2, 1, this.event_list[idx1])[0];
+                this.event_list.splice(index + 1, 0, new_event);
+            },
+            add_event(index) {
+                let new_event = Object.assign({}, this.event_prototype);
+                this.event_list.splice(index + 1, 0, new_event);
+            },
+            del_event(index) {
+                if (this.event_list.length == 1) {
+                    this.new_program();
+                } else {
+                    this.event_list.splice(index, 1);
+                }
+            },
+            move_event_up(index) {
+                if (index == 0) return;
+                this._swap_events(index, index - 1);
+            },
+            move_event_down(index) {
+                if (index == this.event_list.length - 1) return;
+                this._swap_events(index, index + 1);
+            },
+
+            new_program() {
+                if (confirm("Are you sure to create a new Program?\nUnsaved work will be lost.")) {
+                    this.event_list = []
+                    this.add_event(0);
+                }
+            },
+            _loaded_event_list_is_valid(event_list) {
+                if (Object.prototype.toString.call(event_list) != "[object Array]") return false;
+                for (const e of event_list) {
+                    if (!e.hasOwnProperty('name')) return false;
+                    if (!e.hasOwnProperty('device_id')) return false;
+                    if (!e.hasOwnProperty('letter')) return false;
+                    if (!e.hasOwnProperty('number')) return false;
+                    if (!e.hasOwnProperty('timestamp')) return false;
+
+                    if (typeof(e.name) != 'string') return false;
+
+                    if (typeof(e.device_id) != 'string') return false;
+                    if (!(e.device_id in this.available_device_ids)) return false;
+
+                    if (typeof(e.letter) != 'string') return false;
+                    if (!(this.available_device_ids[e.device_id].includes(e.letter))) return false;
+
+                    if (typeof(e.number) != 'number') return false;
+                    if (e.number < 0 || e.number > 15) return false;
+
+                    if (typeof(e.timestamp) != 'number') return false;
+                    if (e.timestamp < 0) return false;
+                }
+                return true;
+            },
+            load_program(event) {
+                console.log(event.target.files);
+                const reader = new FileReader();
+                reader.onload = this._on_reader_loaded;
+                reader.readAsText(event.target.files[0]);
+            },
+            _on_reader_loaded(event) {
+                const display_error = (event_list) => {
+                    console.log(event_list);
+                    alert("The loaded Program is ill formed!\nPlease check the file or choose a different one.");
+                }
+
+                let loaded_event_list = [];
+                try {
+                    loaded_event_list = JSON.parse(event.target.result);
+                } catch (e) {
+                    display_error(loaded_event_list);
+                    return;
+                }
+
+                if (this._loaded_event_list_is_valid(loaded_event_list)) {
+                    this.event_list = loaded_event_list;
+                } else {
+                    display_error(loaded_event_list);
+                }
+            },
+            save_program() {
+                if (!this._program_is_valid()) {
+                    alert("The program is invalid.\nPlease check your inputs.")
+                    return;
+                }
+                for (let i = 0; i < this.event_list.length; ++i) {
+                    this.event_list[i].number = Number(this.event_list[i].number);
+                    this.event_list[i].timestamp = Number(this.event_list[i].timestamp).toFixed(1);
+                }
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.event_list));
+                const anchor = document.getElementById('download_anchor_element');
+                anchor.setAttribute("href", dataStr);
+                anchor.setAttribute("download", "program.json");
+                anchor.click();
+            },
+            formatted_time(index) {
+                if (this.event_list[index].timestamp == 0.0) {
+                    return "00:00.0";
+                }
+                const total_seconds = this.event_list[index].timestamp.toFixed(1);
+                const minutes = Math.floor(total_seconds / 60);
+                const seconds = Math.floor(total_seconds - (minutes * 60));
+                const deciseconds = ((total_seconds * 10) - (minutes * 600) - (seconds * 10));
+                let m_str = minutes.toString();
+                let s_str = seconds.toString();
+                if (minutes < 10) m_str = "0" + m_str;
+                if (seconds < 10) s_str = "0" + s_str;
+                return m_str + ":" + s_str + "." + deciseconds.toString();
+            },
+
+            event_style(index) {
+                if (this._event_is_valid(index)) {
+                    return "background-color: paleGreen;";
+                } else {
+                    return "background-color: salmon;";
+                }
+            },
+            _event_is_valid(index) {
+                return this.reason_for_invalid(index) == "";
+            },
+            reason_for_invalid(index) {
+                const event = this.event_list[index];
+                for (const e of this.event_list) {
+                    if (e === event) continue;
+                    if (
+                        e.device_id == event.device_id
+                        && e.letter == event.letter
+                        && e.number == event.number
+                    ) {
+                        return "Address already in use!";
+                    }
+                }
+                if (!this.available_device_ids[event.device_id].includes(event.letter)) {
+                    return "Please select a valid address!"
+                }
+                if (event.timestamp < 0) {
+                    return "The time has to be a positive number!"
+                }
+                return "";
+            },
+            _program_is_valid() {
+                for (let i = 0; i < this.event_list.length; ++i) {
+                    if (!this._event_is_valid(i)) return false;
+                }
+                return true;
+            }
+        },
+        computed: {
+
+        }
+    }).mount('#app')
+</script>
+
+<style>
+    body {
+       transform: scale(1.3);
+       transform-origin: 0 0;
+    }
+    #menu>button {
+        margin-right: 2px;
+        margin-left: 6px;
+    }
+    table {
+        margin-left: 4px;
+    }
+</style>

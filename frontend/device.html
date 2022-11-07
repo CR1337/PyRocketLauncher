@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Device</title>
+    <script src="js/vue.global.js"></script>
+    <script src="js/util.js"></script>
+    <script src="js/control.js"></script>
+    <script src="js/device.js"></script>
+    <script src="js/chip.js"></script>
+    <script src="js/fuse.js"></script>
+    <link rel="stylesheet" href="line-awesome/css/line-awesome.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+    <control
+        @enabled-changed="enabled_changed"
+        @ask-changed="ask_changed"
+    ></control>
+    <device
+        :enabled="enabled"
+        :ask="ask"
+        :initial_ip_address=""
+        :on_master_page="false"
+    ></device>
+</div>
+</body>
+</html>
+
+<script>
+    const { createApp } = Vue;
+    const app = createApp({
+        data() {
+            return {
+                enabled: false,
+                ask: true
+            };
+        },
+        methods: {
+            enabled_changed(value) {
+                this.enabled = value;
+            },
+
+            ask_changed(value) {
+                this.ask = value;
+            }
+        }
+    })
+    .component('control', control_component)
+    .component('device', device_component)
+    .component('chip', chip_component)
+    .component('fuse', fuse_component)
+    .mount('#app');
+</script>
