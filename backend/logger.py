@@ -25,7 +25,7 @@ stream_handler = logging.StreamHandler()
 file_handler = logging.FileHandler(filename)
 
 stream_handler.setLevel(logging.WARNING)
-file_handler.setLevel(logging.DEBUG if Mode.debug else logging.INFO)
+file_handler.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter(
     '>>>%(asctime)s:::%(levelname)s:::%(threadName)s:::%(filename)s:::%(lineno)d:::%(message)s',
