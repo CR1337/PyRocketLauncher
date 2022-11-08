@@ -1,2 +1,3 @@
-*/__pycache__
-frontend/logs/*
+**/__pycache__
+logs/*
+loc.py

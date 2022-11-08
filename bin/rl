@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 
 class Paths:
@@ -14,6 +14,7 @@ class Paths:
     HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
     CONFIG: str = os.path.join(HOME, "config")
     BIN: str = os.path.join(HOME, "bin")
+    LOGS: str = os.path.join(HOME, "logs")
     PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
 
 
@@ -24,30 +25,46 @@ class Ids:
     MASTER_CONTAINER: str = 'rl_master_container'
 
 
+class TerminalColors:
+
+    DEFAULT: str = "\033[39m"
+    BLACK: str = "\033[30m"
+    DARK_RED: str = "\033[31m"
+    DARK_GREEN: str = "\033[32m"
+    DARK_YELLOW: str = "(Orange-ish"
+    DARK_BLUE: str = "\033[34m"
+    DARK_MAGENTA: str = "\033[35m"
+    DARK_CYAN: str = "\033[36m"
+    LIGHT_GRAY: str = "\033[37m"
+    DARK_GRAY: str = "\033[90m"
+    RED: str = "\033[91m"
+    GREEN: str = "\033[92m"
+    ORANGE: str = "\033[93m"
+    BLUE: str = "\033[94m"
+    MAGENTA: str = "\033[95m"
+    CYAN: str = "\033[96m"
+    WHITE: str = "\033[97m"
+    RESET: str = '\033[0m'
+
+
 class Output:
 
-    RED: str = '\033[1;31m'
-    CYAN: str = '\033[1;36m'
-    MAGENTA: str = '\033[1;35m'
-    GREEN: str = '\033[1;92m'
-    ENDC: str = '\033[0m'
+    @staticmethod
+    def info(message: str):
+        print(f"{TerminalColors.CYAN}INFO> {message}{TerminalColors.RESET}")
 
-    @classmethod
-    def info(cls, message: str):
-        print(f"{cls.CYAN}INFO> {message}{cls.ENDC}")
+    @staticmethod
+    def important(message: str):
+        print(f"{TerminalColors.MAGENTA}IMPORTANT> {message}{TerminalColors.RESET}")
 
-    @classmethod
-    def important(cls, message: str):
-        print(f"{cls.MAGENTA}IMPORTANT> {message}{cls.ENDC}")
-
-    @classmethod
-    def error(cls, message: str):
-        print(f"{cls.RED}ERROR> {message}{cls.ENDC}", file=sys.stderr)
+    @staticmethod
+    def error(message: str):
+        print(f"{TerminalColors.RED}ERROR> {message}{TerminalColors.RESET}", file=sys.stderr)
         exit(1)
 
-    @classmethod
-    def success(cls, message: str):
-        print(f"{cls.GREEN}SUCCESS> {message}{cls.ENDC}")
+    @staticmethod
+    def success(message: str):
+        print(f"{TerminalColors.GREEN}SUCCESS> {message}{TerminalColors.RESET}")
         exit(0)
 
     @classmethod
@@ -257,7 +274,7 @@ class ConfigWizard:
     _need_rebuild: bool = False
     _called_from_setup: bool = False
 
-    @classmethod
+    @staticmethod
     def _print_menu(cls):
         print()
         print("Select number of value to change:")
@@ -272,8 +289,8 @@ class ConfigWizard:
         print("[7] DISCARD")
         print()
 
-    @classmethod
-    def _user_selection(cls) -> int:
+    @staticmethod
+    def _user_selection() -> int:
         return Ask.integer("> ", 1, 6)
 
     @classmethod
@@ -325,8 +342,8 @@ class ConfigWizard:
         ) as file:
             file.write("1" if cls._debug else "0")
         if cls._need_rebuild and not cls._called_from_setup:
-            Output.important("The image needs to be rebuilt for changes to take effect!")
-            Output.important("Run: rl build")
+            Output.important("If the app is currently running, a restart is necessary!")
+            Output.important("Run: sudo rl restart")
         Output.info("Configuration saved.")
 
     @classmethod
@@ -359,6 +376,151 @@ class ConfigWizard:
                 return
 
 
+class Logs():
+
+    SEP = ":::"
+
+    @staticmethod
+    def _get_log_filenames():
+        filenames = os.listdir(Paths.LOGS)
+        log_filenames = [fn for fn in filenames if fn.endswith(".log")]
+        if len(log_filenames) == 0:
+            Output.error("There are no logfiles.")
+        return log_filenames
+
+    @classmethod
+    def _get_latest_log_filename(cls):
+        return sorted(cls._get_log_filenames())[-1]
+
+    @classmethod
+    def clear_logs(cls):
+        if not Ask.boolean("Are you sure you want to delete all logfiles? (yn)> "):
+            Output.success("Logfile deletion was cancelled.")
+        Output.info("Deleting all logfiles...")
+        for filename in cls._get_log_filenames():
+            os.remove(os.path.join(Paths.LOGS, filename))
+
+    @classmethod
+    def print_latest_raw(cls):
+        latest_log_filename = cls._get_latest_log_filename()
+        with open(os.path.join(Paths.LOGS, latest_log_filename), 'r', encoding='utf-8') as file:
+            print(file.read())
+
+    @classmethod
+    def print_latest_pretty(cls):
+        latest_log_filename = cls._get_latest_log_filename()
+        with open(os.path.join(Paths.LOGS, latest_log_filename), 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        for line in lines:
+            level = line.split(cls.SEP)[1]
+            if level == 'DEBUG':
+                color_code = TerminalColors.LIGHT_GRAY
+            elif level == 'INFO':
+                color_code = TerminalColors.CYAN
+            elif level == 'WARNING':
+                color_code = TerminalColors.DARK_YELLOW
+            elif level == 'ERROR':
+                color_code = TerminalColors.DARK_RED
+            elif level == 'CRITICAL':
+                color_code = TerminalColors.RED
+            else:
+                color_code = TerminalColors.DEFAULT
+            print(f"{color_code}{line}{TerminalColors.RESET}", end="")
+
+
+class TimezoneWizard:
+
+    REGIONS: Dict[str, str] = {
+        'Africa': 'Africa',
+        'America': 'America',
+        'Antartica': 'Antarctica',
+        'Asia': 'Asia',
+        'Australia': 'Australia',
+        'Europe': 'Europe',
+        'Indian Ocean': 'Indian',
+        'Pacific Ocean': 'Pacific'
+    }
+
+    @classmethod
+    def _print_region_menu(cls):
+        print()
+        print(f"Current timezone: {cls.get_timezone()}")
+        print("Select your region:")
+        print()
+        for idx, region in enumerate(cls.REGIONS.keys()):
+            print(f"[{idx + 1}] {region}")
+        print()
+        print(f"[{len(cls.REGIONS.keys()) + 1}] DONT CHANGE")
+
+    @classmethod
+    def _print_timezone_menu(cls, timezones: str):
+        print()
+        print("Select your timezone:")
+        print()
+        for idx, timezone in enumerate(timezones):
+            print(f"[{idx + 1}] {timezone}")
+        print()
+        print(f"[{len(timezones) + 1}] CANCEL")
+
+    @staticmethod
+    def _get_all_timezones() -> List[str]:
+        command = Command("timedatectl list-timezones")
+        timezones = command.get_output().split("\n")
+        return timezones
+
+    @classmethod
+    def _get_all_timezones_in(cls, region: str) -> List[str]:
+        return [
+            tz for tz in cls._get_all_timezones()
+            if tz.startswith(region)
+        ]
+
+    @staticmethod
+    def get_timezone() -> str:
+        with open(os.path.join(Paths.CONFIG, "timezone"), 'r', encoding='ascii') as file:
+            return file.read()
+
+    @staticmethod
+    def _set_timezone(timezone: str):
+        Output.info(f"Set timezone to {timezone}")
+        with open(os.path.join(Paths.CONFIG, "timezone"), 'w', encoding='ascii') as file:
+            return file.write(timezone)
+
+    @classmethod
+    def run(cls, called_from_setup: bool):
+        cls._print_region_menu()
+        selection = Ask.integer("> ", 1, len(cls.REGIONS.keys()) + 1)
+        if selection == len(cls.REGIONS.keys()) + 1:
+            Output.info("Timezone was not changed.")
+            return
+        region = list(cls.REGIONS.values())[selection - 1]
+        timezones = cls._get_all_timezones_in(region)
+        cls._print_timezone_menu(timezones)
+        selection = Ask.integer("> ", 1, len(timezones) + 1)
+        if selection == len(timezones) + 1:
+            Output.info("Timezone was not changed.")
+            return
+        timezone = timezones[selection - 1]
+        cls._set_timezone(timezone)
+        if not called_from_setup:
+            Output.important("If the app is currently running, a restart is necessary!")
+            Output.important("Run: sudo rl restart")
+
+
+class Time:
+
+    @classmethod
+    def set_time(cls, time_string: str):
+        time_string = time_string.strip()
+        command = Command(f"timedatectl set-time '{time_string}'")
+        if command.get_returncode() != 0:
+            Output.error(
+                f"Invalid time format: {time_string}\n"
+                "Format has to be 'YYYY-MM-DD HH:MM:SS'"
+            )
+        Output.info(f"Set time to {time_string}.")
+
+
 class RlManager:
 
     @classmethod
@@ -367,10 +529,6 @@ class RlManager:
         if Check.running():
             was_running = True
             cls.stop()
-        Output.info("Deleting previous docker images...")
-        command = Command(f"docker rmi $(docker images | grep {Ids.IMAGE})")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
         Output.info("Building docker image...")
         command = Command(f"docker build --tag {Ids.IMAGE} {Paths.HOME}")
         if command.get_returncode(show_output=True) != 0:
@@ -387,19 +545,39 @@ class RlManager:
         if Check.device():
             Output.info("Starting device...")
             command = Command(
-                f"docker run --rm --detach --env IS_MASTER=0 --env DEBUG={debug_str} "
-                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
-                f"-p 5001:5001 --name {Ids.DEVICE_CONTAINER} "
-                f"--volume /dev/i2c-1:/dev/i2c-1 {Ids.IMAGE}"
+                f"docker run "
+                f"--rm "
+                f"--detach "
+                f"--env IS_MASTER=0 "
+                f"--env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} "
+                f"--env ON_PI={pi_str} "
+                f"--env TZ={TimezoneWizard.get_timezone()} "
+                f"-p 5001:5001 "
+                f"--name {Ids.DEVICE_CONTAINER} "
+                f"--volume /dev/i2c-1:/dev/i2c-1 "
+                f"--volume {Paths.HOME}/logs:/rl/logs "
+                f"--volume {Paths.HOME}/config:/rl/config "
+                f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
         if Check.master():
             Output.info("Starting master...")
             command = Command(
-                f"docker run --rm --detach --env IS_MASTER=1 --env DEBUG={debug_str} "
-                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
-                f"-p 80:5000 --name {Ids.MASTER_CONTAINER} {Ids.IMAGE}"
+                f"docker run "
+                f"--rm "
+                f"--detach "
+                f"--env IS_MASTER=1 "
+                f"--env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} "
+                f"--env ON_PI={pi_str} "
+                f"--env TZ={TimezoneWizard.get_timezone()} "
+                f"-p 80:5000 "
+                f"--name {Ids.MASTER_CONTAINER} "
+                f"--volume {Paths.HOME}/logs:/rl/logs  "
+                f"--volume {Paths.HOME}/config:/rl/config "
+                f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
@@ -443,6 +621,7 @@ class RlManager:
         if Check.running():
             cls.stop()
         Output.info("Starting configuration wizard...")
+        TimezoneWizard.run(called_from_setup=True)
         ConfigWizard.run(called_from_setup=True)
         cls.build()
         if not Check.cronjob():
@@ -453,16 +632,13 @@ class RlManager:
     def uninstall(cls):
         Output.info("Starting deinstallation process...")
         if not Check.pi():
-            Output.info("Deinstallation process was cancelled because not running on a Rasperry Pi")
-            return
+            Output.error("Deinstallation process was cancelled because not running on a Rasperry Pi")
         Output.important("Are you sure you want to uninstall?")
-        if not Ask.boolean("Are you sure? (yn)> "):
-            Output.info("Deinstallation process was cancelled.")
-            return
+        if not Ask.boolean("Are you sure yout want to uninstall? (yn)> "):
+            Output.success("Deinstallation process was cancelled.")
         answer = input("Type 'uninstall' if you are really sure> ")
         if answer != 'uninstall':
-            Output.info("Deinstallation process was cancelled.")
-            return
+            Output.success("Deinstallation process was cancelled.")
         if Check.running():
             cls.stop()
         if Check.cronjob():
@@ -487,67 +663,91 @@ class RlManager:
 
 class UserInterface:
 
-    @classmethod
-    def build(cls):
+    @staticmethod
+    def build():
         RlManager.build()
         Output.success("Build step successful.")
 
-    @classmethod
-    def run(cls):
+    @staticmethod
+    def run():
         RlManager.run()
         Output.success("System is running.")
 
-    @classmethod
-    def stop(cls):
+    @staticmethod
+    def stop():
         RlManager.stop()
         Output.success("System stopped.")
 
-    @classmethod
-    def restart(cls):
+    @staticmethod
+    def restart():
         RlManager.restart()
         Output.success("System restarted.")
 
-    @classmethod
-    def update(cls):
+    @staticmethod
+    def update():
         RlManager.update()
         Output.success("Update successfull.")
 
-    @classmethod
-    def setup(cls):
+    @staticmethod
+    def setup():
         RlManager.setup()
         Output.success("Setup successfull.")
 
-    @classmethod
-    def config(cls):
+    @staticmethod
+    def config():
         ConfigWizard.run(called_from_setup=False)
         Output.success("Configuration done.")
 
-    @classmethod
-    def uninstall(cls):
+    @staticmethod
+    def timezone():
+        TimezoneWizard.run(called_from_setup=False)
+        Output.success("Timezone configuration done.")
+
+    @staticmethod
+    def time(time_string: str):
+        Time.set_time(time_string)
+        Output.success("Time was set.")
+
+    @staticmethod
+    def uninstall():
         RlManager.uninstall()
         Output.success("Deinstallation successfull.")
 
-    @classmethod
-    def check(cls, key: str):
+    @staticmethod
+    def check(key: str):
         result = Check.check(key)
         print("1" if result else "0")
         exit(0)
 
-    @classmethod
-    def register_cronjob(cls):
+    @staticmethod
+    def register_cronjob():
         Cronjob.register()
         Output.success("Cronjob registered.")
 
-    @classmethod
-    def deregister_cronjob(cls):
+    @staticmethod
+    def deregister_cronjob():
         Cronjob.deregister()
         Output.success("Cronjob deregistered.")
+
+    @staticmethod
+    def print_latest_logs_raw():
+        Logs.print_latest_raw()
+
+    @staticmethod
+    def print_latest_logs_pretty():
+        Logs.print_latest_pretty()
+
+    @staticmethod
+    def clear_logs():
+        Logs.clear_logs()
+        Output.success("All logs deleted.")
 
 
 COMMAND_MAPPINGS: Dict[str, Callable] = {
     'setup': UserInterface.setup,
     'uninstall': UserInterface.uninstall,
     'config': UserInterface.config,
+    'timezone': UserInterface.timezone,
     'build': UserInterface.build,
     'run': UserInterface.run,
     'stop': UserInterface.stop,
@@ -567,6 +767,9 @@ def main():
 
     if len(args) < 1:
         Output.wrong_usage()
+
+    if args[0] == 'time' and len(args) == 2:
+        UserInterface.time(args[1])
 
     if args[0] in COMMAND_MAPPINGS.keys():
         if len(args) != 1:
@@ -596,6 +799,18 @@ def main():
             UserInterface.deregister_cronjob()
         elif args[1] == 'check':
             UserInterface.check('cronjob')
+
+    elif args[0] == 'logs':
+        if len(args) != 2:
+            Output.wrong_usage()
+        if args[1] not in ['clear', 'raw', 'pretty']:
+            Output.wrong_usage()
+        if args[1] == 'clear':
+            UserInterface.clear_logs()
+        elif args[1] == 'raw':
+            UserInterface.print_latest_logs_raw()
+        elif  args[1] == 'pretty':
+            UserInterface.print_latest_logs_pretty()
 
     else:
         Output.wrong_usage()

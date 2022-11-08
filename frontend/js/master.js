@@ -67,22 +67,6 @@ const master_template = /*html*/`
             ><i
                 class="las la-lock"
             ></i></button>
-            <span class="h-spacing"></span>
-            <button
-                :class="['base-button', button_status.set_system_time_now]"
-                @click="set_system_time_now_button_clicked"
-                :disabled="!set_system_time_now_button_enabled"
-            ><i
-                class="las la-user-clock"
-            ></i></button>
-            <button
-                :class="['base-button', button_status.set_system_time]"
-                @click="set_system_time_button_clicked"
-                :disabled="!set_system_time_button_enabled"
-            ><i
-                class="las la-clock"
-            ></i></button>
-            <input type="time" step="1" v-model="selected_system_time">
         </div>
 
         <div>
@@ -175,7 +159,6 @@ const master_component = {
             devices: {},
             event_source: null,
             last_loaded_program_name: "",
-            selected_system_time: formatted_time(new Date(Date.now())),
             selected_schedule_time: "00:00:00",
             event_stream_pending_seconds: 0,
             event_stream_timeout_id: null,
@@ -356,24 +339,6 @@ const master_component = {
             );
         },
 
-        set_system_time_button_clicked(event) {
-            const datetime_string = this._next_datetime_ISOstring(this.selected_system_time);
-            button_request(
-                "/system-time", 'POST',
-                {system_time: datetime_string},
-                'set_system_time', "Set system time to " + datetime_string + "?", true, this.button_status, this._error_callback
-            );
-        },
-
-        set_system_time_now_button_clicked(event) {
-            const system_time = now_ISOstring();
-            button_request(
-                "/system-time", 'POST',
-                {system_time: system_time},
-                'set_system_time_now', "Set system time to now (" + system_time + ")?", this.ask, this.button_status, this._error_callback
-            );
-        },
-
         error_button_clicked(event) {
             this.error_occured = false;
         },
@@ -519,22 +484,6 @@ const master_component = {
             return false;
         },
 
-        set_system_time_button_enabled() {
-            for (device_id in this.devices) {
-                if (
-                    this.devices[device_id].controller.state != 'not_loaded'
-                    && this.devices[device_id].controller.state != 'loaded'
-                ) {
-                    return false;
-                }
-            }
-            return this.enabled;
-        },
-
-        set_system_time_now_button_enabled() {
-            return this.set_system_time_button_enabled;
-        },
-
         displayed_system_time() {
             return this.system_time.split("T")[1].split(".")[0];
         },
@@ -550,7 +499,7 @@ const master_component = {
         }
     },
     created() {
-        request("/devices", 'GET', {}, this._error_callback, this._error_callback, ()=>{})
+        request("/devices", 'GET', {}, this._error_callback, ()=>{})
         .then((devices) => {
             this.devices = devices;
         });

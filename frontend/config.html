@@ -148,26 +148,26 @@
             },
 
             submit() {
-                fetch("config", {
+                fetch("/config", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         'config': this.config,
                         'constants': this.constants
                     })
-                    .then((response) => {
-                        if (response.status != 200) {
-                            alert("Subission not successful!\n\nStatus code: " + response.status);
-                            return;
-                        }
-                        this._load_config();
-                        alert("Config was updated.");
-                    })
+                })
+                .then((response) => {
+                    if (response.status != 200) {
+                        alert("Subission not successful!\n\nStatus code: " + response.status);
+                        return;
+                    }
+                    this._load_config();
+                    alert("Config was updated.");
                 })
             },
 
             _load_config() {
-                fetch("config")
+                fetch("/config")
                 .then((response) => {
                     return response.json();
                 })

@@ -8,6 +8,7 @@ Commands:
     setup           Run a wizard that configures, builds and runs the app and registers a cronjob
     uninstall       Completely remove the app from the system
     config          Configure the app interactively
+    timezone        Configure the app's timezone interactively
     build           Create a fresh build of the app
     run             Run the app
     stop            Run the running app
@@ -30,6 +31,13 @@ Commands with further arguments:
         deregister      Deregister the cronjob
         check           Is there a cronjob for this app?
 
+    logs            Manage logfiles
+        clear           Delete all logfiles
+        raw             Display the latest logfiles content
+        pretty          Display the latest logfiles prettyfied content
+
+    time '[TIME]'   Set the system time (Format: 'YYYY-MM-DD HH:MM:SS')
+
 Examples:
 
     rl run
@@ -39,3 +47,5 @@ Examples:
     rl check running
 
     rl cronjob register
+
+    rl time '2022-11-08 20:58:00'

@@ -5,7 +5,7 @@
     --green: green;
     --blue: blue;
     --yellow: yellow;
-    --purple: purple;
+    --pink: fuchsia;
     --gray: gray;
     --white: white;
     --black: black;
@@ -37,7 +37,7 @@ a:hover {
 }
 
 a:active {
-    color: var(--purple);
+    color: var(--pink);
 }
 
 /* #endregion */
@@ -205,7 +205,7 @@ a:active {
     color: var(--yellow);
 }
 .purple {
-    color: var(--purple);
+    color: var(--pink);
 }
 .white {
     color: var(--white);

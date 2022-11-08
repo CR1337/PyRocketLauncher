@@ -15,9 +15,11 @@ class Program:
     _command_list: List[Command]
     _thread: Thread
     _pause_event: Event
+    _paused: bool
     _continue_event: Event
     _stop_event: Event
     _start_timestamp: float
+    _last_current_timestamp_before_pause: float
     _callback: Callable
     _seconds_paused: float
     _command_idx: int
@@ -55,9 +57,11 @@ class Program:
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"program_{self._name}"
         self._pause_event = Event()
+        self._paused = False
         self._continue_event = Event()
         self._stop_event = Event()
         self._start_timestamp = None
+        self._last_current_timestamp_before_pause = None
         self._callback = None
         self._seconds_paused = 0
 
@@ -84,17 +88,25 @@ class Program:
 
     @property
     def _current_timestamp(self) -> float:
+        if self._paused:
+            return self._last_current_timestamp_before_pause
+        if self._start_timestamp is None:
+            return None
         return self._current_total_seconds - self._start_timestamp
 
     def _pause_handler(self) -> float:
+        self._last_current_timestamp_before_pause = self._current_timestamp
+        self._paused = True
         pause_started_timestamp = self._current_total_seconds
         while not self._continue_event.is_set():
             if self._stop_event.is_set():
-                return
+                pause_ended_timestamp = self._current_total_seconds
+                return pause_ended_timestamp - pause_started_timestamp
             tu.sleep(tu.TIME_RESOLUTION)
         self._pause_event.clear()
         self._continue_event.clear()
         pause_ended_timestamp = self._current_total_seconds
+        self._paused = False
         return pause_ended_timestamp - pause_started_timestamp
 
     def _thread_handler(self):
@@ -114,7 +126,7 @@ class Program:
         self._callback()
 
     def _program_mainloop(self):
-        while not self._stop_event.is_set() and self._command_list:
+        while (not self._stop_event.is_set()) and self._command_list:
 
             if self._pause_event.is_set():
                 self._seconds_paused += self._pause_handler()

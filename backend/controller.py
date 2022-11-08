@@ -83,7 +83,6 @@ class DeviceController:
         logger.debug("Program stopped")
 
     @classmethod
-    @lock
     def _program_finished(cls):
         cls._program = None
         cls._state_machine.reset()
@@ -160,12 +159,6 @@ class DeviceController:
             command.light()
         else:
             raise RuntimeError("Can only fire when not program is loaded")
-
-    @classmethod
-    @lock
-    def set_system_time(cls, time: str):
-        logger.info(f"Set system time to {time}")
-        tu.set_system_time(time)
 
     @classmethod
     def get_system_time(cls) -> str:
@@ -301,13 +294,6 @@ class MasterController:
     def fire(cls, device_id: str, letter: str, number: int):
         logger.info(f"Fire {device_id}::{letter}{number}")
         return cls._devices[device_id].fire(letter, number)
-
-    @classmethod
-    @lock
-    def set_system_time(cls, time: str):
-        logger.info(f"Set system time to {time}")
-        tu.set_system_time(time)
-        return cls._call_device_method("set_system_time", time)
 
     @classmethod
     def get_system_time(cls) -> str:
