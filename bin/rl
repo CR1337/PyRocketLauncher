@@ -584,6 +584,8 @@ class RlManager:
 
     @classmethod
     def stop(cls):
+        if not Check.running():
+            Output.error("System is not running!")
         Output.info("Stopping system. Please wait...")
         if Check.device():
             Output.info("Stopping device...")
