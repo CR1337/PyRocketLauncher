@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 
 class Paths:
@@ -274,7 +274,7 @@ class ConfigWizard:
     _need_rebuild: bool = False
     _called_from_setup: bool = False
 
-    @classmethod
+    @staticmethod
     def _print_menu(cls):
         print()
         print("Select number of value to change:")
@@ -289,8 +289,8 @@ class ConfigWizard:
         print("[7] DISCARD")
         print()
 
-    @classmethod
-    def _user_selection(cls) -> int:
+    @staticmethod
+    def _user_selection() -> int:
         return Ask.integer("> ", 1, 6)
 
     @classmethod
@@ -428,6 +428,99 @@ class Logs():
             print(f"{color_code}{line}{TerminalColors.RESET}", end="")
 
 
+class TimezoneWizard:
+
+    REGIONS: Dict[str, str] = {
+        'Africa': 'Africa',
+        'America': 'America',
+        'Antartica': 'Antarctica',
+        'Asia': 'Asia',
+        'Australia': 'Australia',
+        'Europe': 'Europe',
+        'Indian Ocean': 'Indian',
+        'Pacific Ocean': 'Pacific'
+    }
+
+    @classmethod
+    def _print_region_menu(cls):
+        print()
+        print(f"Current timezone: {cls.get_timezone()}")
+        print("Select your region:")
+        print()
+        for idx, region in enumerate(cls.REGIONS.keys()):
+            print(f"[{idx + 1}] {region}")
+        print()
+        print(f"[{len(cls.REGIONS.keys()) + 1}] DONT CHANGE")
+
+    @classmethod
+    def _print_timezone_menu(cls, timezones: str):
+        print()
+        print("Select your timezone:")
+        print()
+        for idx, timezone in enumerate(timezones):
+            print(f"[{idx + 1}] {timezone}")
+        print()
+        print(f"[{len(timezones) + 1}] CANCEL")
+
+    @staticmethod
+    def _get_all_timezones() -> List[str]:
+        command = Command("timedatectl list-timezones")
+        timezones = command.get_output().split("\n")
+        return timezones
+
+    @classmethod
+    def _get_all_timezones_in(cls, region: str) -> List[str]:
+        return [
+            tz for tz in cls._get_all_timezones()
+            if tz.startswith(region)
+        ]
+
+    @staticmethod
+    def get_timezone() -> str:
+        with open(os.path.join(Paths.CONFIG, "timezone"), 'r', encoding='ascii') as file:
+            return file.read()
+
+    @staticmethod
+    def _set_timezone(timezone: str):
+        Output.info(f"Set timezone to {timezone}")
+        with open(os.path.join(Paths.CONFIG, "timezone"), 'w', encoding='ascii') as file:
+            return file.write(timezone)
+
+    @classmethod
+    def run(cls, called_from_setup: bool):
+        cls._print_region_menu()
+        selection = Ask.integer("> ", 1, len(cls.REGIONS.keys()) + 1)
+        if selection == len(cls.REGIONS.keys()) + 1:
+            Output.info("Timezone was not changed.")
+            return
+        region = list(cls.REGIONS.values())[selection - 1]
+        timezones = cls._get_all_timezones_in(region)
+        cls._print_timezone_menu(timezones)
+        selection = Ask.integer("> ", 1, len(timezones) + 1)
+        if selection == len(timezones) + 1:
+            Output.info("Timezone was not changed.")
+            return
+        timezone = timezones[selection - 1]
+        cls._set_timezone(timezone)
+        if not called_from_setup:
+            Output.important("If the app is currently running, a restart is necessary!")
+            Output.important("Run: sudo rl restart")
+
+
+class Time:
+
+    @classmethod
+    def set_time(cls, time_string: str):
+        time_string = time_string.strip()
+        command = Command(f"timedatectl set-time '{time_string}'")
+        if command.get_returncode() != 0:
+            Output.error(
+                f"Invalid time format: {time_string}\n"
+                "Format has to be 'YYYY-MM-DD HH:MM:SS'"
+            )
+        Output.info(f"Set time to {time_string}.")
+
+
 class RlManager:
 
     @classmethod
@@ -459,6 +552,7 @@ class RlManager:
                 f"--env DEBUG={debug_str} "
                 f"--env GATEWAY_IP={Network.get_gateway_ip()} "
                 f"--env ON_PI={pi_str} "
+                f"--env TZ={TimezoneWizard.get_timezone()} "
                 f"-p 5001:5001 "
                 f"--name {Ids.DEVICE_CONTAINER} "
                 f"--volume /dev/i2c-1:/dev/i2c-1 "
@@ -478,6 +572,7 @@ class RlManager:
                 f"--env DEBUG={debug_str} "
                 f"--env GATEWAY_IP={Network.get_gateway_ip()} "
                 f"--env ON_PI={pi_str} "
+                f"--env TZ={TimezoneWizard.get_timezone()} "
                 f"-p 80:5000 "
                 f"--name {Ids.MASTER_CONTAINER} "
                 f"--volume {Paths.HOME}/logs:/rl/logs  "
@@ -526,6 +621,7 @@ class RlManager:
         if Check.running():
             cls.stop()
         Output.info("Starting configuration wizard...")
+        TimezoneWizard.run(called_from_setup=True)
         ConfigWizard.run(called_from_setup=True)
         cls.build()
         if not Check.cronjob():
@@ -603,6 +699,16 @@ class UserInterface:
         Output.success("Configuration done.")
 
     @staticmethod
+    def timezone():
+        TimezoneWizard.run(called_from_setup=False)
+        Output.success("Timezone configuration done.")
+
+    @staticmethod
+    def time(time_string: str):
+        Time.set_time(time_string)
+        Output.success("Time was set.")
+
+    @staticmethod
     def uninstall():
         RlManager.uninstall()
         Output.success("Deinstallation successfull.")
@@ -641,6 +747,7 @@ COMMAND_MAPPINGS: Dict[str, Callable] = {
     'setup': UserInterface.setup,
     'uninstall': UserInterface.uninstall,
     'config': UserInterface.config,
+    'timezone': UserInterface.timezone,
     'build': UserInterface.build,
     'run': UserInterface.run,
     'stop': UserInterface.stop,
@@ -660,6 +767,9 @@ def main():
 
     if len(args) < 1:
         Output.wrong_usage()
+
+    if args[0] == 'time' and len(args) == 2:
+        UserInterface.time(args[1])
 
     if args[0] in COMMAND_MAPPINGS.keys():
         if len(args) != 1:

@@ -108,19 +108,14 @@ def route_lock():
     return make_response(({}, status.HTTP_200_OK))
 
 
-@shared_bp.route("/system-time", methods=['GET', 'POST'], endpoint='system_time')
+@shared_bp.route("/system-time", methods=['GET'], endpoint='system_time')
 @handle_exceptions
 @log_request
 def route_system_time():
-    if request.method == 'GET':
-        return make_response((
-            {'system_time': Controller.get_system_time()},
-            status.HTTP_200_OK
-        ))
-    elif request.method == 'POST':
-        time = request.get_json(force=True)['system_time']
-        Controller.set_system_time(time)
-        return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {'system_time': Controller.get_system_time()},
+        status.HTTP_200_OK
+    ))
 
 
 @shared_bp.route("/event-stream", methods=['GET'], endpoint='event_stream')

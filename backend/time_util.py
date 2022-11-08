@@ -1,10 +1,7 @@
-import shlex
-import subprocess
 import time
 from datetime import datetime
 
 from backend.config import Config
-from backend.logger import logger
 
 TIME_ORIGIN: datetime = datetime(1970, 1, 1)
 TIME_RESOLUTION: float = Config.get_constant('time_resolution')
@@ -12,13 +9,6 @@ TIME_RESOLUTION: float = Config.get_constant('time_resolution')
 
 def get_system_time() -> str:
     return datetime.now().replace(tzinfo=None).isoformat()
-
-
-def set_system_time(t: str):
-    logger.debug(f"Set system time to {t}")
-    subprocess.call(shlex.split("timedatectl set-ntp false"))
-    subprocess.call(shlex.split(f"sudo date -s '{t}'"))
-
 
 def timestamp_now() -> float:
     return (datetime.now() - TIME_ORIGIN).total_seconds()

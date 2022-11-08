@@ -1,11 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
-from telnetlib import IP
-from threading import Event, Thread
 from typing import Any, Dict, List, Tuple
 
 import requests
 
-import backend.time_util as tu
 from backend.config import Config
 from backend.logger import logger
 from backend.network import get_gateway_ip
@@ -140,10 +137,6 @@ class Device:
     def fire(self, letter: str, number: int):
         logger.debug(f"{self._device_id}: fire {letter}{number}")
         return self._post("fire", {'letter': letter, 'number': number})
-
-    def set_system_time(self, time: str):
-        logger.debug(f"{self._device_id}:set system time to {time}")
-        return self._post("system-time", {'system_time': time})
 
     def get_system_time(self) -> str:
         logger.debug(f"{self._device_id}: get system time")
