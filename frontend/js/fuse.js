@@ -190,7 +190,11 @@ const fuse_component = {
         },
 
         progress_string() {
-            return Math.round(this.seconds_left).toString();
+            if (this.seconds_left == -1) {
+                return "-";
+            } else {
+                return Math.round(this.seconds_left).toString();
+            }
         }
     }
 };
