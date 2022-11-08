@@ -83,7 +83,6 @@ class DeviceController:
         logger.debug("Program stopped")
 
     @classmethod
-    @lock
     def _program_finished(cls):
         cls._program = None
         cls._state_machine.reset()
