@@ -81,7 +81,6 @@ class Program:
     def stop(self):
         self._stop_event.set()
         self._thread.join()
-        print("JOINED")
 
     @property
     def _current_total_seconds(self) -> float:
