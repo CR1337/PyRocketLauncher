@@ -383,19 +383,37 @@ class RlManager:
         if Check.device():
             Output.info("Starting device...")
             command = Command(
-                f"docker run --rm --detach --env IS_MASTER=0 --env DEBUG={debug_str} "
-                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
-                f"-p 5001:5001 --name {Ids.DEVICE_CONTAINER} "
-                f"--volume /dev/i2c-1:/dev/i2c-1 {Ids.IMAGE}"
+                f"docker run "
+                f"--rm "
+                f"--detach "
+                f"--env IS_MASTER=0 "
+                f"--env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} "
+                f"--env ON_PI={pi_str} "
+                f"-p 5001:5001 "
+                f"--name {Ids.DEVICE_CONTAINER} "
+                f"--volume /dev/i2c-1:/dev/i2c-1 "
+                f"--volume {Paths.HOME}/logs:/rl/logs "
+                f"--volume {Paths.HOME}/config:/rl/config "
+                f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
         if Check.master():
             Output.info("Starting master...")
             command = Command(
-                f"docker run --rm --detach --env IS_MASTER=1 --env DEBUG={debug_str} "
-                f"--env GATEWAY_IP={Network.get_gateway_ip()} --env ON_PI={pi_str} "
-                f"-p 80:5000 --name {Ids.MASTER_CONTAINER} {Ids.IMAGE}"
+                f"docker run "
+                f"--rm "
+                f"--detach "
+                f"--env IS_MASTER=1 "
+                f"--env DEBUG={debug_str} "
+                f"--env GATEWAY_IP={Network.get_gateway_ip()} "
+                f"--env ON_PI={pi_str} "
+                f"-p 80:5000 "
+                f"--name {Ids.MASTER_CONTAINER} "
+                f"--volume {Paths.HOME}/logs:/rl/logs  "
+                f"--volume {Paths.HOME}/config:/rl/config "
+                f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
