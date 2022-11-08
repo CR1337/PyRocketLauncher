@@ -1,8 +1,0 @@
-#!/bin/sh
-
-export IS_MASTER=1
-export DEBUG=1
-export GATEWAY_IP=192.168.0.1
-export ON_PI=0
-
-python3 run.py
