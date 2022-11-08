@@ -30,6 +30,11 @@ Commands with further arguments:
         deregister      Deregister the cronjob
         check           Is there a cronjob for this app?
 
+    logs            Manage logfiles
+        clear           Delete all logfiles
+        raw             Display the latest logfiles content
+        pretty          Display the latest logfiles prettyfied content
+
 Examples:
 
     rl run
