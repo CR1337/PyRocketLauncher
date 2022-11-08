@@ -147,11 +147,11 @@ const device_component = {
         },
 
         logs_button_clicked(event) {
-            window.open("logs.html", "_blank").focus();
+            window.open(this.host + "/static/logs.html", "_blank").focus();
         },
 
         config_button_clicked(event) {
-            window.open("config.html", "_blank").focus();
+            window.open(this.host + "/static/config.html", "_blank").focus();
         },
     },
     computed: {

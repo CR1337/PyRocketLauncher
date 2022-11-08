@@ -196,4 +196,4 @@ def route_config():
     elif request.method == 'POST':
         config = request.get_json(force=True)
         Config.update_state(config)
-        make_response(({}, status.HTTP_200_OK))
+        return make_response(({}, status.HTTP_200_OK))
