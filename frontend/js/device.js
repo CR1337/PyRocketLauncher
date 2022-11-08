@@ -273,7 +273,7 @@ const device_component = {
                 case 'paused':
                     return this.state.program.name;
                 case 'scheduled':
-                    return this.state.program.name +  " > " + this.state.schedule.schduled_time;
+                    return this.state.program.name +  " > " + this.state.schedule.schduled_time.replace("T", " ").split(".")[0];
                 default:
                     return "";
             }
