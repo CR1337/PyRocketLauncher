@@ -84,6 +84,8 @@ class Program:
 
     @property
     def _current_timestamp(self) -> float:
+        if self._start_timestamp is None:
+            return None
         return self._current_total_seconds - self._start_timestamp
 
     def _pause_handler(self) -> float:
