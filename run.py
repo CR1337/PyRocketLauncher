@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 
-from backend.logger import add_flask_logging_handler, logger
+from backend.logger import logger
 from backend.mode import Mode
 from backend.endpoints.device import device_bp
 from backend.endpoints.master import master_bp
@@ -11,7 +11,6 @@ from backend.endpoints.shared import shared_bp
 def run():
     app = Flask(__name__)
 
-    add_flask_logging_handler(app)
     CORS(app)
 
     app.static_folder = f"{app.root_path}/frontend"
