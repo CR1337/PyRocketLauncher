@@ -12,7 +12,7 @@ START: str = ">>>"
 SEP: str = ":::"
 
 
-logger =  logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 filename = (
@@ -37,12 +37,6 @@ file_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
-
-
-def add_flask_logging_handler(app: Flask):
-    app.logger.removeHandler(default_handler)
-    app.logger.addHandler(stream_handler)
-    app.logger.addHandler(file_handler)
 
 
 def get_log_files() -> List[str]:

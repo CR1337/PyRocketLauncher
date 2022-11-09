@@ -1,7 +1,8 @@
 
 Usage: rl COMMAND [ARGUMENT]
 
-CLI based manager for PyRocketLauncher
+CLI based manager for PyRocketLauncher.
+Most of the commands require root previleges!
 
 Commands:
 
