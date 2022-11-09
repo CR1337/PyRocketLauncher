@@ -591,12 +591,12 @@ class RlManager:
             Output.info("Stopping device...")
             command = Command(f"docker stop {Ids.DEVICE_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.unexpected_error()
+                Output.info("Error stopping device. Maybe it was already stopped.")
         if Check.master():
             Output.info("Stopping master...")
             command = Command(f"docker stop {Ids.MASTER_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.unexpected_error()
+                Output.info("Error stopping master. Maybe it was already stopped.")
 
     @classmethod
     def restart(cls):
