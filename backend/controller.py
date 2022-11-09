@@ -321,9 +321,8 @@ class MasterController:
     @classmethod
     def get_state(cls) -> Dict:
         return {
-            'controller': {
-                'system_time': cls.get_system_time()
-            }
+            'system_time': cls.get_system_time(),
+            'device_ids': list(cls._devices.keys())
         }
 
     @classmethod

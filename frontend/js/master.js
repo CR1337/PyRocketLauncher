@@ -162,6 +162,7 @@ const master_component = {
             selected_schedule_time: "00:00:00",
             event_stream_pending_seconds: 0,
             event_stream_timeout_id: null,
+            searching_devices: false,
             button_status: {
                 search: '',
                 deregister_all: '',
@@ -187,6 +188,7 @@ const master_component = {
         },
 
         search_button_clicked(event) {
+            this.searching_devices = true;
             button_request("/search", 'GET', {}, 'search', "Search for devices?", this.ask, this.button_status, this._error_callback)
             .then((data) => {
                 if (data !== null) {
@@ -198,6 +200,7 @@ const master_component = {
                         this.button_status["deregister_" + device_id] = '';
                     }
                 }
+                this.searching_devices = false;
             });
         },
 
@@ -506,7 +509,17 @@ const master_component = {
         this.event_source = new EventSource("/event-stream");
         this.event_source.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            this.system_time = data.controller.system_time;
+            this.system_time = data.system_time;
+
+            if (!this.searching_devices) {
+                for (const existing_device_id in this.devices) {
+                    if (!data.device_ids.includes(existing_device_id)) {
+                        delete this.devices[existing_device_id];
+                        delete this.button_status["deregister_" + existing_device_id];
+                    }
+                }
+            }
+
             this.event_stream_pending_seconds = 0;
         }
         this.event_stream_pending_seconds = 0;
