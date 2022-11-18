@@ -3,9 +3,6 @@ import os
 from datetime import datetime
 from typing import Dict, List
 
-from flask import Flask
-from flask.logging import default_handler
-
 from backend.environment import Environment
 
 START: str = ">>>"

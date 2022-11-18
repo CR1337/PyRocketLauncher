@@ -1,15 +1,15 @@
-from backend.controller import Controller
-from backend.event_stream import EventStream
-from backend.hardware import Hardware
-from backend.logger import (get_log_files, get_log_structured_file_content,
-                            logfile_exists)
-from backend.environment import Environment
 from flask import (Blueprint, Response, make_response, redirect, request,
                    send_file, send_from_directory, url_for)
 from flask_api import status
 
-from backend.endpoints.util import handle_exceptions, log_request
 from backend.config import Config
+from backend.controller import Controller
+from backend.endpoints.util import handle_exceptions, log_request
+from backend.environment import Environment
+from backend.event_stream import EventStream
+from backend.hardware import Hardware
+from backend.logger import (get_log_files, get_log_structured_file_content,
+                            logfile_exists)
 
 shared_bp = Blueprint('shared_blueprint', __name__)
 

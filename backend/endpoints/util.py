@@ -1,9 +1,10 @@
 import sys
 import traceback
 
-from backend.logger import logger
 from flask import has_request_context, make_response, request
 from flask_api import status
+
+from backend.logger import logger
 
 
 def handle_exceptions(func):

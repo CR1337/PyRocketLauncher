@@ -7,9 +7,9 @@ from backend.address import Address
 from backend.command import Command
 from backend.config import Config
 from backend.device import Device
+from backend.environment import Environment
 from backend.hardware import Hardware
 from backend.logger import logger
-from backend.environment import Environment
 from backend.program import Program
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine

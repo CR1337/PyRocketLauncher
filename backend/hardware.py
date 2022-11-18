@@ -1,15 +1,15 @@
-
 from functools import wraps
 from threading import Lock
 from types import NoneType
-from typing import Union, Dict
+from typing import Dict, Union
 
 from smbus2 import SMBus
 
-from backend.environment import Environment
 from backend.address import Address
 from backend.config import Config
+from backend.environment import Environment
 from backend.logger import logger
+
 
 class DummySMBus:
 

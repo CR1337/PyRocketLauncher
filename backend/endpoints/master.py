@@ -1,8 +1,7 @@
-import json
-from backend.controller import Controller
 from flask import Blueprint, make_response, request
 from flask_api import status
 
+from backend.controller import Controller
 from backend.endpoints.util import handle_exceptions, log_request
 
 master_bp = Blueprint('master_blueprint', __name__)

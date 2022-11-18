@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Tuple
 import requests
 
 from backend.config import Config
-from backend.logger import logger
 from backend.environment import Environment
+from backend.logger import logger
 
 
 class Device:

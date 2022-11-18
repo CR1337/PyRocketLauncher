@@ -1,11 +1,11 @@
 from flask import Flask
 from flask_cors import CORS
 
-from backend.logger import logger
-from backend.environment import Environment
 from backend.endpoints.device import device_bp
 from backend.endpoints.master import master_bp
 from backend.endpoints.shared import shared_bp
+from backend.environment import Environment
+from backend.logger import logger
 
 
 def run():

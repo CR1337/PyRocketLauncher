@@ -1,6 +1,6 @@
 from itertools import product
 from string import ascii_lowercase
-from typing import List, Dict
+from typing import Dict, List
 
 from backend.config import Config
 
