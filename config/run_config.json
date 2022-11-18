@@ -1,0 +1,6 @@
+{
+    "debug": true,
+    "master": true,
+    "device": true,
+    "timezone": "Europe/Berlin"
+}
