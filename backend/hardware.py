@@ -6,7 +6,7 @@ from typing import Union, Dict
 
 from smbus2 import SMBus
 
-from backend.mode import Mode
+from backend.environment import Environment
 from backend.address import Address
 from backend.config import Config
 from backend.logger import logger
@@ -49,7 +49,7 @@ class Hardware:
     UNLOCK_VALUE: int = 0x00
 
     try:
-        if Mode.on_pi():
+        if Environment.on_pi():
             print("REALLY ON PI")
             BUS: SMBus = SMBus(BUS_ADDRESS)
         else:

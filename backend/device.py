@@ -5,12 +5,12 @@ import requests
 
 from backend.config import Config
 from backend.logger import logger
-from backend.network import get_gateway_ip
+from backend.environment import Environment
 
 
 class Device:
 
-    IP_PREFIX: str = ".".join(get_gateway_ip().split(".")[:3]) + "."
+    IP_PREFIX: str = ".".join(Environment.gateway_ip().split(".")[:3]) + "."
     REQUEST_TIMEOUT: int = Config.get_constant('request_timeout')
     FIRST_IP_LAST_BYTE = 1
     LAST_IP_LAST_BYTE = 254

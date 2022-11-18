@@ -3,7 +3,7 @@ from backend.event_stream import EventStream
 from backend.hardware import Hardware
 from backend.logger import (get_log_files, get_log_structured_file_content,
                             logfile_exists)
-from backend.mode import Mode
+from backend.environment import Environment
 from flask import (Blueprint, Response, make_response, redirect, request,
                    send_file, send_from_directory, url_for)
 from flask_api import status
@@ -18,7 +18,7 @@ shared_bp = Blueprint('shared_blueprint', __name__)
 @handle_exceptions
 @log_request
 def route_index():
-    path = f"{Mode.get_prefix()}.html"
+    path = f"{Environment.get_prefix()}.html"
     return redirect(url_for('static', filename=path))
 
 
@@ -78,7 +78,7 @@ def route_program_control():
 @log_request
 def route_fire():
     json_data = request.get_json(force=True)
-    if Mode.is_master():
+    if Environment.is_master():
         Controller.fire(json_data['device_id'], json_data['letter'], json_data['number'])
     else:
         if Hardware.is_locked():
@@ -100,7 +100,7 @@ def route_testloop():
 @log_request
 def route_lock():
     is_locked = request.get_json(force=True)['is_locked']
-    if Mode.is_master():
+    if Environment.is_master():
         Controller.set_hardware_lock(is_locked)
     else:
         if is_locked:

@@ -9,7 +9,7 @@ from backend.config import Config
 from backend.device import Device
 from backend.hardware import Hardware
 from backend.logger import logger
-from backend.mode import Mode
+from backend.environment import Environment
 from backend.program import Program
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
@@ -333,4 +333,4 @@ class MasterController:
         }
 
 
-Controller = MasterController if Mode.is_master() else DeviceController
+Controller = MasterController if Environment.is_master() else DeviceController

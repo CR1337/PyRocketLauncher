@@ -6,7 +6,7 @@ from typing import Dict, List
 from flask import Flask
 from flask.logging import default_handler
 
-from backend.mode import Mode
+from backend.environment import Environment
 
 START: str = ">>>"
 SEP: str = ":::"
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 filename = (
-    f"logs/{Mode.get_prefix()}-"
+    f"logs/{Environment.get_prefix()}-"
     f"{str(datetime.now()).replace(' ', '-').replace(':', '-')}"
     ".log"
 )
