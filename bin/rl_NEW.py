@@ -399,8 +399,6 @@ class ConfigWizard:
             if selection == cls.KEY_COUNT:
                 break
             key = list(Config.ASK_METHODS.keys())[selection]
-            if key is None:
-                break
 
             ask_for_bool = (Config.ASK_METHODS[key] == Ask.boolean)
             ask_for_chip_amount = (key == 'chip_amount')
@@ -411,6 +409,8 @@ class ConfigWizard:
                 "> ",
                 *([1, 26] if ask_for_chip_amount else [])
             )
+            if value is None:
+                break
 
             Config.SET_METHODS[key](value)
 
