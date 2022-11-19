@@ -20,5 +20,9 @@ class Environment:
         return os.environ['GATEWAY_IP']
 
     @classmethod
+    def server_port(cls) -> int:
+        return int(os.environ['SERVER_PORT'])
+
+    @classmethod
     def get_prefix(cls) -> str:
         return "master" if cls._is_master else 'device'

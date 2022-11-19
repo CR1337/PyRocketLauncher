@@ -28,9 +28,10 @@ def run():
     )
     app.run(
         debug=Environment.debug(),
-        port=5000 if Environment.is_master() else 5001,
+        port=Environment.server_port(),
         host="0.0.0.0",
-        threaded=True
+        threaded=True,
+        use_reloader=Environment.debug()
     )
 
 
