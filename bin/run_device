@@ -3,8 +3,10 @@
 echo "USE ONLY FOR DEBUGGING!"
 
 export IS_MASTER=0
-export DEBUG=1
+export FLASK_DEBUG=1
 export GATEWAY_IP=192.168.0.1
 export ON_PI=0
+export TZ=Europe/Berlin
+export SERVER_PORT=5001
 
 python3 run.py
