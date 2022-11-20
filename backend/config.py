@@ -5,8 +5,8 @@ from backend.logger import logger
 
 
 class Config:
-    CONFIG_FILENAME: str = f"config/config.json"
-    CONSTANTS_FILENAME: str = f"config/constants.json"
+    CONFIG_FILENAME: str = "config/config.json"
+    CONSTANTS_FILENAME: str = "config/constants.json"
 
     _config_data: Dict[str, Any]
     _constants_data: Dict[str, Any]
@@ -18,7 +18,9 @@ class Config:
         _constants_data = json.load(file)
 
     @classmethod
-    def _raise_for_key(cls, key: str, dictionary: Dict[str, Any], display_name: str):
+    def _raise_for_key(
+        cls, key: str, dictionary: Dict[str, Any], display_name: str
+    ):
         if key not in dictionary.keys():
             raise KeyError(f"{display_name} key '{key}' does not exist")
 
@@ -28,7 +30,10 @@ class Config:
         return dictionary[key]
 
     @classmethod
-    def _set(cls, key: str, value: Any, dictionary: Dict[str, Any], display_name: str, filename: str):
+    def _set(
+        cls, key: str, value: Any, dictionary: Dict[str, Any],
+        display_name: str, filename: str
+    ):
         logger.info(f"Set '{key}' to '{value}'")
         cls._raise_for_key(key, dictionary, display_name)
         dictionary[key] = value
@@ -49,7 +54,10 @@ class Config:
 
     @classmethod
     def set_constant(cls, key: str, value: Any):
-        cls._set(key, value, cls._constants_data, "Constants", cls.CONSTANTS_FILENAME)
+        cls._set(
+            key, value, cls._constants_data,
+            "Constants", cls.CONSTANTS_FILENAME
+        )
 
     @classmethod
     def get_state(cls):

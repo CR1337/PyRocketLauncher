@@ -19,13 +19,20 @@ class DummySMBus:
     def __init__(self, _):
         self._locked = [True for _ in range(self._chip_count)]
 
-    def write_byte_data(self, chip_address: int, register_address: int, value: int):
+    def write_byte_data(
+        self, chip_address: int, register_address: int, value: int
+    ):
         if register_address == 0x00:
-            self._locked[chip_address - Address.BASE_CHIP_ADDRESS] = value & Hardware.LOCK_VALUE
+            self._locked[chip_address - Address.BASE_CHIP_ADDRESS] = \
+                value & Hardware.LOCK_VALUE
 
     def read_byte_data(self, chip_address: int, register_address: int) -> int:
         if register_address == 0x00:
-            return Hardware.LOCK_VALUE if self._locked[chip_address - Address.BASE_CHIP_ADDRESS] else 0x00
+            return (
+                Hardware.LOCK_VALUE
+                if self._locked[chip_address - Address.BASE_CHIP_ADDRESS]
+                else 0x00
+            )
         return 0x00
 
 
@@ -61,7 +68,10 @@ class Hardware:
 
     @classmethod
     def _write(cls, chip_address: int, register_address: int, value: int):
-        logger.info(f"Write value {value:02x} to {chip_address:02x}::{register_address:02x}")
+        logger.info(
+            f"Write value {value:02x} to "
+            f"{chip_address:02x}::{register_address:02x}"
+        )
         cls.BUS.write_byte_data(chip_address, register_address, value)
 
     @classmethod

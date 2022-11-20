@@ -30,6 +30,9 @@ def handle_exceptions(func):
 def log_request(func):
     def wrapper(*args, **kwargs):
         if has_request_context():
-            logger.info(f"{request.method.capitalize()} request to {request.endpoint} from {request.host}")
+            logger.info(
+                f"{request.method.capitalize()} request "
+                f"to {request.endpoint} from {request.host}"
+            )
         return func(*args, **kwargs)
     return wrapper

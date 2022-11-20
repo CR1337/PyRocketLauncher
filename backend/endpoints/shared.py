@@ -52,7 +52,9 @@ def route_program():
     return make_response(({}, status.HTTP_200_OK))
 
 
-@shared_bp.route("/program/control", methods=['POST'], endpoint='program_control')
+@shared_bp.route(
+    "/program/control", methods=['POST'], endpoint='program_control'
+)
 @handle_exceptions
 @log_request
 def route_program_control():
@@ -73,16 +75,22 @@ def route_program_control():
 
     return make_response(({}, status.HTTP_200_OK))
 
+
 @shared_bp.route("/fire", methods=['POST'], endpoint='fire')
 @handle_exceptions
 @log_request
 def route_fire():
     json_data = request.get_json(force=True)
     if Environment.is_master():
-        Controller.fire(json_data['device_id'], json_data['letter'], json_data['number'])
+        Controller.fire(
+            json_data['device_id'], json_data['letter'], json_data['number']
+        )
     else:
         if Hardware.is_locked():
-            raise RuntimeError(f"Cannot light {json_data['letter']}{json_data['number']}. Hardware is locked!")
+            raise RuntimeError(
+                f"Cannot light {json_data['letter']}{json_data['number']}. "
+                "Hardware is locked!"
+            )
         Controller.fire(json_data['letter'], json_data['number'])
     return make_response(({}, status.HTTP_200_OK))
 
@@ -168,7 +176,10 @@ def route_logs_filename(filename: str):
         return make_response(({}, status.HTTP_404_NOT_FOUND))
 
 
-@shared_bp.route("/logs/structured/<filename>", methods=['GET'], endpoint="logs_structured_filename")
+@shared_bp.route(
+    "/logs/structured/<filename>", methods=['GET'],
+    endpoint="logs_structured_filename"
+)
 @handle_exceptions
 @log_request
 def route_logs_structured_filename(filename: str):

@@ -20,4 +20,8 @@ class EventStream:
         for idx in count(start=0):
             tu.sleep(self.PERIOD)
             data = Controller.get_state()
-            yield f"retry: {self._retry_period_in_ms()}\ndata: {json.dumps(data)}\nid: {str(idx)}\n\n"
+            yield (
+                f"retry: {self._retry_period_in_ms()}\n"
+                f"data: {json.dumps(data)}\n"
+                f"id: {str(idx)}\n\n"
+            )

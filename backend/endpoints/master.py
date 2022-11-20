@@ -16,6 +16,7 @@ def route_search():
         status.HTTP_200_OK
     ))
 
+
 @master_bp.route("/deregister", methods=['POST'], endpoint='deregister')
 @handle_exceptions
 @log_request
@@ -28,12 +29,16 @@ def route_deregister():
         status.HTTP_200_OK
     ))
 
-@master_bp.route("/deregister-all", methods=['POST'], endpoint='deregister_all')
+
+@master_bp.route(
+    "/deregister-all", methods=['POST'], endpoint='deregister_all'
+)
 @handle_exceptions
 @log_request
 def route_deregister_all():
     Controller.deregister_all()
     return make_response(({}, status.HTTP_200_OK))
+
 
 @master_bp.route("/devices", methods=['GET'], endpoint='devices')
 @handle_exceptions

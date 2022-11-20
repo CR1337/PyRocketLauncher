@@ -25,7 +25,8 @@ stream_handler.setLevel(logging.WARNING)
 file_handler.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter(
-    '>>>%(asctime)s:::%(levelname)s:::%(threadName)s:::%(filename)s:::%(lineno)d:::%(message)s',
+    '>>>%(asctime)s:::%(levelname)s:::%(threadName)s'
+    ':::%(filename)s:::%(lineno)d:::%(message)s',
     datefmt='%Y-%m-%d %H.%M.%S'
 )
 

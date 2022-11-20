@@ -11,7 +11,7 @@ class State:
     def __hash__(self) -> int:
         return hash(self._name)
 
-    def __eq__(self, other: 'State')-> bool:
+    def __eq__(self, other: 'State') -> bool:
         return self._name == other.name
 
     def __str__(self):
@@ -39,7 +39,9 @@ class StateMachine:
         self._transitions = {}
         self._callbacks = {}
 
-    def add_state(self, name: str, is_initial: bool = False, is_accpeting: bool = False) -> State:
+    def add_state(
+        self, name: str, is_initial: bool = False, is_accpeting: bool = False
+    ) -> State:
         state = State(name)
         if state in self._states:
             raise ValueError("There already exists a state with this name")
