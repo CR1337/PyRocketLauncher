@@ -79,6 +79,10 @@ class Output:
     @staticmethod
     def error(message: str):
         print(f"{TerminalColors.RED}ERROR> {message}{TerminalColors.RESET}", file=sys.stderr)
+
+    @classmethod
+    def critical(cls, message: str):
+        cls.error(message)
         exit(1)
 
     @staticmethod
@@ -137,7 +141,7 @@ class Command:
 class FormatValidator:
 
     @staticmethod
-    def get_all_timezones(cls):
+    def get_all_timezones():
         command = Command("timedatectl list-timezones")
         timezones = [
             tz.strip()
@@ -271,7 +275,7 @@ class Cronjob:
     def register(cls):
         Output.info("Registering cronjob...")
         if cls.is_registered():
-            Output.error("A cronjob was already registered!")
+            Output.critical("A cronjob was already registered!")
         command = Command(f'crontab -l ; echo "@reboot {Paths.SELF} run" | crontab -')
         if command.get_returncode() != 0:
             Output.unexpected_error()
@@ -280,7 +284,7 @@ class Cronjob:
     def deregister(cls):
         Output.info("Deregistering cronjob...")
         if not cls.is_registered():
-            Output.error("There is no cronjob registered!")
+            Output.critical("There is no cronjob registered!")
         command = Command(f"crontab -l | grep -v '{Paths.SELF} run' | crontab -")
         if command.get_returncode() != 0:
             Output.unexpected_error()
@@ -379,7 +383,7 @@ class Config:
         time_string = str(value).strip()
         command = Command(f"timedatectl set-time '{time_string}'")
         if command.get_returncode() != 0:
-            Output.error(
+            Output.critical(
                 f"Invalid time format: {time_string}\n"
                 "Format has to be 'YYYY-MM-DD HH:MM:SS'"
             )
@@ -484,7 +488,7 @@ class ConfigWizard:
     def run(cls):
         Output.info("Starting PyRocketLauncher Config Wizard...")
         cls._mainloop()
-        Output.info("Config Wizard exited.")
+        Output.important("You might need to rebuild for changes to take effect!")
 
 
 class Logs:
@@ -504,7 +508,7 @@ class Logs:
         filenames = os.listdir(Paths.LOGS)
         log_filenames = [fn for fn in filenames if fn.endswith(".log")]
         if len(log_filenames) == 0:
-            Output.error("There are no logfiles.")
+            Output.critical("There are no logfiles.")
         return log_filenames
 
     @classmethod
@@ -624,7 +628,7 @@ class RlManager:
     @staticmethod
     def run():
         if Status.is_running():
-            Output.error("System is already running!")
+            Output.critical("System is already running!")
         debug_str = str(int(Config.get_debug()))
         on_pi_str = str(int(Status.is_on_pi()))
         if Config.get_device():
@@ -672,18 +676,18 @@ class RlManager:
     @staticmethod
     def stop():
         if not Status.is_running():
-            Output.error("System is not running!")
+            Output.critical("System is not running!")
         Output.info("Stopping system...")
         if Config.get_device():
             Output.info("Stopping device...")
             command = Command(f"docker stop {Ids.DEVICE_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.info("Error stopping device! Maybe it was already stopped?")
+                Output.error("Error stopping device! Maybe it was already stopped?")
         if Config.get_master():
             Output.info("Stopping master...")
             command = Command(f"docker stop {Ids.MASTER_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.info("Error stopping master. Maybe is was already stopped?")
+                Output.error("Error stopping master. Maybe is was already stopped?")
 
     @classmethod
     def restart(cls):
@@ -742,39 +746,51 @@ class UserInterface:
     @classmethod
     def _check_for_no_further_arguments(cls, args: List[str], name: str):
         if len(args) != 1:
-            Output.error(f"'rl {name}' takes no further arguments!\nRun 'rl help'.")
+            Output.critical(f"'rl {name}' takes no further arguments!\nRun 'rl help'.")
 
     @classmethod
     def _check_for_further_arguments(cls, args: List[str], count: int, name: str):
         if len(args) != count + 1:
-            Output.error(f"'rl {name}' takes {count} further argument{'s' if count > 1 else ''}!\nRun 'rl help'.")
+            Output.critical(f"'rl {name}' takes {count} further argument{'s' if count > 1 else ''}!\nRun 'rl help'.")
+
+    @staticmethod
+    def _require_root():
+        if os.geteuid() != 0:
+            Output.critical("Please run as root!")
 
     @classmethod
     def run(cls, args: List[str]):
         if len(args) < 1:
-            Output.error("Invalid number of arguments!\nRun 'rl help'.")
+            Output.critical("Invalid number of arguments!\nRun 'rl help'.")
 
         if args[0] in ['setup', 'build', 'run', 'stop', 'restart', 'update', 'uninstall', 'help']:
             cls._check_for_no_further_arguments(args, args[0])
             if args[0] == 'setup':
+                cls._require_root()
                 RlManager.setup()
                 Output.success("Setup done.")
             elif args[0] == 'build':
+                cls._require_root()
                 RlManager.build()
                 Output.success("Building done.")
             elif args[0] == 'run':
+                cls._require_root()
                 RlManager.run()
                 Output.success("System is now running.")
             elif args[0] == 'stop':
+                cls._require_root()
                 RlManager.stop()
                 Output.success("System was stopped.")
             elif args[0] == 'restart':
+                cls._require_root()
                 RlManager.setup()
                 Output.success("System was restarted.")
             elif args[0] == 'update':
-                RlManager.setup()
+                cls._require_root()
+                RlManager.update()
                 Output.success("Update done.")
             elif args[0] == 'uninstall':
+                cls._require_root()
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
             elif args[0] == 'help':
@@ -789,12 +805,12 @@ class UserInterface:
         elif args[0] == 'logs':
             cls._logs(args[1:])
         else:
-            Output.error("Unknown command!\nRun 'rl help'.")
+            Output.critical("Unknown command!\nRun 'rl help'.")
 
     @classmethod
     def _config(cls, args: List[str]):
         if len(args) < 1:
-            Output.error("Invalid number of arguments!\nRun 'rl config help'.")
+            Output.critical("Invalid number of arguments!\nRun 'rl config help'.")
 
         if args[0] in ['list', 'wizard', 'help']:
             cls._check_for_no_further_arguments(args, f"config {args[0]}")
@@ -802,6 +818,7 @@ class UserInterface:
                 for key in Config.GET_METHODS.keys():
                     print(f"{key}:\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
+                # root?
                 ConfigWizard.run()
                 Output.success("Exited wizard.")
             elif args[0] == 'help':
@@ -811,9 +828,9 @@ class UserInterface:
             cls._check_for_further_arguments(args, 2, f"config {args[0]}")
             key, value = args[1], args[2]
             if key not in Config.SET_METHODS.keys():
-                Output.error(f"Invalid key: {key}!\nRun 'rl config help'.")
+                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
             if not Config.validate_value(key, value):
-                Output.error(f"Invalid value: {value}\nRun 'rl config help'.")
+                Output.critical(f"Invalid value: {value}\nRun 'rl config help'.")
             Config.SET_METHODS[key](value)
             Output.success(f"Set {key} to {value}.")
 
@@ -821,16 +838,16 @@ class UserInterface:
             cls._check_for_further_arguments(args, 1, f"config {args[0]}")
             key = args[1]
             if key not in Config.SET_METHODS.keys():
-                Output.error(f"Invalid key: {key}!\nRun 'rl config help'.")
+                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
             print(f"{key}:\t{Config.GET_METHODS[key]()}")
 
         else:
-            Output.error("Unknown command!\nRun 'rl config help'.")
+            Output.critical("Unknown command!\nRun 'rl config help'.")
 
     @classmethod
     def _status(cls, args: List[str]):
         if len(args) < 1:
-            Output.error("Invalid number of arguments!\nRun 'rl status help'.")
+            Output.critical("Invalid number of arguments!\nRun 'rl status help'.")
 
         if args[0] in ['list', 'help']:
             if args[0] == 'list':
@@ -843,36 +860,39 @@ class UserInterface:
             cls._check_for_further_arguments(args, 1, f"status {args[0]}")
             key = args[1]
             if key not in Status.GET_METHODS.keys():
-                Output.error(f"Invalid key: {key}!\nRun 'rl status help'.")
+                Output.critical(f"Invalid key: {key}!\nRun 'rl status help'.")
             print(f"{key}:\t{Status.GET_METHODS[key]()}")
 
         else:
-            Output.error("Unknown command!\nRun 'rl status help'.")
+            Output.critical("Unknown command!\nRun 'rl status help'.")
 
     @classmethod
     def _cronjob(cls, args: List[str]):
         if len(args) < 1:
-            Output.error("Invalid number of arguments!\nRun 'rl cronjob help'.")
+            Output.critical("Invalid number of arguments!\nRun 'rl cronjob help'.")
 
         if args[0] in ['register', 'deregister', 'status', 'help']:
             if args[0] == 'register':
+                cls._require_root()
                 Cronjob.register()
                 Output.success("Cronjob registered.")
             elif args[0] == 'deregister':
+                cls._require_root()
                 Cronjob.deregister()
                 Output.success("Cronjob deregistered.")
             elif args[0] == 'status':
+                cls._require_root()
                 print(f"cronjob:\t{Cronjob.is_registered()}")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CRONJOB)
 
         else:
-            Output.error("Unknown command!\nRun 'rl cronjob help'.")
+            Output.critical("Unknown command!\nRun 'rl cronjob help'.")
 
     @classmethod
     def _logs(cls, args: List[str]):
         if len(args) < 1:
-            Output.error("Invalid number of arguments!\nRun 'rl logs help'.")
+            Output.critical("Invalid number of arguments!\nRun 'rl logs help'.")
 
         if args[0] in ['list', 'latest', 'clear', 'help']:
             if args[0] == 'list':
@@ -887,7 +907,7 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_LOGS)
 
         else:
-            Output.error("Unknown command!\nRun 'rl logs help'.")
+            Output.critical("Unknown command!\nRun 'rl logs help'.")
 
 
 if __name__ == "__main__":
