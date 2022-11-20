@@ -65,7 +65,7 @@ else
     info "Docker is already installed."
 fi
 
-if [ -d "$BASE/$APP_NAME" ]
+if [ -d "$BASE_DIR/$APP_NAME" ]
 then
     error "$APP_NAME is already installed!"
     exit 1
