@@ -19,7 +19,7 @@ class Paths:
     CONFIG_PATH: str = os.path.join(HOME, "config")
     BIN: str = os.path.join(HOME, "bin")
     LOGS: str = os.path.join(HOME, "logs")
-    HELP: str = os.path.join(HOME, "doc/help")
+    HELP: str = os.path.join(HOME, "doc/rl_help")
 
     HELP_RL: str = os.path.join(HELP, "rl.txt")
     HELP_RL_CONFIG: str = os.path.join(HELP, "rl_config.txt")
