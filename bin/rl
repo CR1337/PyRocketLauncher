@@ -27,7 +27,6 @@ class Paths:
     HELP_RL_CRONJOB: str = os.path.join(HELP, "rl_cronjob.txt")
     HELP_RL_LOGS: str = os.path.join(HELP, "rl_logs.txt")
 
-    # HELP_TXT: str = os.path.join(BIN, "rl_help.txt")
     RL_INSTALL: str = os.path.join(BIN, "rl-install")
 
     CONFIG: str = os.path.join(CONFIG_PATH, "config.json")
@@ -843,7 +842,7 @@ class UserInterface:
         elif args[0] == 'get':
             cls._check_for_further_arguments(args, 1, f"status {args[0]}")
             key = args[1]
-            if key not in Status.SET_METHODS.keys():
+            if key not in Status.GET_METHODS.keys():
                 Output.error(f"Invalid key: {key}!\nRun 'rl status help'.")
             print(f"{key}:\t{Status.GET_METHODS[key]()}")
 

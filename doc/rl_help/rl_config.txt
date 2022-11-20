@@ -1,0 +1,42 @@
+
+Usage: rl config COMMAND [ARGS]
+
+Configure the app.
+
+Commands:
+
+    list        Display the values of all options
+    wizard      Run the interactive configuration wizard
+    help        Display this help
+
+Commands that require arguments:
+
+    set KEY VALUE
+
+        Set the value of a specific option.
+        Possible keys are:
+
+        device_id:          The name of this device
+        chip_amount [1-26]: The number of installed i²c chips
+        debug [0, 1]:       Debug mode
+        master [0, 1]:      Run a master instance on this hardware
+        device [0, 1]:      Run a device instance on this hardware
+        timezone:           The timezone this software is used in
+        system_time:        The system time
+
+    get KEY
+
+        Display the current value of a specific option.
+        For possible keys see 'set'
+
+Examples:
+
+    rl config list
+
+    rl config get device_id
+
+    rl config set master 1
+
+    rl config set timezone Europe/Berlin
+
+    rl config set system_time "2022-12-31 23:59:59"

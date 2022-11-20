@@ -1,0 +1,29 @@
+
+Usage: rl COMMAND [SUBCOMMAND [ARGS]]
+
+CLI based manager for PyRocketLauncher.
+Most of the commands require root previleges!
+
+Commands
+
+    setup       Run a wizard that configures, builds and runs the app and registers a cronjob
+    build       Create a fresh build of the app
+    run         Run the app
+    stop        Stop the running app
+    restart     Restart the running app
+    update      Pull the latest update and rebuild
+    uninstall   Completely remove the app from the system
+    help        Display this help
+
+Commands that require subcommands:
+
+    config      Configure the app. Run 'rl config help'
+    status      Display status information. Run 'rl status help'
+    cronjob     Manage the app's cronjob. Run 'rl cronjob help'
+    logs        Manage the app's logfiles. Run 'rl logs help'
+
+Examples:
+
+    rl run
+
+    rl stop
