@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export RED="\e[1;31m"
 export CYAN="\e[1;36m"
@@ -30,8 +30,9 @@ info "Updating apt repositories..."
 apt -y update
 
 info "Checking and installing dependencies..."
-declare -a dependencies=("git", "jq", "ca-certificates", "curl", "gnupg", "lsb-release", "python3")
-for d in "${dependencies[@]}" do
+declare -a dependencies=("git" "jq" "ca-certificates" "curl" "gnupg" "lsb-release" "python3")
+for d in "${dependencies[@]}"
+do
     info "Checking if ${d} is installed..."
     dpkg -s "$d" &> /dev/null
     if [ $? -ne 0 ]
@@ -43,7 +44,7 @@ for d in "${dependencies[@]}" do
     fi
 done
 
-info "Checking if docker is installed..."^
+info "Checking if docker is installed..."
 docker info
 if [ $? -ne 0 ]
 then
@@ -74,6 +75,8 @@ fi
 info "Creating base directory..."
 mkdir -p $BASE_DIR
 
+cd $BASE_DIR
+
 info "Cloning RL repository from GitHub..."
 git clone "https://github.com/CR1337/$APP_NAME.git"
 
@@ -82,8 +85,14 @@ then
     info "bin directory already added to PATH."
 else
     info "Adding bin directory to PATH..."
+
+    echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /home/$USER/.bashrc
+
     echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /root/.bashrc
     source /root/.bashrc
+
+    echo "Defaults	secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+    service sudo restart
 fi
 
 success "Done"

@@ -30,11 +30,13 @@ class Paths:
     RL_INSTALL: str = os.path.join(BIN, "rl-install")
 
     CONFIG: str = os.path.join(CONFIG_PATH, "config.json")
-    RUN_CONFIG: str = os.path.join(CONFIG_PATH, "run_config.jon")
+    RUN_CONFIG: str = os.path.join(CONFIG_PATH, "run_config.json")
 
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
-    BASHRC: str = "/root/.bashrc"
+    ROOT_BASHRC: str = "/root/.bashrc"
+    USER_BASHRC: str = f"/home/{os.environ['USER']}/.bashrc"
+    SUDOERS_RL: str = "/etc/sudoers.d/rl"
 
 
 class Ids:
@@ -195,6 +197,7 @@ class Ask:
         try:
             return input(prompt)
         except KeyboardInterrupt:
+            print()
             return None
 
     @classmethod
@@ -245,7 +248,7 @@ class Ask:
             def sort_key(item: str) -> float:
                 return SequenceMatcher(None, answer, item).ratio()
 
-            sorted_timezones = sorted(timezones, sort_key, reverse=True)
+            sorted_timezones = sorted(timezones, key=sort_key, reverse=True)
 
             print()
             print("Did you mean...?")
@@ -425,26 +428,6 @@ class Config:
         'system_time': Ask.datetime
     }
 
-    SET_METHODS: Dict[str, Callable] = {
-        'device_id': set_device_id,
-        'chip_amount': set_chip_amount,
-        'debug': set_debug,
-        'master': set_master,
-        'device': set_device,
-        'timezone': set_timezone,
-        'system_time': set_system_time
-    }
-
-    GET_METHODS: Dict[str, Callable] = {
-        'device_id': set_device_id,
-        'chip_amount': set_chip_amount,
-        'debug': set_debug,
-        'master': set_master,
-        'device': set_device,
-        'timezone': set_timezone,
-        'system_time': set_system_time
-    }
-
     TYPES: Dict[str, type] = {
         'device_id': str,
         'chip_amount': int,
@@ -454,6 +437,28 @@ class Config:
         'timezone': str,
         'system_time': str
     }
+
+
+Config.SET_METHODS: Dict[str, Callable] = {
+    'device_id': Config.set_device_id,
+    'chip_amount': Config.set_chip_amount,
+    'debug': Config.set_debug,
+    'master': Config.set_master,
+    'device': Config.set_device,
+    'timezone': Config.set_timezone,
+    'system_time': Config.set_system_time
+}
+
+
+Config.GET_METHODS: Dict[str, Callable] = {
+    'device_id': Config.get_device_id,
+    'chip_amount': Config.get_chip_amount,
+    'debug': Config.get_debug,
+    'master': Config.get_master,
+    'device': Config.get_device,
+    'timezone': Config.get_timezone,
+    'system_time': Config.get_system_time
+}
 
 
 class ConfigWizard:
@@ -757,13 +762,17 @@ class RlManager:
             sys.path.remove(Paths.BIN)
         except ValueError:
             Output.info("bin directory not found in PATH.")
-        Output.info(f"Removing PATH configuration from {Paths.BASHRC}")
-        with open(Paths.BASHRC, 'r') as file:
-            lines = file.readlines()
-        with open(Paths.BASHRC, 'w') as file:
-            for line in lines:
-                if Paths.BIN not in line.strip("\n"):
-                    file.write(line)
+        for filename in [Paths.ROOT_BASHRC, Paths.USER_BASHRC]:
+            Output.info(
+                f"Removing PATH configuration from {filename}"
+            )
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+            with open(filename, 'w') as file:
+                for line in lines:
+                    if Paths.BIN not in line.strip("\n"):
+                        file.write(line)
+        os.remove(Paths.SUDOERS_RL)
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
         Output.info("Removing all files...")
