@@ -25,4 +25,4 @@ class Environment:
 
     @classmethod
     def get_prefix(cls) -> str:
-        return "master" if cls._is_master else 'device'
+        return "master" if cls.is_master else 'device'
