@@ -13,7 +13,7 @@ class Environment:
 
     @classmethod
     def debug(cls) -> bool:
-        return bool(int(os.environ['DEBUG']))
+        return bool(int(os.environ['FLASK_DEBUG']))
 
     @classmethod
     def gateway_ip(cls) -> str:
