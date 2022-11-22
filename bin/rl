@@ -35,8 +35,14 @@ class Paths:
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
     ROOT_BASHRC: str = "/root/.bashrc"
-    USER_BASHRC: str = f"/home/{os.environ['USER']}/.bashrc"
+    USER_BASHRC: str = None
     SUDOERS_RL: str = "/etc/sudoers.d/rl"
+
+    @classmethod
+    def initialize(cls):
+        command = Command("who am i | awk '{print $1}'")
+        user = command.get_output()
+        cls.USER_BASHRC = f"/home/{user}/.bashrc"
 
 
 class Ids:
@@ -620,12 +626,13 @@ class Status:
     def get_gateway_ip() -> str:
         return Network.get_gateway_ip()
 
-    GET_METHODS: Dict[str, Callable] = {
-        'running': is_running,
-        'cronjob': is_cronjob_registered,
-        'pi': is_on_pi,
-        'gateway_ip': get_gateway_ip
-    }
+
+Status.GET_METHODS: Dict[str, Callable] = {
+    'running': Status.is_running,
+    'cronjob': Status.is_cronjob_registered,
+    'pi': Status.is_on_pi,
+    'gateway_ip': Status.get_gateway_ip
+}
 
 
 class RlManager:
@@ -758,7 +765,7 @@ class RlManager:
         if Cronjob.is_registered():
             Cronjob.deregister()
         try:
-            Output("Removing bin directory from PATH...")
+            Output.info("Removing bin directory from PATH...")
             sys.path.remove(Paths.BIN)
         except ValueError:
             Output.info("bin directory not found in PATH.")
@@ -969,4 +976,5 @@ class UserInterface:
 
 
 if __name__ == "__main__":
+    Paths.initialize()
     UserInterface.run(sys.argv[1:])
