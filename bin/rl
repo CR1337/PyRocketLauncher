@@ -41,7 +41,7 @@ class Paths:
     @classmethod
     def initialize(cls):
         command = Command("who am i | awk '{print $1}'")
-        user = command.get_output()
+        user = command.get_output().strip()
         cls.USER_BASHRC = f"/home/{user}/.bashrc"
 
 
