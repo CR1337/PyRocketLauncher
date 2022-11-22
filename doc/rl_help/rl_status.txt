@@ -1,0 +1,27 @@
+
+Usage: rl status COMMAND [ARG]
+
+Display status information.
+
+Commands:
+
+    list        Display all status information
+    help        Display this help
+
+Commands that require arguments:
+
+    get KEY
+
+        Display the current value of a specific status information.
+        Possible keys are:
+
+        running:        Wether the app is running
+        cronjob:        Wether the cronjob is registered
+        pi:             Wether the app is running on a Raspberry Pi with i²c hardware
+        gateway_ip:     The networks gateway ip
+
+Examples:
+
+    rl status list
+
+    rl status get running

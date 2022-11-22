@@ -1,0 +1,17 @@
+
+Usage: rl logs COMMAND
+
+Manage the app's logfiles.
+
+Commands:
+
+    list        List all logfile names
+    latest      Display latest logfile name
+    clear       Delete all lofgiles
+    help        Display this help
+
+Examples:
+
+    rl logs list
+
+    rl logs clear

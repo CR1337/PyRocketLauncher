@@ -1,7 +1,7 @@
-from backend.config import Config
-from flask import Blueprint, make_response, request
+from flask import Blueprint, make_response
 from flask_api import status
 
+from backend.config import Config
 from backend.endpoints.util import handle_exceptions, log_request
 
 device_bp = Blueprint('device_blueprint', __name__)

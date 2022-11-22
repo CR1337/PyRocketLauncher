@@ -37,7 +37,9 @@ class Schedule:
                     logger.debug("Calling schedule callback")
                     self._callback()
                 except Exception:
-                    logger.exception("Exception while calling schedule callback")
+                    logger.exception(
+                        "Exception while calling schedule callback"
+                    )
                     self._faulty = True
                 break
             tu.sleep(tu.TIME_RESOLUTION)

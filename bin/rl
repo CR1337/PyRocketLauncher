@@ -5,17 +5,38 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Callable, Dict, List
+from datetime import datetime
+from difflib import SequenceMatcher
+from typing import Any, Callable, Dict, List
 
 
 class Paths:
 
     SELF: str = os.path.realpath(__file__)
+
+    PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
     HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
-    CONFIG: str = os.path.join(HOME, "config")
+    CONFIG_PATH: str = os.path.join(HOME, "config")
     BIN: str = os.path.join(HOME, "bin")
     LOGS: str = os.path.join(HOME, "logs")
-    PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
+    HELP: str = os.path.join(HOME, "doc/rl_help")
+
+    HELP_RL: str = os.path.join(HELP, "rl.txt")
+    HELP_RL_CONFIG: str = os.path.join(HELP, "rl_config.txt")
+    HELP_RL_STATUS: str = os.path.join(HELP, "rl_status.txt")
+    HELP_RL_CRONJOB: str = os.path.join(HELP, "rl_cronjob.txt")
+    HELP_RL_LOGS: str = os.path.join(HELP, "rl_logs.txt")
+
+    RL_INSTALL: str = os.path.join(BIN, "rl-install")
+
+    CONFIG: str = os.path.join(CONFIG_PATH, "config.json")
+    RUN_CONFIG: str = os.path.join(CONFIG_PATH, "run_config.json")
+
+    MODEL: str = "/sys/firmware/devicetree/base/model"
+    I2C: str = "/dev/i2c-1"
+    ROOT_BASHRC: str = "/root/.bashrc"
+    USER_BASHRC: str = f"/home/{os.environ['USER']}/.bashrc"
+    SUDOERS_RL: str = "/etc/sudoers.d/rl"
 
 
 class Ids:
@@ -55,16 +76,28 @@ class Output:
 
     @staticmethod
     def important(message: str):
-        print(f"{TerminalColors.MAGENTA}IMPORTANT> {message}{TerminalColors.RESET}")
+        print(
+            f"{TerminalColors.MAGENTA}IMPORTANT> "
+            f"{message}{TerminalColors.RESET}"
+        )
 
     @staticmethod
     def error(message: str):
-        print(f"{TerminalColors.RED}ERROR> {message}{TerminalColors.RESET}", file=sys.stderr)
+        print(
+            f"{TerminalColors.RED}ERROR> {message}{TerminalColors.RESET}",
+            file=sys.stderr
+        )
+
+    @classmethod
+    def critical(cls, message: str):
+        cls.error(message)
         exit(1)
 
     @staticmethod
     def success(message: str):
-        print(f"{TerminalColors.GREEN}SUCCESS> {message}{TerminalColors.RESET}")
+        print(
+            f"{TerminalColors.GREEN}SUCCESS> {message}{TerminalColors.RESET}"
+        )
         exit(0)
 
     @classmethod
@@ -72,11 +105,8 @@ class Output:
         cls.error("Wrong arguments! Run 'rl help' for help.")
 
     @staticmethod
-    def print_help():
-        with open(
-            os.path.join(Paths.BIN, "rl_help.txt"),
-            'r', encoding='utf-8'
-        ) as file:
+    def print_file(filename: str):
+        with open(filename, 'r', encoding='utf-8') as file:
             print(file.read())
         exit(0)
 
@@ -92,7 +122,7 @@ class Command:
     def __init__(self, command: str):
         self._command = command
 
-    def run(self, show_output: bool = False):
+    def run(self, show_output: bool = True):
         subprocess.run(
             self._command,
             shell=True,
@@ -107,7 +137,7 @@ class Command:
             stderr=subprocess.DEVNULL
         ).decode(encoding='ascii')
 
-    def get_returncode(self, show_output: bool = False) -> int:
+    def get_returncode(self, show_output: bool = True) -> int:
         process = subprocess.Popen(
             self._command,
             shell=True,
@@ -118,23 +148,75 @@ class Command:
         return process.returncode
 
 
+class FormatValidator:
+
+    @staticmethod
+    def get_all_timezones():
+        command = Command("timedatectl list-timezones")
+        timezones = [
+            tz.strip()
+            for tz in command.get_output().split("\n")
+        ]
+        return timezones
+
+    @classmethod
+    def validate_timezone(cls, value: str) -> bool:
+        return value in cls.get_all_timezones()
+
+    @staticmethod
+    def validate_datetime(value: str) -> bool:
+        try:
+            datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def validate_bool(value: str) -> bool:
+        return value in ['0', '1']
+
+    @staticmethod
+    def validate_int(value: str, max_value: int, min_value: int) -> bool:
+        try:
+            value = int(value)
+        except ValueError:
+            return False
+        else:
+            if value > max_value:
+                return False
+            if value < min_value:
+                return False
+            return True
+
+
 class Ask:
 
     @staticmethod
     def string(prompt: str) -> str:
-        return input(prompt)
+        try:
+            return input(prompt)
+        except KeyboardInterrupt:
+            print()
+            return None
 
     @classmethod
     def boolean(cls, prompt: str) -> bool:
         while True:
             answer = cls.string(prompt).lower()
+            if answer is None:
+                return None
             if len(answer) == 1 and answer in "yn":
                 return answer == 'y'
 
     @classmethod
-    def integer(cls, prompt: str, min_value: int = None, max_value: int = None) -> int:
+    def integer(
+        cls, prompt: str, min_value: int = None, max_value: int = None
+    ) -> int:
         while True:
             answer = cls.string(prompt)
+            if answer is None:
+                return None
             try:
                 number = int(answer)
             except ValueError:
@@ -148,11 +230,52 @@ class Ask:
                         continue
                 return number
 
+    @classmethod
+    def timezone(cls, prompt: str) -> str:
+        timezones = FormatValidator.get_all_timezones()
+        lower_timezones = [
+            tz.lower()
+            for tz in timezones
+        ]
+        while True:
+            answer = cls.string(prompt)
+            if answer is None:
+                return None
+            if answer.lower() in lower_timezones:
+                index = lower_timezones.index(answer.lower())
+                return timezones[index]
+
+            def sort_key(item: str) -> float:
+                return SequenceMatcher(None, answer, item).ratio()
+
+            sorted_timezones = sorted(timezones, key=sort_key, reverse=True)
+
+            print()
+            print("Did you mean...?")
+            print("Type a number.")
+            for idx, timezone in enumerate(sorted_timezones[:10]):
+                print(f"[{idx}] {timezone}")
+
+            selection = Ask.integer("> ", 0, 9)
+            if selection is None:
+                return None
+
+            return sorted_timezones[selection]
+
+    @classmethod
+    def datetime(cls, prompt: str) -> str:
+        while True:
+            answer = cls.string(prompt)
+            if answer is None:
+                return None
+            if FormatValidator.validate_datetime(answer):
+                return answer
+
 
 class Network:
 
     @staticmethod
-    def get_gateway_ip():
+    def get_gateway_ip() -> str:
         command = Command("/sbin/ip route|awk '/default/ { print $3 }'")
         return command.get_output().strip()
 
@@ -163,8 +286,10 @@ class Cronjob:
     def register(cls):
         Output.info("Registering cronjob...")
         if cls.is_registered():
-            Output.error("A cronjob was already registered!")
-        command = Command(f'crontab -l ; echo "@reboot {Paths.SELF} run" | crontab -')
+            Output.critical("A cronjob was already registered!")
+        command = Command(
+            f'crontab -l ; echo "@reboot {Paths.SELF} run" | crontab -'
+        )
         if command.get_returncode() != 0:
             Output.unexpected_error()
 
@@ -172,29 +297,287 @@ class Cronjob:
     def deregister(cls):
         Output.info("Deregistering cronjob...")
         if not cls.is_registered():
-            Output.error("There is no cronjob registered!")
-        command = Command(f"crontab -l | grep -v '{Paths.SELF} run' | crontab -")
+            Output.critical("There is no cronjob registered!")
+        command = Command(
+            f"crontab -l | grep -v '{Paths.SELF} run' | crontab -"
+        )
         if command.get_returncode() != 0:
             Output.unexpected_error()
 
     @staticmethod
-    def is_registered():
+    def is_registered() -> bool:
         command = Command(f'crontab -l | grep -q "@reboot {Paths.SELF} run"')
         return command.get_returncode() == 0
 
 
-class Check:
+class Config:
 
     @staticmethod
-    def _check_config(key: str) -> bool:
-        with open(os.path.join(Paths.CONFIG, key), 'r', encoding='ascii') as file:
-            content = file.readline()
-            return content == "1"
+    def _get(key: str, filename: str) -> Any:
+        with open(filename, 'r', encoding='utf-8') as file:
+            return json.load(file)[key]
+
+    @staticmethod
+    def _set(key: str, value: Any, filename: str):
+        with open(filename, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        data[key] = value
+        with open(filename, 'w', encoding='utf-8') as file:
+            json.dump(data, filename)
+
+    @classmethod
+    def _get_config(cls, key: str) -> Any:
+        return cls._get(key, Paths.CONFIG)
+
+    @classmethod
+    def _set_config(cls, key: str, value: Any):
+        cls._set(key, value, Paths.CONFIG)
+
+    @classmethod
+    def _get_run_config(cls, key: str) -> Any:
+        return cls._get(key, Paths.RUN_CONFIG)
+
+    @classmethod
+    def _set_run_config(cls, key: str, value: Any):
+        cls._set(key, value, Paths.RUN_CONFIG)
+
+    @classmethod
+    def get_device_id(cls) -> str:
+        return cls._get_config('device_id')
+
+    @classmethod
+    def set_device_id(cls, value: str):
+        cls._set_config('device_id', str(value))
+
+    @classmethod
+    def get_chip_amount(cls) -> int:
+        return cls._get_config('chip_amount')
+
+    @classmethod
+    def set_chip_amount(cls, value: int):
+        cls._set_config('chip_amount', int(value))
+
+    @classmethod
+    def get_debug(cls) -> bool:
+        return cls._get_run_config('debug')
+
+    @classmethod
+    def set_debug(cls, value: bool):
+        cls._set_run_config('debug', bool(value))
+
+    @classmethod
+    def get_master(cls) -> bool:
+        return cls._get_run_config('master')
+
+    @classmethod
+    def set_master(cls, value: bool):
+        cls._set_run_config('master', bool(value))
+
+    @classmethod
+    def get_device(cls) -> bool:
+        return cls._get_run_config('device')
+
+    @classmethod
+    def set_device(cls, value: bool):
+        cls._set_run_config('device', bool(value))
+
+    @classmethod
+    def get_timezone(cls) -> str:
+        return cls._get_run_config('timezone')
+
+    @classmethod
+    def set_timezone(cls, value: str):
+        cls._set_run_config('timezone', str(value))
+
+    @classmethod
+    def get_system_time(cls) -> str:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    @classmethod
+    def set_system_time(cls, value: str) -> str:
+        time_string = str(value).strip()
+        command = Command(f"timedatectl set-time '{time_string}'")
+        if command.get_returncode() != 0:
+            Output.critical(
+                f"Invalid time format: {time_string}\n"
+                "Format has to be 'YYYY-MM-DD HH:MM:SS'"
+            )
+        Output.info(f"Set time to {time_string}.")
+
+    @classmethod
+    def validate_value(cls, key: str, value: Any) -> bool:
+        if cls.TYPES[key] == str:
+            if key == 'timezone':
+                return FormatValidator.validate_timezone(value)
+            elif key == 'system_time':
+                return FormatValidator.validate_datetime(value)
+            else:
+                return True
+        elif key == 'chip_amount':
+            FormatValidator.validate_int(value, 1, 26)
+        elif cls.TYPES[key] == bool:
+            return FormatValidator.validate_bool(value)
+
+    ASK_METHODS: Dict[str, Callable] = {
+        'device_id': Ask.string,
+        'chip_amount': Ask.integer,
+        'debug': Ask.boolean,
+        'master': Ask.boolean,
+        'device': Ask.boolean,
+        'timezone': Ask.timezone,
+        'system_time': Ask.datetime
+    }
+
+    TYPES: Dict[str, type] = {
+        'device_id': str,
+        'chip_amount': int,
+        'debug': bool,
+        'master': bool,
+        'device': bool,
+        'timezone': str,
+        'system_time': str
+    }
+
+
+Config.SET_METHODS: Dict[str, Callable] = {
+    'device_id': Config.set_device_id,
+    'chip_amount': Config.set_chip_amount,
+    'debug': Config.set_debug,
+    'master': Config.set_master,
+    'device': Config.set_device,
+    'timezone': Config.set_timezone,
+    'system_time': Config.set_system_time
+}
+
+
+Config.GET_METHODS: Dict[str, Callable] = {
+    'device_id': Config.get_device_id,
+    'chip_amount': Config.get_chip_amount,
+    'debug': Config.get_debug,
+    'master': Config.get_master,
+    'device': Config.get_device,
+    'timezone': Config.get_timezone,
+    'system_time': Config.get_system_time
+}
+
+
+class ConfigWizard:
+
+    KEY_COUNT: int = len(Config.ASK_METHODS.keys())
+
+    @classmethod
+    def _print_main_menu(cls):
+        print()
+        print("This is the current configuration.")
+        print("Type a number to change an entry.")
+        print()
+        for idx, key in enumerate(Config.ASK_METHODS.keys()):
+            print(f"[{idx}] {key}: {Config.GET_METHODS[key]()}")
+        print()
+        print(f"[{cls.KEY_COUNT}] EXIT")
+
+    @classmethod
+    def _mainloop(cls):
+        while True:
+            cls._print_main_menu()
+            selection = Ask.integer("> ", 0, cls.KEY_COUNT)
+            if selection is None:
+                break
+            if selection == cls.KEY_COUNT:
+                break
+            key = list(Config.ASK_METHODS.keys())[selection]
+
+            ask_for_bool = (Config.ASK_METHODS[key] == Ask.boolean)
+            ask_for_chip_amount = (key == 'chip_amount')
+            value = Config.ASK_METHODS[key](
+                f"Enter the new value for {key} "
+                f"{'(yn)' if ask_for_bool else ''}"
+                f"{'(1-26)' if ask_for_chip_amount else ''}"
+                "> ",
+                *([1, 26] if ask_for_chip_amount else [])
+            )
+            if value is None:
+                break
+
+            Config.SET_METHODS[key](value)
+
+    @classmethod
+    def run(cls):
+        Output.info("Starting PyRocketLauncher Config Wizard...")
+        cls._mainloop()
+        Output.important(
+            "You might need to rebuild for changes to take effect!"
+        )
+
+
+class Logs:
+
+    SEP: str = ":::"
+
+    LEVEL_COLORS: Dict[str, str] = {
+        'DEBUG': TerminalColors.LIGHT_GRAY,
+        'INFO': TerminalColors.CYAN,
+        'WARNING': TerminalColors.DARK_YELLOW,
+        'ERROR': TerminalColors.DARK_RED,
+        'CRITICAL': TerminalColors.RED
+    }
+
+    @staticmethod
+    def get_log_filenames() -> List[str]:
+        filenames = os.listdir(Paths.LOGS)
+        log_filenames = [fn for fn in filenames if fn.endswith(".log")]
+        if len(log_filenames) == 0:
+            Output.critical("There are no logfiles.")
+        return log_filenames
+
+    @classmethod
+    def get_latest_log_filename(cls) -> str:
+        return sorted(cls.get_log_filenames())[-1]
+
+    @classmethod
+    def clear_logs(cls):
+        if not Ask.boolean(
+            "Are you sure you want to delete all logfiles? (yn)> "
+        ):
+            Output.success("Logfile deletion was cancelled.")
+        Output.info("Deleting all logfiles...")
+        for filename in cls.get_log_filenames():
+            os.remove(os.path.join(Paths.LOGS, filename))
+
+    @classmethod
+    def print_latest_raw(cls):
+        latest_log_filename = cls.get_latest_log_filename()
+        with open(
+            os.path.join(Paths.LOGS, latest_log_filename), 'r',
+            encoding='utf-8'
+        ) as file:
+            print(file.read())
+
+    @classmethod
+    def print_latest_pretty(cls):
+        latest_log_filename = cls.get_latest_log_filename()
+        with open(
+            os.path.join(Paths.LOGS, latest_log_filename), 'r',
+            encoding='utf-8'
+        ) as file:
+            lines = file.readlines()
+        for line in lines:
+            level = line.split(cls.SEP)[1]
+            color_code = cls.LEVEL_COLORS.get(
+                level, TerminalColors.DEFAULT
+            )
+            print(f"{color_code}{line}{TerminalColors.RESET}")
+
+
+class Status:
 
     @staticmethod
     def _is_container_running(container_id: str) -> bool:
         try:
-            command = Command(f"docker container inspect -f '{{{{.State.Status}}}}' {container_id}")
+            command = Command(
+                f"docker container inspect -f '{{{{.State.Status}}}}' "
+                f"{container_id}"
+            )
             result = command.get_output()
         except subprocess.CalledProcessError:
             return False
@@ -204,403 +587,145 @@ class Check:
         return False
 
     @classmethod
-    def master(cls) -> bool:
-        return cls._check_config('master')
-
-    @classmethod
-    def device(cls) -> bool:
-        return cls._check_config('device')
-
-    @classmethod
-    def debug(cls) -> bool:
-        return cls._check_config('debug')
-
-    @classmethod
-    def running(cls) -> bool:
-        if cls.device:
-            if cls._is_container_running(Ids.DEVICE_CONTAINER):
-                return True
-        if cls.master:
-            if cls._is_container_running(Ids.MASTER_CONTAINER):
-                return True
-        return False
+    def is_running(cls) -> bool:
+        return any([
+            (
+                Config.get_device()
+                and cls._is_container_running(Ids.DEVICE_CONTAINER)
+            ),
+            (
+                Config.get_master()
+                and cls._is_container_running(Ids.MASTER_CONTAINER)
+            )
+        ])
 
     @staticmethod
-    def cronjob() -> bool:
+    def is_cronjob_registered() -> bool:
         return Cronjob.is_registered()
 
     @staticmethod
-    def pi() -> bool:
+    def is_on_pi() -> bool:
+        if not os.path.exists(Paths.MODEL):
+            return False
         try:
             with open(
-                "/sys/firmware/devicetree/base/model",
+                Paths.MODEL,
                 'r', encoding='ascii'
             ) as file:
                 return "pi" in file.read().lower()
         except FileNotFoundError:
             return False
 
-    @classmethod
-    def check(cls, key: str) -> bool:
-        if key == 'master':
-            return cls.master()
-        elif key == 'device':
-            return cls.device()
-        elif key == 'debug':
-            return cls.debug()
-        elif key == 'running':
-            return cls.running()
-        elif key == 'cronjob':
-            return cls.cronjob()
-        elif key == 'pi':
-            return cls.pi()
-        else:
-            raise KeyError(f"Unknown key: {key}")
-
-
-class ConfigWizard:
-
-    with open(
-        os.path.join(Paths.CONFIG, 'config.json'),
-        'r', encoding='utf-8'
-    ) as file:
-        config = json.load(file)
-    _device_id: str = config['device_id']
-    _chip_amount: int = config['chip_amount']
-    _master: bool = Check.master()
-    _device: bool = Check.device()
-    _debug: bool = Check.debug()
-
-    _need_rebuild: bool = False
-    _called_from_setup: bool = False
-
     @staticmethod
-    def _print_menu(cls):
-        print()
-        print("Select number of value to change:")
-        print()
-        print(f"[1] Device ID: {cls._device_id}")
-        print(f"[2] Number of installed chips: {cls._chip_amount}")
-        print(f"[3] This is a master: {'yes' if cls._master else 'no'}")
-        print(f"[4] This is a device: {'yes' if cls._device else 'no'}")
-        print(f"[5] Debug mode: {'yes' if cls._debug else 'no'}")
-        print()
-        print("[6] SAVE")
-        print("[7] DISCARD")
-        print()
+    def get_gateway_ip() -> str:
+        return Network.get_gateway_ip()
 
-    @staticmethod
-    def _user_selection() -> int:
-        return Ask.integer("> ", 1, 6)
-
-    @classmethod
-    def _update_device_id(cls):
-        cls._device_id = Ask.string("Enter device id> ")
-        cls._need_rebuild = True
-
-    @classmethod
-    def _update_chip_amount(cls):
-        cls._chip_amount = Ask.integer("Enter amount of installed chips> ")
-        cls._need_rebuild = True
-
-    @classmethod
-    def _update_master(cls):
-        cls._master = Ask.boolean("Is this a master? (yn)> ")
-
-    @classmethod
-    def _update_device(cls):
-        cls._device = Ask.boolean("Is this a device? (yn)> ")
-
-    @classmethod
-    def _update_debug(cls):
-        cls._debug = Ask.boolean("Enable debug mode? (yn)> ")
-
-    @classmethod
-    def _save(cls):
-        config = {
-            'device_id': cls._device_id,
-            'chip_amount': cls._chip_amount
-        }
-        with open(
-            os.path.join(Paths.CONFIG, 'config.json'),
-            'w', encoding='utf-8'
-        ) as file:
-            json.dump(config, file, indent=4)
-        with open(
-            os.path.join(Paths.CONFIG, 'master'),
-            'w', encoding='ascii'
-        ) as file:
-            file.write("1" if cls._master else "0")
-        with open(
-            os.path.join(Paths.CONFIG, 'device'),
-            'w', encoding='ascii'
-        ) as file:
-            file.write("1" if cls._device else "0")
-        with open(
-            os.path.join(Paths.CONFIG, 'debug'),
-            'w', encoding='ascii'
-        ) as file:
-            file.write("1" if cls._debug else "0")
-        if cls._need_rebuild and not cls._called_from_setup:
-            Output.important("If the app is currently running, a restart is necessary!")
-            Output.important("Run: sudo rl restart")
-        Output.info("Configuration saved.")
-
-    @classmethod
-    def _discard(cls):
-        Output.info("Configuration discarded.")
-
-    @classmethod
-    def run(cls, called_from_setup: bool):
-        cls._called_from_setup = called_from_setup
-        cls._need_rebuild = False
-
-        while True:
-            cls._print_menu()
-            selection = cls._user_selection()
-            if selection == 1:
-                cls._update_device_id()
-            elif selection == 2:
-                cls._update_chip_amount()
-            elif selection == 3:
-                cls._update_master()
-            elif selection == 4:
-                cls._update_device()
-            elif selection == 5:
-                cls._update_debug()
-            elif selection == 6:
-                cls._save()
-                return
-            elif selection == 7:
-                cls._discard()
-                return
-
-
-class Logs():
-
-    SEP = ":::"
-
-    @staticmethod
-    def _get_log_filenames():
-        filenames = os.listdir(Paths.LOGS)
-        log_filenames = [fn for fn in filenames if fn.endswith(".log")]
-        if len(log_filenames) == 0:
-            Output.error("There are no logfiles.")
-        return log_filenames
-
-    @classmethod
-    def _get_latest_log_filename(cls):
-        return sorted(cls._get_log_filenames())[-1]
-
-    @classmethod
-    def clear_logs(cls):
-        if not Ask.boolean("Are you sure you want to delete all logfiles? (yn)> "):
-            Output.success("Logfile deletion was cancelled.")
-        Output.info("Deleting all logfiles...")
-        for filename in cls._get_log_filenames():
-            os.remove(os.path.join(Paths.LOGS, filename))
-
-    @classmethod
-    def print_latest_raw(cls):
-        latest_log_filename = cls._get_latest_log_filename()
-        with open(os.path.join(Paths.LOGS, latest_log_filename), 'r', encoding='utf-8') as file:
-            print(file.read())
-
-    @classmethod
-    def print_latest_pretty(cls):
-        latest_log_filename = cls._get_latest_log_filename()
-        with open(os.path.join(Paths.LOGS, latest_log_filename), 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-        for line in lines:
-            level = line.split(cls.SEP)[1]
-            if level == 'DEBUG':
-                color_code = TerminalColors.LIGHT_GRAY
-            elif level == 'INFO':
-                color_code = TerminalColors.CYAN
-            elif level == 'WARNING':
-                color_code = TerminalColors.DARK_YELLOW
-            elif level == 'ERROR':
-                color_code = TerminalColors.DARK_RED
-            elif level == 'CRITICAL':
-                color_code = TerminalColors.RED
-            else:
-                color_code = TerminalColors.DEFAULT
-            print(f"{color_code}{line}{TerminalColors.RESET}", end="")
-
-
-class TimezoneWizard:
-
-    REGIONS: Dict[str, str] = {
-        'Africa': 'Africa',
-        'America': 'America',
-        'Antartica': 'Antarctica',
-        'Asia': 'Asia',
-        'Australia': 'Australia',
-        'Europe': 'Europe',
-        'Indian Ocean': 'Indian',
-        'Pacific Ocean': 'Pacific'
+    GET_METHODS: Dict[str, Callable] = {
+        'running': is_running,
+        'cronjob': is_cronjob_registered,
+        'pi': is_on_pi,
+        'gateway_ip': get_gateway_ip
     }
-
-    @classmethod
-    def _print_region_menu(cls):
-        print()
-        print(f"Current timezone: {cls.get_timezone()}")
-        print("Select your region:")
-        print()
-        for idx, region in enumerate(cls.REGIONS.keys()):
-            print(f"[{idx + 1}] {region}")
-        print()
-        print(f"[{len(cls.REGIONS.keys()) + 1}] DONT CHANGE")
-
-    @classmethod
-    def _print_timezone_menu(cls, timezones: str):
-        print()
-        print("Select your timezone:")
-        print()
-        for idx, timezone in enumerate(timezones):
-            print(f"[{idx + 1}] {timezone}")
-        print()
-        print(f"[{len(timezones) + 1}] CANCEL")
-
-    @staticmethod
-    def _get_all_timezones() -> List[str]:
-        command = Command("timedatectl list-timezones")
-        timezones = command.get_output().split("\n")
-        return timezones
-
-    @classmethod
-    def _get_all_timezones_in(cls, region: str) -> List[str]:
-        return [
-            tz for tz in cls._get_all_timezones()
-            if tz.startswith(region)
-        ]
-
-    @staticmethod
-    def get_timezone() -> str:
-        with open(os.path.join(Paths.CONFIG, "timezone"), 'r', encoding='ascii') as file:
-            return file.read()
-
-    @staticmethod
-    def _set_timezone(timezone: str):
-        Output.info(f"Set timezone to {timezone}")
-        with open(os.path.join(Paths.CONFIG, "timezone"), 'w', encoding='ascii') as file:
-            return file.write(timezone)
-
-    @classmethod
-    def run(cls, called_from_setup: bool):
-        cls._print_region_menu()
-        selection = Ask.integer("> ", 1, len(cls.REGIONS.keys()) + 1)
-        if selection == len(cls.REGIONS.keys()) + 1:
-            Output.info("Timezone was not changed.")
-            return
-        region = list(cls.REGIONS.values())[selection - 1]
-        timezones = cls._get_all_timezones_in(region)
-        cls._print_timezone_menu(timezones)
-        selection = Ask.integer("> ", 1, len(timezones) + 1)
-        if selection == len(timezones) + 1:
-            Output.info("Timezone was not changed.")
-            return
-        timezone = timezones[selection - 1]
-        cls._set_timezone(timezone)
-        if not called_from_setup:
-            Output.important("If the app is currently running, a restart is necessary!")
-            Output.important("Run: sudo rl restart")
-
-
-class Time:
-
-    @classmethod
-    def set_time(cls, time_string: str):
-        time_string = time_string.strip()
-        command = Command(f"timedatectl set-time '{time_string}'")
-        if command.get_returncode() != 0:
-            Output.error(
-                f"Invalid time format: {time_string}\n"
-                "Format has to be 'YYYY-MM-DD HH:MM:SS'"
-            )
-        Output.info(f"Set time to {time_string}.")
 
 
 class RlManager:
 
     @classmethod
+    def setup(cls):
+        if Status.is_running():
+            cls.stop()
+        ConfigWizard.run()
+        cls.build()
+        if not Status.is_cronjob_registered():
+            Cronjob.register()
+        cls.run()
+        Output.info("This system should now be fully functional.")
+        Output.info("For further options run: 'rl help'")
+
+    @classmethod
     def build(cls):
         was_running = False
-        if Check.running():
+        if Status.is_running():
             was_running = True
             cls.stop()
         Output.info("Building docker image...")
         command = Command(f"docker build --tag {Ids.IMAGE} {Paths.HOME}")
-        if command.get_returncode(show_output=True) != 0:
+        if command.get_returncode() != 0:
             Output.unexpected_error()
         if was_running:
             cls.run()
 
-    @classmethod
-    def run(cls):
-        if Check.running():
-            Output.error("System is already running!")
-        debug_str = "1" if Check.debug() else "0"
-        pi_str = "1" if Check.pi() else "0"
-        if Check.device():
+    @staticmethod
+    def run():
+        if Status.is_running():
+            Output.critical("System is already running!")
+        debug_str = str(int(Config.get_debug()))
+        on_pi_str = str(int(Status.is_on_pi()))
+        if Config.get_device():
             Output.info("Starting device...")
             command = Command(
                 f"docker run "
                 f"--rm "
                 f"--detach "
                 f"--env IS_MASTER=0 "
-                f"--env DEBUG={debug_str} "
+                f"--env FLASK_DEBUG={debug_str} "
                 f"--env GATEWAY_IP={Network.get_gateway_ip()} "
-                f"--env ON_PI={pi_str} "
-                f"--env TZ={TimezoneWizard.get_timezone()} "
-                f"-p 5001:5001 "
-                f"--name {Ids.DEVICE_CONTAINER} "
-                f"--volume /dev/i2c-1:/dev/i2c-1 "
-                f"--volume {Paths.HOME}/logs:/rl/logs "
-                f"--volume {Paths.HOME}/config:/rl/config "
+                f"--env ON_PI={on_pi_str} "
+                f"--env TZ={Config.get_timezone()}"
+                f"--env SERVER_PORT=5001 "
+                f"-p 5001:5001"
+                f"--name {Ids.DEVICE_CONTAINER}"
+                f"--volume {Paths.I2C}:{Paths.I2C}"
+                f"--volume {Paths.LOGS}:/rl/logs "
+                f"--volume {Paths.CONFIG_PATH}:/rl/config "
                 f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
-        if Check.master():
+        if Config.get_master():
             Output.info("Starting master...")
             command = Command(
                 f"docker run "
                 f"--rm "
                 f"--detach "
                 f"--env IS_MASTER=1 "
-                f"--env DEBUG={debug_str} "
+                f"--env FLASK_DEBUG={debug_str} "
                 f"--env GATEWAY_IP={Network.get_gateway_ip()} "
-                f"--env ON_PI={pi_str} "
-                f"--env TZ={TimezoneWizard.get_timezone()} "
+                f"--env ON_PI={on_pi_str} "
+                f"--env TZ={Config.get_timezone()} "
+                f"--env SERVER_PORT=5000 "
                 f"-p 80:5000 "
                 f"--name {Ids.MASTER_CONTAINER} "
-                f"--volume {Paths.HOME}/logs:/rl/logs  "
-                f"--volume {Paths.HOME}/config:/rl/config "
+                f"--volume {Paths.LOGS}:/rl/logs "
+                f"--volume {Paths.CONFIG_PATH}:/rl/config "
                 f"{Ids.IMAGE}"
             )
             if command.get_returncode() != 0:
                 Output.unexpected_error()
 
-    @classmethod
-    def stop(cls):
-        if not Check.running():
-            Output.error("System is not running!")
-        Output.info("Stopping system. Please wait...")
-        if Check.device():
+    @staticmethod
+    def stop():
+        if not Status.is_running():
+            Output.critical("System is not running!")
+        Output.info("Stopping system...")
+        if Config.get_device():
             Output.info("Stopping device...")
             command = Command(f"docker stop {Ids.DEVICE_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.info("Error stopping device. Maybe it was already stopped.")
-        if Check.master():
+                Output.error(
+                    "Error stopping device! Maybe it was already stopped?"
+                )
+        if Config.get_master():
             Output.info("Stopping master...")
             command = Command(f"docker stop {Ids.MASTER_CONTAINER}")
             if command.get_returncode() != 0:
-                Output.info("Error stopping master. Maybe it was already stopped.")
+                Output.error(
+                    "Error stopping master. Maybe is was already stopped?"
+                )
 
     @classmethod
     def restart(cls):
-        Output.info("Restarting System...")
+        Output.info("Restarting system...")
         cls.stop()
         cls.run()
 
@@ -608,217 +733,240 @@ class RlManager:
     def update(cls):
         Output.info("Updating System...")
         was_running = False
-        if Check.running():
+        if Status.is_running():
             was_running = True
             cls.stop()
-        Output.info("Pulling from repository...")
         command = Command(f"git -C {Paths.HOME} pull")
-        if command.get_returncode(show_output=True) != 0:
+        if command.get_returncode() != 0:
             Output.unexpected_error()
+        cls.build()
         if was_running:
             cls.run()
 
     @classmethod
-    def setup(cls):
-        if Check.running():
-            cls.stop()
-        Output.info("Starting configuration wizard...")
-        TimezoneWizard.run(called_from_setup=True)
-        ConfigWizard.run(called_from_setup=True)
-        cls.build()
-        if not Check.cronjob():
-            Cronjob.register()
-        cls.run()
-        Output.info("This system should now be fully functional.")
-        Output.info("For further options run: rl help")
-
-    @classmethod
     def uninstall(cls):
         Output.info("Starting deinstallation process...")
-        if not Check.pi():
-            Output.error("Deinstallation process was cancelled because not running on a Rasperry Pi")
         Output.important("Are you sure you want to uninstall?")
-        if not Ask.boolean("Are you sure yout want to uninstall? (yn)> "):
+        if not Ask.boolean("Are you sure you want to uninstall? (yn)> "):
             Output.success("Deinstallation process was cancelled.")
-        answer = input("Type 'uninstall' if you are really sure> ")
-        if answer != 'uninstall':
+        keyword = 'uninstall'
+        answer = Ask.string(f"Type '{keyword}' if you are really sure> ")
+        if answer != keyword:
             Output.success("Deinstallation process was cancelled.")
-        if Check.running():
+        if Status.is_running():
             cls.stop()
-        if Check.cronjob():
-            cls.deregister_cronjob()
+        if Cronjob.is_registered():
+            Cronjob.deregister()
         try:
-            Output.info("Removing bin directory from PATH...")
+            Output("Removing bin directory from PATH...")
             sys.path.remove(Paths.BIN)
         except ValueError:
             Output.info("bin directory not found in PATH.")
-        Output.info("Removing PATH configuration from /root/.bashrc")
-        with open("/root/.bashrc", 'r') as file:
-            lines = file.readlines()
-        with open("/root/.bashrc", 'w') as file:
-            for line in lines:
-                if Paths.BIN not in line.strip("\n"):
-                    file.write(line)
+        for filename in [Paths.ROOT_BASHRC, Paths.USER_BASHRC]:
+            Output.info(
+                f"Removing PATH configuration from {filename}"
+            )
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+            with open(filename, 'w') as file:
+                for line in lines:
+                    if Paths.BIN not in line.strip("\n"):
+                        file.write(line)
+        os.remove(Paths.SUDOERS_RL)
         Output.info("Copying install script to parent directory...")
-        shutil.copy(os.path.join(Paths.BIN, "rl-install"), Paths.PARENT)
+        shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
         Output.info("Removing all files...")
         shutil.rmtree(Paths.HOME)
 
 
 class UserInterface:
 
-    @staticmethod
-    def build():
-        RlManager.build()
-        Output.success("Build step successful.")
-
-    @staticmethod
-    def run():
-        RlManager.run()
-        Output.success("System is running.")
-
-    @staticmethod
-    def stop():
-        RlManager.stop()
-        Output.success("System stopped.")
-
-    @staticmethod
-    def restart():
-        RlManager.restart()
-        Output.success("System restarted.")
-
-    @staticmethod
-    def update():
-        RlManager.update()
-        Output.success("Update successfull.")
-
-    @staticmethod
-    def setup():
-        RlManager.setup()
-        Output.success("Setup successfull.")
-
-    @staticmethod
-    def config():
-        ConfigWizard.run(called_from_setup=False)
-        Output.success("Configuration done.")
-
-    @staticmethod
-    def timezone():
-        TimezoneWizard.run(called_from_setup=False)
-        Output.success("Timezone configuration done.")
-
-    @staticmethod
-    def time(time_string: str):
-        Time.set_time(time_string)
-        Output.success("Time was set.")
-
-    @staticmethod
-    def uninstall():
-        RlManager.uninstall()
-        Output.success("Deinstallation successfull.")
-
-    @staticmethod
-    def check(key: str):
-        result = Check.check(key)
-        print("1" if result else "0")
-        exit(0)
-
-    @staticmethod
-    def register_cronjob():
-        Cronjob.register()
-        Output.success("Cronjob registered.")
-
-    @staticmethod
-    def deregister_cronjob():
-        Cronjob.deregister()
-        Output.success("Cronjob deregistered.")
-
-    @staticmethod
-    def print_latest_logs_raw():
-        Logs.print_latest_raw()
-
-    @staticmethod
-    def print_latest_logs_pretty():
-        Logs.print_latest_pretty()
-
-    @staticmethod
-    def clear_logs():
-        Logs.clear_logs()
-        Output.success("All logs deleted.")
-
-
-COMMAND_MAPPINGS: Dict[str, Callable] = {
-    'setup': UserInterface.setup,
-    'uninstall': UserInterface.uninstall,
-    'config': UserInterface.config,
-    'timezone': UserInterface.timezone,
-    'build': UserInterface.build,
-    'run': UserInterface.run,
-    'stop': UserInterface.stop,
-    'restart': UserInterface.restart,
-    'update': UserInterface.update,
-    'help': Output.print_help
-}
-
-
-def require_root():
-    if os.getuid() != 0:
-        Output.error("Please run as root!")
-
-
-def main():
-    args = sys.argv[1:]
-
-    if len(args) < 1:
-        Output.wrong_usage()
-
-    if args[0] == 'time' and len(args) == 2:
-        UserInterface.time(args[1])
-
-    if args[0] in COMMAND_MAPPINGS.keys():
+    @classmethod
+    def _check_for_no_further_arguments(cls, args: List[str], name: str):
         if len(args) != 1:
-            Output.wrong_usage()
-        if args[0] != 'help':
-            require_root()
-        COMMAND_MAPPINGS[args[0]]()
+            Output.critical(
+                f"'rl {name}' takes no further arguments!\nRun 'rl help'."
+            )
 
-    elif args[0] == 'check':
-        if len(args) != 2:
-            Output.wrong_usage()
-        if args[1] not in ['master', 'device', 'debug', 'running', 'cronjob', 'pi']:
-            Output.wrong_usage()
-        if args[1] in ['running', 'cronjob', 'pi']:
-            require_root()
-        UserInterface.check(args[1])
+    @classmethod
+    def _check_for_further_arguments(
+        cls, args: List[str], count: int, name: str
+    ):
+        if len(args) != count + 1:
+            Output.critical(
+                f"'rl {name}' takes {count} further "
+                f"argument{'s' if count > 1 else ''}!\nRun 'rl help'."
+            )
 
-    elif args[0] == 'cronjob':
-        if len(args) != 2:
-            Output.wrong_usage()
-        if args[1] not in ['register', 'deregister', 'check']:
-            Output.wrong_usage()
-        require_root()
-        if args[1] == 'register':
-            UserInterface.register_cronjob()
-        elif args[1] == 'deregister':
-            UserInterface.deregister_cronjob()
-        elif args[1] == 'check':
-            UserInterface.check('cronjob')
+    @staticmethod
+    def _require_root():
+        if os.geteuid() != 0:
+            Output.critical("Please run as root!")
 
-    elif args[0] == 'logs':
-        if len(args) != 2:
-            Output.wrong_usage()
-        if args[1] not in ['clear', 'raw', 'pretty']:
-            Output.wrong_usage()
-        if args[1] == 'clear':
-            UserInterface.clear_logs()
-        elif args[1] == 'raw':
-            UserInterface.print_latest_logs_raw()
-        elif  args[1] == 'pretty':
-            UserInterface.print_latest_logs_pretty()
+    @classmethod
+    def run(cls, args: List[str]):
+        if len(args) < 1:
+            Output.critical("Invalid number of arguments!\nRun 'rl help'.")
 
-    else:
-        Output.wrong_usage()
+        if args[0] in [
+            'setup', 'build', 'run', 'stop', 'restart',
+            'update', 'uninstall', 'help'
+        ]:
+            cls._check_for_no_further_arguments(args, args[0])
+            if args[0] == 'setup':
+                cls._require_root()
+                RlManager.setup()
+                Output.success("Setup done.")
+            elif args[0] == 'build':
+                cls._require_root()
+                RlManager.build()
+                Output.success("Building done.")
+            elif args[0] == 'run':
+                cls._require_root()
+                RlManager.run()
+                Output.success("System is now running.")
+            elif args[0] == 'stop':
+                cls._require_root()
+                RlManager.stop()
+                Output.success("System was stopped.")
+            elif args[0] == 'restart':
+                cls._require_root()
+                RlManager.setup()
+                Output.success("System was restarted.")
+            elif args[0] == 'update':
+                cls._require_root()
+                RlManager.update()
+                Output.success("Update done.")
+            elif args[0] == 'uninstall':
+                cls._require_root()
+                RlManager.uninstall()
+                Output.success("Deinstallation done.")
+            elif args[0] == 'help':
+                Output.print_file(Paths.HELP_RL)
+
+        elif args[0] == 'config':
+            cls._config(args[1:])
+        elif args[0] == 'status':
+            cls._status(args[1:])
+        elif args[0] == 'cronjob':
+            cls._cronjob(args[1:])
+        elif args[0] == 'logs':
+            cls._logs(args[1:])
+        else:
+            Output.critical("Unknown command!\nRun 'rl help'.")
+
+    @classmethod
+    def _config(cls, args: List[str]):
+        if len(args) < 1:
+            Output.critical(
+                "Invalid number of arguments!\nRun 'rl config help'."
+            )
+
+        if args[0] in ['list', 'wizard', 'help']:
+            cls._check_for_no_further_arguments(args, f"config {args[0]}")
+            if args[0] == 'list':
+                for key in Config.GET_METHODS.keys():
+                    print(f"{key}:\t{Config.GET_METHODS[key]()}")
+            elif args[0] == 'wizard':
+                # root?
+                ConfigWizard.run()
+                Output.success("Exited wizard.")
+            elif args[0] == 'help':
+                Output.print_file(Paths.HELP_RL_CONFIG)
+
+        elif args[0] == 'set':
+            cls._check_for_further_arguments(args, 2, f"config {args[0]}")
+            key, value = args[1], args[2]
+            if key not in Config.SET_METHODS.keys():
+                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
+            if not Config.validate_value(key, value):
+                Output.critical(
+                    f"Invalid value: {value}\nRun 'rl config help'."
+                )
+            Config.SET_METHODS[key](value)
+            Output.success(f"Set {key} to {value}.")
+
+        elif args[0] == 'get':
+            cls._check_for_further_arguments(args, 1, f"config {args[0]}")
+            key = args[1]
+            if key not in Config.SET_METHODS.keys():
+                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
+            print(f"{key}:\t{Config.GET_METHODS[key]()}")
+
+        else:
+            Output.critical("Unknown command!\nRun 'rl config help'.")
+
+    @classmethod
+    def _status(cls, args: List[str]):
+        if len(args) < 1:
+            Output.critical(
+                "Invalid number of arguments!\nRun 'rl status help'."
+            )
+
+        if args[0] in ['list', 'help']:
+            if args[0] == 'list':
+                for key in Status.GET_METHODS.keys():
+                    print(f"{key}:\t{Status.GET_METHODS[key]()}")
+            elif args[0] == 'help':
+                Output.print_file(Paths.HELP_RL_STATUS)
+
+        elif args[0] == 'get':
+            cls._check_for_further_arguments(args, 1, f"status {args[0]}")
+            key = args[1]
+            if key not in Status.GET_METHODS.keys():
+                Output.critical(f"Invalid key: {key}!\nRun 'rl status help'.")
+            print(f"{key}:\t{Status.GET_METHODS[key]()}")
+
+        else:
+            Output.critical("Unknown command!\nRun 'rl status help'.")
+
+    @classmethod
+    def _cronjob(cls, args: List[str]):
+        if len(args) < 1:
+            Output.critical(
+                "Invalid number of arguments!\nRun 'rl cronjob help'."
+            )
+
+        if args[0] in ['register', 'deregister', 'status', 'help']:
+            if args[0] == 'register':
+                cls._require_root()
+                Cronjob.register()
+                Output.success("Cronjob registered.")
+            elif args[0] == 'deregister':
+                cls._require_root()
+                Cronjob.deregister()
+                Output.success("Cronjob deregistered.")
+            elif args[0] == 'status':
+                cls._require_root()
+                print(f"cronjob:\t{Cronjob.is_registered()}")
+            elif args[0] == 'help':
+                Output.print_file(Paths.HELP_RL_CRONJOB)
+
+        else:
+            Output.critical("Unknown command!\nRun 'rl cronjob help'.")
+
+    @classmethod
+    def _logs(cls, args: List[str]):
+        if len(args) < 1:
+            Output.critical(
+                "Invalid number of arguments!\nRun 'rl logs help'."
+            )
+
+        if args[0] in ['list', 'latest', 'clear', 'help']:
+            if args[0] == 'list':
+                for filename in Logs.get_log_filenames():
+                    print(filename)
+            elif args[0] == 'latest':
+                print(Logs.get_latest_log_filename())
+            elif args[0] == 'clear':
+                Logs.clear_logs()
+                Output.success("All logfiles were deleted.")
+            elif args[0] == 'help':
+                Output.print_file(Paths.HELP_RL_LOGS)
+
+        else:
+            Output.critical("Unknown command!\nRun 'rl logs help'.")
 
 
 if __name__ == "__main__":
-    main()
+    UserInterface.run(sys.argv[1:])

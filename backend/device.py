@@ -4,13 +4,13 @@ from typing import Any, Dict, List, Tuple
 import requests
 
 from backend.config import Config
+from backend.environment import Environment
 from backend.logger import logger
-from backend.network import get_gateway_ip
 
 
 class Device:
 
-    IP_PREFIX: str = ".".join(get_gateway_ip().split(".")[:3]) + "."
+    IP_PREFIX: str = ".".join(Environment.gateway_ip().split(".")[:3]) + "."
     REQUEST_TIMEOUT: int = Config.get_constant('request_timeout')
     FIRST_IP_LAST_BYTE = 1
     LAST_IP_LAST_BYTE = 254
@@ -23,7 +23,10 @@ class Device:
     def _search_for_device(cls, index):
         ip_address = cls.IP_PREFIX + str(index)
         try:
-            response = requests.get(f"http://{ip_address}:5001/discover", timeout=cls.REQUEST_TIMEOUT)
+            response = requests.get(
+                f"http://{ip_address}:5001/discover",
+                timeout=cls.REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             device_id = response.json()['device_id']
             return (ip_address, device_id)
@@ -32,10 +35,15 @@ class Device:
 
     @classmethod
     def find_all(cls) -> List['Device']:
-        with ThreadPoolExecutor(max_workers=cls.LAST_IP_LAST_BYTE, thread_name_prefix="find_all_devices") as executor:
+        with ThreadPoolExecutor(
+            max_workers=cls.LAST_IP_LAST_BYTE,
+            thread_name_prefix="find_all_devices"
+        ) as executor:
             futures = []
 
-            for idx in range(cls.FIRST_IP_LAST_BYTE, cls.LAST_IP_LAST_BYTE + 1):
+            for idx in range(
+                cls.FIRST_IP_LAST_BYTE, cls.LAST_IP_LAST_BYTE + 1
+            ):
                 futures.append(
                     executor.submit(cls._search_for_device, idx)
                 )
@@ -60,8 +68,12 @@ class Device:
     def __eq__(self, other: 'Device') -> bool:
         return self._device_id == other.device_id
 
-    def _request(self, method: str, url: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-        logger.debug(f"{method.capitalize()} request to {self._device_id}/{url}")
+    def _request(
+        self, method: str, url: str, data: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], int]:
+        logger.debug(
+            f"{method.capitalize()} request to {self._device_id}/{url}"
+        )
         address = f"http://{self._ip_address}:5001/{url}"
         try:
             if method == 'post':
@@ -83,19 +95,29 @@ class Device:
                 )
             return response.json()
         except requests.exceptions.Timeout:
-            logger.exception(f"Timeout while {method.capitalize()} request to {self._device_id}/{url}")
+            logger.exception(
+                f"Timeout while {method.capitalize()} "
+                f"request to {self._device_id}/{url}"
+            )
             return {'error': 'timeout'}, None
         except requests.exceptions.RequestException:
-            logger.exception(f"Exception while {method.capitalize()} request to {self._device_id}/{url}")
+            logger.exception(
+                f"Exception while {method.capitalize()} "
+                f"request to {self._device_id}/{url}"
+            )
             return {'error': 'request'}, None
 
-    def _post(self, url: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    def _post(
+        self, url: str, data: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], int]:
         return self._request('post', url, data)
 
     def _get(self, url: str) -> Tuple[Dict[str, Any], int]:
         return self._request('get', url, None)
 
-    def _delete(self, url: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    def _delete(
+        self, url: str, data: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], int]:
         return self._request('delete', url, data)
 
     def load_program(self, name: str, event_list: List) -> Dict[str, Any]:
@@ -108,7 +130,9 @@ class Device:
 
     def schedule_program(self, time: str):
         logger.debug(f"{self._device_id}: schedule program for {time}")
-        return self._post("program/control", {'action': 'schedule', 'time': time})
+        return self._post(
+            "program/control", {'action': 'schedule', 'time': time}
+        )
 
     def unschedule_program(self):
         logger.debug(f"{self._device_id}: unschedule program")

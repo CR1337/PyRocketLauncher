@@ -10,6 +10,7 @@ TIME_RESOLUTION: float = Config.get_constant('time_resolution')
 def get_system_time() -> str:
     return datetime.now().replace(tzinfo=None).isoformat()
 
+
 def timestamp_now() -> float:
     return (datetime.now() - TIME_ORIGIN).total_seconds()
 

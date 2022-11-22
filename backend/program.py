@@ -5,8 +5,8 @@ import backend.time_util as tu
 from backend.address import Address
 from backend.command import Command
 from backend.config import Config
-from backend.logger import logger
 from backend.hardware import Hardware
+from backend.logger import logger
 
 
 class Program:

@@ -1,6 +1,6 @@
 from itertools import product
 from string import ascii_lowercase
-from typing import List, Dict
+from typing import Dict, List
 
 from backend.config import Config
 
@@ -55,13 +55,20 @@ class Address:
         if len(self._letter) != 1:
             raise ValueError(f"letter has to be of length 1: {self._letter}")
         if self._letter not in ascii_lowercase:
-            raise ValueError(f"letter has to be an ascii letter: {self._letter}")
+            raise ValueError(
+                f"letter has to be an ascii letter: {self._letter}"
+            )
         if self._letter not in self.DEVICE_LETTERS:
-            raise ValueError(f"invalid letter for this device_id: {self._letter}")
+            raise ValueError(
+                f"invalid letter for this device_id: {self._letter}"
+            )
 
     def _raise_on_number(self):
         if self._number < 0 or self._number >= self.NUMBERS_PER_LETTER:
-            raise ValueError(f"number has to be a positive integer in [0,{self.NUMBERS_PER_LETTER - 1}]: {self._number}")
+            raise ValueError(
+                f"number has to be a positive integer in "
+                f"[0,{self.NUMBERS_PER_LETTER - 1}]: {self._number}"
+            )
 
     @property
     def device_id(self) -> str:

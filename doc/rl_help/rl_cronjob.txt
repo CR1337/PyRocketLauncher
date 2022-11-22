@@ -1,0 +1,17 @@
+
+Usage: rl cronjob COMMAND
+
+Manage the app's cronjob.
+
+Commands:
+
+    register        Register this app's cronjob
+    deregister      Deregister this app's cronjob
+    status          Display wether this app's cronjob is registered
+    help            Display this help
+
+Examples:
+
+    rl cronjob register
+
+    rl cronjob status

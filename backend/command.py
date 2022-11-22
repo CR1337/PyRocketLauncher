@@ -69,7 +69,7 @@ class Command:
         return self._timestamp
 
     @property
-    def seconds_left(self) ->float:
+    def seconds_left(self) -> float:
         return self._timestamp - tu.timestamp_now()
 
     @property
@@ -102,4 +102,3 @@ class Command:
             'faulty': self._faulty,
             'faulty_reason': self._faulty_reason
         }
-

@@ -5,8 +5,8 @@ from backend.logger import logger
 
 
 class Config:
-    CONFIG_FILENAME: str = f"config/config.json"
-    CONSTANTS_FILENAME: str = f"config/constants.json"
+    CONFIG_FILENAME: str = "config/config.json"
+    CONSTANTS_FILENAME: str = "config/constants.json"
 
     _config_data: Dict[str, Any]
     _constants_data: Dict[str, Any]
@@ -18,34 +18,46 @@ class Config:
         _constants_data = json.load(file)
 
     @classmethod
+    def _raise_for_key(
+        cls, key: str, dictionary: Dict[str, Any], display_name: str
+    ):
+        if key not in dictionary.keys():
+            raise KeyError(f"{display_name} key '{key}' does not exist")
+
+    @classmethod
+    def _get(cls, key: str, dictionary: Dict[str, Any], display_name: str):
+        cls._raise_for_key(key, dictionary, display_name)
+        return dictionary[key]
+
+    @classmethod
+    def _set(
+        cls, key: str, value: Any, dictionary: Dict[str, Any],
+        display_name: str, filename: str
+    ):
+        logger.info(f"Set '{key}' to '{value}'")
+        cls._raise_for_key(key, dictionary, display_name)
+        dictionary[key] = value
+        with open(filename, 'w', encoding='utf-8') as file:
+            json.dump(dictionary, file, indent=4)
+
+    @classmethod
     def get_value(cls, key: str) -> Any:
-        if key not in cls._config_data.keys():
-            raise KeyError(f"Config key '{key}' does not exist")
-        return cls._config_data[key]
+        return cls._get(key, cls._config_data, "Config")
 
     @classmethod
     def get_constant(cls, key: str) -> Any:
-        if key not in cls._constants_data.keys():
-            raise KeyError(f"Constants key '{key}' does not exist")
-        return cls._constants_data[key]
+        return cls._get(key, cls._constants_data, "Constants")
 
     @classmethod
     def set_value(cls, key: str, value: Any):
-        logger.info(f"Set '{key}' to '{value}'")
-        if key not in cls._config_data.keys():
-            raise KeyError(f"Config key '{key}' does not exist")
-        cls._config_data[key] = value
-        with open(cls.CONFIG_FILENAME, 'w', encoding='utf-8') as file:
-            json.dump(cls._config_data, file, indent=4)
+        cls._set(key, value, cls._config_data, "Config", cls.CONFIG_FILENAME)
 
     @classmethod
     def set_constant(cls, key: str, value: Any):
-        logger.info(f"Set '{key}' to '{value}'")
-        if key not in cls._constants_data.keys():
-            raise KeyError(f"Constants key '{key}' does not exist")
-        cls._constants_data[key] = value
-        with open(cls.CONSTANTS_FILENAME, 'w', encoding='utf-8') as file:
-            json.dump(cls._constants_data, file, indent=4)
+        cls._set(
+            key, value, cls._constants_data,
+            "Constants", cls.CONSTANTS_FILENAME
+        )
 
     @classmethod
     def get_state(cls):

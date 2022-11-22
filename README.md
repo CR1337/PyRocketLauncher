@@ -7,8 +7,8 @@ When this software does not run on an Raspberry Pi it simulates the behaviour of
 
 ## Installation
 1. Download  the [rl-install script](https://raw.githubusercontent.com/CR1337/PyRocketLauncher/dev/bin/rl-install).
-2. Execute the `rl-install` script.
-3. Run `sudo rl setup`
+2. Execute the `rl-install` script as root.
+3. Run `sudo rl setup`.
 4. Configure your device by interacting with the config wizard.
-5. Save your configuration.
-6. Your device is now fully functional.
+5. Your device is now fully functional.
+6. Check further options by running `rl help`.

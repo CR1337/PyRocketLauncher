@@ -3,10 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict, List
 
-from flask import Flask
-from flask.logging import default_handler
-
-from backend.mode import Mode
+from backend.environment import Environment
 
 START: str = ">>>"
 SEP: str = ":::"
@@ -16,7 +13,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 filename = (
-    f"logs/{Mode.get_prefix()}-"
+    f"logs/{Environment.get_prefix()}-"
     f"{str(datetime.now()).replace(' ', '-').replace(':', '-')}"
     ".log"
 )
@@ -28,7 +25,8 @@ stream_handler.setLevel(logging.WARNING)
 file_handler.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter(
-    '>>>%(asctime)s:::%(levelname)s:::%(threadName)s:::%(filename)s:::%(lineno)d:::%(message)s',
+    '>>>%(asctime)s:::%(levelname)s:::%(threadName)s'
+    ':::%(filename)s:::%(lineno)d:::%(message)s',
     datefmt='%Y-%m-%d %H.%M.%S'
 )
 

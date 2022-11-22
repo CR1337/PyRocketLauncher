@@ -7,9 +7,9 @@ from backend.address import Address
 from backend.command import Command
 from backend.config import Config
 from backend.device import Device
+from backend.environment import Environment
 from backend.hardware import Hardware
 from backend.logger import logger
-from backend.mode import Mode
 from backend.program import Program
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
@@ -173,21 +173,67 @@ class DeviceController:
             },
             'hardware': Hardware.get_state(),
             'config': Config.get_state(),
-            'schedule': None if cls._schedule is None else cls._schedule.get_state(),
-            'program': None if cls._program is None else cls._program.get_state(),
+            'schedule': (
+                None if cls._schedule is None
+                else cls._schedule.get_state()
+            ),
+            'program': (
+                None if cls._program is None
+                else cls._program.get_state()
+            ),
         }
 
 
-DeviceController._state_machine.add_transition(DeviceController.NOT_LOADED, DeviceController.LOADED, DeviceController._load_program)
-DeviceController._state_machine.add_transition(DeviceController.LOADED, DeviceController.NOT_LOADED, DeviceController._unload_program)
-DeviceController._state_machine.add_transition(DeviceController.LOADED, DeviceController.RUNNING, DeviceController._run_program)
-DeviceController._state_machine.add_transition(DeviceController.LOADED, DeviceController.SCHEDULED, DeviceController._schedule_program)
-DeviceController._state_machine.add_transition(DeviceController.SCHEDULED, DeviceController.LOADED, DeviceController._unschedule_program)
-DeviceController._state_machine.add_transition(DeviceController.SCHEDULED, DeviceController.RUNNING, DeviceController._run_program)
-DeviceController._state_machine.add_transition(DeviceController.RUNNING, DeviceController.PAUSED, DeviceController._pause_program)
-DeviceController._state_machine.add_transition(DeviceController.RUNNING, DeviceController.NOT_LOADED, DeviceController._stop_program)
-DeviceController._state_machine.add_transition(DeviceController.PAUSED, DeviceController.RUNNING, DeviceController._continue_program)
-DeviceController._state_machine.add_transition(DeviceController.PAUSED, DeviceController.NOT_LOADED, DeviceController._stop_program)
+DeviceController._state_machine.add_transition(
+    DeviceController.NOT_LOADED,
+    DeviceController.LOADED,
+    DeviceController._load_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.LOADED,
+    DeviceController.NOT_LOADED,
+    DeviceController._unload_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.LOADED,
+    DeviceController.RUNNING,
+    DeviceController._run_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.LOADED,
+    DeviceController.SCHEDULED,
+    DeviceController._schedule_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.SCHEDULED,
+    DeviceController.LOADED,
+    DeviceController._unschedule_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.SCHEDULED,
+    DeviceController.RUNNING,
+    DeviceController._run_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.RUNNING,
+    DeviceController.PAUSED,
+    DeviceController._pause_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.RUNNING,
+    DeviceController.NOT_LOADED,
+    DeviceController._stop_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.PAUSED,
+    DeviceController.RUNNING,
+    DeviceController._continue_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.PAUSED,
+    DeviceController.NOT_LOADED,
+    DeviceController._stop_program
+)
 
 
 class MasterController:
@@ -216,13 +262,22 @@ class MasterController:
             new_devices.append(found_device)
 
         logger.info(f"Found devices: {[d.device_id for d in new_devices]}")
-        return {device_id: device.get_state() for device_id, device in cls._devices.items()}
+        return {
+            device_id: device.get_state()
+            for device_id, device
+            in cls._devices.items()
+        }
 
     @classmethod
-    def _call_device_method(cls, method_name: str, *args, **kwargs) -> Dict[str, Dict]:
+    def _call_device_method(
+        cls, method_name: str, *args, **kwargs
+    ) -> Dict[str, Dict]:
         if not len(cls._devices):
             return {}
-        with ThreadPoolExecutor(max_workers=len(cls._devices), thread_name_prefix=f"call_device_{method_name}") as executor:
+        with ThreadPoolExecutor(
+            max_workers=len(cls._devices),
+            thread_name_prefix=f"call_device_{method_name}"
+        ) as executor:
             futures = {
                 device_id: executor.submit(
                     getattr(device, method_name),
@@ -333,4 +388,4 @@ class MasterController:
         }
 
 
-Controller = MasterController if Mode.is_master() else DeviceController
+Controller = MasterController if Environment.is_master() else DeviceController

@@ -1,15 +1,15 @@
-from backend.controller import Controller
-from backend.event_stream import EventStream
-from backend.hardware import Hardware
-from backend.logger import (get_log_files, get_log_structured_file_content,
-                            logfile_exists)
-from backend.mode import Mode
 from flask import (Blueprint, Response, make_response, redirect, request,
                    send_file, send_from_directory, url_for)
 from flask_api import status
 
-from backend.endpoints.util import handle_exceptions, log_request
 from backend.config import Config
+from backend.controller import Controller
+from backend.endpoints.util import handle_exceptions, log_request
+from backend.environment import Environment
+from backend.event_stream import EventStream
+from backend.hardware import Hardware
+from backend.logger import (get_log_files, get_log_structured_file_content,
+                            logfile_exists)
 
 shared_bp = Blueprint('shared_blueprint', __name__)
 
@@ -18,7 +18,7 @@ shared_bp = Blueprint('shared_blueprint', __name__)
 @handle_exceptions
 @log_request
 def route_index():
-    path = f"{Mode.get_prefix()}.html"
+    path = f"{Environment.get_prefix()}.html"
     return redirect(url_for('static', filename=path))
 
 
@@ -52,7 +52,9 @@ def route_program():
     return make_response(({}, status.HTTP_200_OK))
 
 
-@shared_bp.route("/program/control", methods=['POST'], endpoint='program_control')
+@shared_bp.route(
+    "/program/control", methods=['POST'], endpoint='program_control'
+)
 @handle_exceptions
 @log_request
 def route_program_control():
@@ -73,16 +75,22 @@ def route_program_control():
 
     return make_response(({}, status.HTTP_200_OK))
 
+
 @shared_bp.route("/fire", methods=['POST'], endpoint='fire')
 @handle_exceptions
 @log_request
 def route_fire():
     json_data = request.get_json(force=True)
-    if Mode.is_master():
-        Controller.fire(json_data['device_id'], json_data['letter'], json_data['number'])
+    if Environment.is_master():
+        Controller.fire(
+            json_data['device_id'], json_data['letter'], json_data['number']
+        )
     else:
         if Hardware.is_locked():
-            raise RuntimeError(f"Cannot light {json_data['letter']}{json_data['number']}. Hardware is locked!")
+            raise RuntimeError(
+                f"Cannot light {json_data['letter']}{json_data['number']}. "
+                "Hardware is locked!"
+            )
         Controller.fire(json_data['letter'], json_data['number'])
     return make_response(({}, status.HTTP_200_OK))
 
@@ -100,7 +108,7 @@ def route_testloop():
 @log_request
 def route_lock():
     is_locked = request.get_json(force=True)['is_locked']
-    if Mode.is_master():
+    if Environment.is_master():
         Controller.set_hardware_lock(is_locked)
     else:
         if is_locked:
@@ -168,7 +176,10 @@ def route_logs_filename(filename: str):
         return make_response(({}, status.HTTP_404_NOT_FOUND))
 
 
-@shared_bp.route("/logs/structured/<filename>", methods=['GET'], endpoint="logs_structured_filename")
+@shared_bp.route(
+    "/logs/structured/<filename>", methods=['GET'],
+    endpoint="logs_structured_filename"
+)
 @handle_exceptions
 @log_request
 def route_logs_structured_filename(filename: str):

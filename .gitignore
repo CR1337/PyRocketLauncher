@@ -1,3 +1,5 @@
 **/__pycache__
 logs/*
 loc.py
+.venv
+loc.py
