@@ -626,12 +626,13 @@ class Status:
     def get_gateway_ip() -> str:
         return Network.get_gateway_ip()
 
-    GET_METHODS: Dict[str, Callable] = {
-        'running': is_running,
-        'cronjob': is_cronjob_registered,
-        'pi': is_on_pi,
-        'gateway_ip': get_gateway_ip
-    }
+
+Status.GET_METHODS: Dict[str, Callable] = {
+    'running': Status.is_running,
+    'cronjob': Status.is_cronjob_registered,
+    'pi': Status.is_on_pi,
+    'gateway_ip': Status.get_gateway_ip
+}
 
 
 class RlManager:
