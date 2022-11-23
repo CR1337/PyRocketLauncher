@@ -1,5 +1,5 @@
 {
-    "debug": true,
+    "debug": false,
     "master": true,
     "device": true,
     "timezone": "Europe/Berlin"
