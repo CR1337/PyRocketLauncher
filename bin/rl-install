@@ -26,11 +26,22 @@ then
     exit 1
 fi
 
+if [ -d "$BASE_DIR/$APP_NAME" ]
+then
+    error "$APP_NAME is already installed!"
+    exit 1
+fi
+
+info "Creating base directory..."
+mkdir -p $BASE_DIR
+cd $BASE_DIR
+
 info "Updating apt repositories..."
 apt -y update
+apt -y upgrade
 
 info "Checking and installing dependencies..."
-declare -a dependencies=("git" "jq" "ca-certificates" "curl" "gnupg" "lsb-release" "python3")
+declare -a dependencies=("git" "curl" "python3")
 for d in "${dependencies[@]}"
 do
     info "Checking if ${d} is installed..."
@@ -49,33 +60,12 @@ docker info
 if [ $? -ne 0 ]
 then
     info "Docker is not installed."
-
-    info "Adding docker GPG key..."
-    mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-    info "Setting up repository..."
-    echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    info "Installing docker..."
-    apt -y update
-    apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    rm get-docker.sh
 else
     info "Docker is already installed."
 fi
-
-if [ -d "$BASE_DIR/$APP_NAME" ]
-then
-    error "$APP_NAME is already installed!"
-    exit 1
-fi
-
-info "Creating base directory..."
-mkdir -p $BASE_DIR
-
-cd $BASE_DIR
 
 info "Cloning RL repository from GitHub..."
 git clone "https://github.com/CR1337/$APP_NAME.git"
