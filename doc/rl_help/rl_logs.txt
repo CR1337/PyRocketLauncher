@@ -1,14 +1,19 @@
 
-Usage: rl logs COMMAND
+Usage: rl logs COMMAND [ARG]
 
 Manage the app's logfiles.
 
 Commands:
 
     list        List all logfile names
-    latest      Display latest logfile name
     clear       Delete all lofgiles
     help        Display this help
+
+Commands that require arguments:
+
+    latest {master|device}
+
+        Display latest logfile name for master or device
 
 Examples:
 

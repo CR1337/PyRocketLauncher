@@ -91,7 +91,6 @@ else
 
     SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
     echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
-    service sudo restart
 fi
 
 success "Done"
