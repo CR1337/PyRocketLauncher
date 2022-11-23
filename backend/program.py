@@ -47,7 +47,7 @@ class Program:
     def testloop_program(cls) -> 'Program':
         testloop = cls("Testloop")
         for idx, address in enumerate(Address.all_addresses()):
-            command = Command(address, idx // 2, str(address))
+            command = Command(address, idx / 2, str(address))
             testloop.add_command(command)
         return testloop
 
