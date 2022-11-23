@@ -813,6 +813,8 @@ class UserInterface:
 
     @classmethod
     def run(cls, args: List[str]):
+        cls._require_root()
+
         if len(args) < 1:
             Output.critical("Invalid number of arguments!\nRun 'rl help'.")
 
@@ -822,31 +824,24 @@ class UserInterface:
         ]:
             cls._check_for_no_further_arguments(args, args[0])
             if args[0] == 'setup':
-                cls._require_root()
                 RlManager.setup()
                 Output.success("Setup done.")
             elif args[0] == 'build':
-                cls._require_root()
                 RlManager.build()
                 Output.success("Building done.")
             elif args[0] == 'run':
-                cls._require_root()
                 RlManager.run()
                 Output.success("System is now running.")
             elif args[0] == 'stop':
-                cls._require_root()
                 RlManager.stop()
                 Output.success("System was stopped.")
             elif args[0] == 'restart':
-                cls._require_root()
                 RlManager.setup()
                 Output.success("System was restarted.")
             elif args[0] == 'update':
-                cls._require_root()
                 RlManager.update()
                 Output.success("Update done.")
             elif args[0] == 'uninstall':
-                cls._require_root()
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
             elif args[0] == 'help':
@@ -936,15 +931,12 @@ class UserInterface:
 
         if args[0] in ['register', 'deregister', 'status', 'help']:
             if args[0] == 'register':
-                cls._require_root()
                 Cronjob.register()
                 Output.success("Cronjob registered.")
             elif args[0] == 'deregister':
-                cls._require_root()
                 Cronjob.deregister()
                 Output.success("Cronjob deregistered.")
             elif args[0] == 'status':
-                cls._require_root()
                 print(f"cronjob:\t{Cronjob.is_registered()}")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CRONJOB)
