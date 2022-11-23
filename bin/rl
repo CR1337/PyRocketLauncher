@@ -480,7 +480,7 @@ class ConfigWizard:
         for idx, key in enumerate(Config.ASK_METHODS.keys()):
             print(f"[{idx}] {key}: {Config.GET_METHODS[key]()}")
         print()
-        print(f"[{cls.KEY_COUNT}] EXIT")
+        print(f"[{cls.KEY_COUNT}] DONE")
 
     @classmethod
     def _mainloop(cls):
@@ -508,12 +508,13 @@ class ConfigWizard:
             Config.SET_METHODS[key](value)
 
     @classmethod
-    def run(cls):
+    def run(cls, show_rebuild_info: bool):
         Output.info("Starting PyRocketLauncher Config Wizard...")
         cls._mainloop()
-        Output.important(
-            "You might need to rebuild for changes to take effect!"
-        )
+        if show_rebuild_info:
+            Output.important(
+                "You might need to rebuild for changes to take effect!"
+            )
 
 
 class Logs:
@@ -641,7 +642,7 @@ class RlManager:
     def setup(cls):
         if Status.is_running():
             cls.stop()
-        ConfigWizard.run()
+        ConfigWizard.run(show_rebuild_info=False)
         cls.build()
         if not Status.is_cronjob_registered():
             Cronjob.register()
@@ -875,8 +876,7 @@ class UserInterface:
                 for key in Config.GET_METHODS.keys():
                     print(f"{key}:\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
-                # root?
-                ConfigWizard.run()
+                ConfigWizard.run(show_rebuild_info=True)
                 Output.success("Exited wizard.")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CONFIG)
