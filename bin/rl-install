@@ -86,13 +86,11 @@ then
 else
     info "Adding bin directory to PATH..."
 
-    RL_USER=$(who am i | awk '{print $1}')
-    echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /home/$RL_USER/.bashrc
-
     echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /root/.bashrc
     source /root/.bashrc
 
-    echo "Defaults	secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+    SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
+    echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
     service sudo restart
 fi
 

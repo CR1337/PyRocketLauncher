@@ -35,14 +35,7 @@ class Paths:
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
     ROOT_BASHRC: str = "/root/.bashrc"
-    USER_BASHRC: str = None
     SUDOERS_RL: str = "/etc/sudoers.d/rl"
-
-    @classmethod
-    def initialize(cls):
-        command = Command("who am i | awk '{print $1}'")
-        user = command.get_output().strip()
-        cls.USER_BASHRC = f"/home/{user}/.bashrc"
 
 
 class Ids:
@@ -480,7 +473,7 @@ class ConfigWizard:
         for idx, key in enumerate(Config.ASK_METHODS.keys()):
             print(f"[{idx}] {key}: {Config.GET_METHODS[key]()}")
         print()
-        print(f"[{cls.KEY_COUNT}] EXIT")
+        print(f"[{cls.KEY_COUNT}] DONE")
 
     @classmethod
     def _mainloop(cls):
@@ -508,12 +501,13 @@ class ConfigWizard:
             Config.SET_METHODS[key](value)
 
     @classmethod
-    def run(cls):
+    def run(cls, show_rebuild_info: bool):
         Output.info("Starting PyRocketLauncher Config Wizard...")
         cls._mainloop()
-        Output.important(
-            "You might need to rebuild for changes to take effect!"
-        )
+        if show_rebuild_info:
+            Output.important(
+                "You might need to rebuild for changes to take effect!"
+            )
 
 
 class Logs:
@@ -641,7 +635,7 @@ class RlManager:
     def setup(cls):
         if Status.is_running():
             cls.stop()
-        ConfigWizard.run()
+        ConfigWizard.run(show_rebuild_info=False)
         cls.build()
         if not Status.is_cronjob_registered():
             Cronjob.register()
@@ -769,16 +763,15 @@ class RlManager:
             sys.path.remove(Paths.BIN)
         except ValueError:
             Output.info("bin directory not found in PATH.")
-        for filename in [Paths.ROOT_BASHRC, Paths.USER_BASHRC]:
-            Output.info(
-                f"Removing PATH configuration from {filename}"
-            )
-            with open(filename, 'r') as file:
-                lines = file.readlines()
-            with open(filename, 'w') as file:
-                for line in lines:
-                    if Paths.BIN not in line.strip("\n"):
-                        file.write(line)
+        Output.info(
+            f"Removing PATH configuration from {Paths.ROOT_BASHRC}"
+        )
+        with open(Paths.ROOT_BASHRC, 'r') as file:
+            lines = file.readlines()
+        with open(Paths.ROOT_BASHRC, 'w') as file:
+            for line in lines:
+                if Paths.BIN not in line.strip("\n"):
+                    file.write(line)
         os.remove(Paths.SUDOERS_RL)
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
@@ -812,6 +805,8 @@ class UserInterface:
 
     @classmethod
     def run(cls, args: List[str]):
+        cls._require_root()
+
         if len(args) < 1:
             Output.critical("Invalid number of arguments!\nRun 'rl help'.")
 
@@ -821,31 +816,24 @@ class UserInterface:
         ]:
             cls._check_for_no_further_arguments(args, args[0])
             if args[0] == 'setup':
-                cls._require_root()
                 RlManager.setup()
                 Output.success("Setup done.")
             elif args[0] == 'build':
-                cls._require_root()
                 RlManager.build()
                 Output.success("Building done.")
             elif args[0] == 'run':
-                cls._require_root()
                 RlManager.run()
                 Output.success("System is now running.")
             elif args[0] == 'stop':
-                cls._require_root()
                 RlManager.stop()
                 Output.success("System was stopped.")
             elif args[0] == 'restart':
-                cls._require_root()
                 RlManager.setup()
                 Output.success("System was restarted.")
             elif args[0] == 'update':
-                cls._require_root()
                 RlManager.update()
                 Output.success("Update done.")
             elif args[0] == 'uninstall':
-                cls._require_root()
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
             elif args[0] == 'help':
@@ -875,8 +863,7 @@ class UserInterface:
                 for key in Config.GET_METHODS.keys():
                     print(f"{key}:\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
-                # root?
-                ConfigWizard.run()
+                ConfigWizard.run(show_rebuild_info=True)
                 Output.success("Exited wizard.")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CONFIG)
@@ -936,15 +923,12 @@ class UserInterface:
 
         if args[0] in ['register', 'deregister', 'status', 'help']:
             if args[0] == 'register':
-                cls._require_root()
                 Cronjob.register()
                 Output.success("Cronjob registered.")
             elif args[0] == 'deregister':
-                cls._require_root()
                 Cronjob.deregister()
                 Output.success("Cronjob deregistered.")
             elif args[0] == 'status':
-                cls._require_root()
                 print(f"cronjob:\t{Cronjob.is_registered()}")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CRONJOB)
@@ -976,5 +960,4 @@ class UserInterface:
 
 
 if __name__ == "__main__":
-    Paths.initialize()
     UserInterface.run(sys.argv[1:])
