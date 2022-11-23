@@ -524,15 +524,22 @@ class Logs:
 
     @staticmethod
     def get_log_filenames() -> List[str]:
-        filenames = os.listdir(Paths.LOGS)
+        filenames = [
+            os.path.join(os.path.abspath(Paths.LOGS), fn)
+            for fn in os.listdir(Paths.LOGS)
+        ]
         log_filenames = [fn for fn in filenames if fn.endswith(".log")]
         if len(log_filenames) == 0:
             Output.critical("There are no logfiles.")
         return log_filenames
 
     @classmethod
-    def get_latest_log_filename(cls) -> str:
-        return sorted(cls.get_log_filenames())[-1]
+    def get_latest_log_filename(cls, mode: str) -> str:
+        log_filenames = [
+            fn for fn in sorted(cls.get_log_filenames())
+            if mode in fn.split(os.path.sep)[-1]
+        ]
+        return log_filenames[-1]
 
     @classmethod
     def clear_logs(cls):
@@ -782,20 +789,26 @@ class RlManager:
 class UserInterface:
 
     @classmethod
-    def _check_for_no_further_arguments(cls, args: List[str], name: str):
+    def _check_for_no_further_arguments(
+        cls, args: List[str], subcommand_name: str
+    ):
         if len(args) != 1:
             Output.critical(
-                f"'rl {name}' takes no further arguments!\nRun 'rl help'."
+                f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
+                f"{args[0]}' takes no further arguments!\nRun 'rl"
+                f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
     @classmethod
     def _check_for_further_arguments(
-        cls, args: List[str], count: int, name: str
+        cls, args: List[str], count: int, subcommand_name: str
     ):
         if len(args) != count + 1:
             Output.critical(
-                f"'rl {name}' takes {count} further "
-                f"argument{'s' if count > 1 else ''}!\nRun 'rl help'."
+                f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
+                f"{args[0]}' takes {count} further "
+                f"argument{'s' if count > 1 else ''}!\nRun 'rl"
+                f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
     @staticmethod
@@ -814,7 +827,7 @@ class UserInterface:
             'setup', 'build', 'run', 'stop', 'restart',
             'update', 'uninstall', 'help'
         ]:
-            cls._check_for_no_further_arguments(args, args[0])
+            cls._check_for_no_further_arguments(args, "")
             if args[0] == 'setup':
                 RlManager.setup()
                 Output.success("Setup done.")
@@ -858,7 +871,7 @@ class UserInterface:
             )
 
         if args[0] in ['list', 'wizard', 'help']:
-            cls._check_for_no_further_arguments(args, f"config {args[0]}")
+            cls._check_for_no_further_arguments(args, "config")
             if args[0] == 'list':
                 for key in Config.GET_METHODS.keys():
                     print(f"{key}:\t{Config.GET_METHODS[key]()}")
@@ -869,7 +882,7 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_CONFIG)
 
         elif args[0] == 'set':
-            cls._check_for_further_arguments(args, 2, f"config {args[0]}")
+            cls._check_for_further_arguments(args, 2, "config")
             key, value = args[1], args[2]
             if key not in Config.SET_METHODS.keys():
                 Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
@@ -881,7 +894,7 @@ class UserInterface:
             Output.success(f"Set {key} to {value}.")
 
         elif args[0] == 'get':
-            cls._check_for_further_arguments(args, 1, f"config {args[0]}")
+            cls._check_for_further_arguments(args, 1, "config")
             key = args[1]
             if key not in Config.SET_METHODS.keys():
                 Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
@@ -905,7 +918,7 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_STATUS)
 
         elif args[0] == 'get':
-            cls._check_for_further_arguments(args, 1, f"status {args[0]}")
+            cls._check_for_further_arguments(args, 1, "status")
             key = args[1]
             if key not in Status.GET_METHODS.keys():
                 Output.critical(f"Invalid key: {key}!\nRun 'rl status help'.")
@@ -948,7 +961,11 @@ class UserInterface:
                 for filename in Logs.get_log_filenames():
                     print(filename)
             elif args[0] == 'latest':
-                print(Logs.get_latest_log_filename())
+                cls._check_for_further_arguments(args, 1, "logs")
+                mode = args[1]
+                if mode not in ['master', 'device']:
+                    Output.critical(f"Unexpected argument: {mode}")
+                print(Logs.get_latest_log_filename(mode))
             elif args[0] == 'clear':
                 Logs.clear_logs()
                 Output.success("All logfiles were deleted.")
