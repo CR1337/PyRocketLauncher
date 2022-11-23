@@ -35,14 +35,7 @@ class Paths:
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
     ROOT_BASHRC: str = "/root/.bashrc"
-    USER_BASHRC: str = None
     SUDOERS_RL: str = "/etc/sudoers.d/rl"
-
-    @classmethod
-    def initialize(cls):
-        command = Command("who am i | awk '{print $1}'")
-        user = command.get_output().strip()
-        cls.USER_BASHRC = f"/home/{user}/.bashrc"
 
 
 class Ids:
@@ -770,16 +763,15 @@ class RlManager:
             sys.path.remove(Paths.BIN)
         except ValueError:
             Output.info("bin directory not found in PATH.")
-        for filename in [Paths.ROOT_BASHRC, Paths.USER_BASHRC]:
-            Output.info(
-                f"Removing PATH configuration from {filename}"
-            )
-            with open(filename, 'r') as file:
-                lines = file.readlines()
-            with open(filename, 'w') as file:
-                for line in lines:
-                    if Paths.BIN not in line.strip("\n"):
-                        file.write(line)
+        Output.info(
+            f"Removing PATH configuration from {Paths.ROOT_BASHRC}"
+        )
+        with open(Paths.ROOT_BASHRC, 'r') as file:
+            lines = file.readlines()
+        with open(Paths.ROOT_BASHRC, 'w') as file:
+            for line in lines:
+                if Paths.BIN not in line.strip("\n"):
+                    file.write(line)
         os.remove(Paths.SUDOERS_RL)
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
@@ -968,5 +960,4 @@ class UserInterface:
 
 
 if __name__ == "__main__":
-    Paths.initialize()
     UserInterface.run(sys.argv[1:])

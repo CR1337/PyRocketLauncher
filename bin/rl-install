@@ -86,9 +86,6 @@ then
 else
     info "Adding bin directory to PATH..."
 
-    RL_USER=$(who am i | awk '{print $1}')
-    echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /home/$RL_USER/.bashrc
-
     echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /root/.bashrc
     source /root/.bashrc
 
