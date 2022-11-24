@@ -38,7 +38,15 @@ cd $BASE_DIR
 
 info "Updating apt repositories..."
 apt -y update
-apt -y upgrade
+
+info "Performing full upgrade..."
+apt -y full-upgrade
+
+info "Setting kernel parameters..."
+echo -n "$(head -n1 /boot/cmdline.txt) cgroup_enable=cpuset cgroup_enable=memory" | tee /boot/cmdline.txt
+
+# TODO: REBOOT
+
 
 info "Checking and installing dependencies..."
 declare -a dependencies=("git" "curl" "python3")
@@ -55,19 +63,13 @@ do
     fi
 done
 
-info "Checking if docker is installed..."
-docker info
-if [ $? -ne 0 ]
-then
-    info "Docker is not installed."
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    rm get-docker.sh
-else
-    info "Docker is already installed."
-fi
+info "Removing old Docker installations..."
+apt remove docker docker-engine docker.io containerd runc
 
-info "Cloning RL repository from GitHub..."
+info "Installing Docker..."
+curl -fsSL https://get.docker.com -o - | sudo sh
+
+info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/CR1337/$APP_NAME.git"
 
 if [ ":$PATH:" == *":$BASE_DIR/$APP_NAME/bin"* ]
