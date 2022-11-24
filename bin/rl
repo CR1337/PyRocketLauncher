@@ -36,6 +36,7 @@ class Paths:
     I2C: str = "/dev/i2c-1"
     ROOT_BASHRC: str = "/root/.bashrc"
     SUDOERS_RL: str = "/etc/sudoers.d/rl"
+    CRONJOB: str = "/etc/cron.d/rl"
 
 
 class Ids:
@@ -286,27 +287,20 @@ class Cronjob:
         Output.info("Registering cronjob...")
         if cls.is_registered():
             Output.critical("A cronjob was already registered!")
-        command = Command(
-            f'crontab -l ; echo "@reboot {Paths.SELF} run" | crontab -'
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
+        with open(Paths.CRONJOB, 'w', encoding='ascii') as file:
+            file.write(f"@reboot {Paths.SELF} run\n")
+        os.chmod(Paths.CRONJOB, int('600', 8))
 
     @classmethod
     def deregister(cls):
         Output.info("Deregistering cronjob...")
         if not cls.is_registered():
             Output.critical("There is no cronjob registered!")
-        command = Command(
-            f"crontab -l | grep -v '{Paths.SELF} run' | crontab -"
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
+        os.remove(Paths.CRONJOB)
 
     @staticmethod
     def is_registered() -> bool:
-        command = Command(f'crontab -l | grep -q "@reboot {Paths.SELF} run"')
-        return command.get_returncode() == 0
+        return os.path.exists(Paths.CRONJOB)
 
 
 class Config:
