@@ -112,7 +112,7 @@ class Output:
 
     @classmethod
     def unexpected_error(cls):
-        cls.error("Unexpected error!")
+        cls.critical("Unexpected error!")
 
 
 class Command:
