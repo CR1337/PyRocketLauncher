@@ -7,27 +7,18 @@ export RESET="\e[1;0m"
 
 export BASE_DIR=/opt/rl
 export APP_NAME="PyRocketLauncher"
+export GITHUB_USER="CR1337"
 
-info () {
-    echo -e "${CYAN}INFO> $1 ${RESET}"
-}
+info () { echo -e "${CYAN}INFO> $1 ${RESET}" }
+error () { >&2 echo -e "${RED}ERROR> $1 ${RESET}" }
+success() { echo -e "${GREEN}SUCCESS> $1 ${RESET}" }
 
-error () {
-    >&2 echo -e "${RED}ERROR> $1 ${RESET}"
-}
-
-success() {
-    echo -e "${GREEN}SUCCESS> $1 ${RESET}"
-}
-
-if [ "$EUID" -ne 0 ]
-then
+if [ "$EUID" -ne 0 ]; then
     error "Please execute as root!"
     exit 1
 fi
 
-if [ -d "$BASE_DIR/$APP_NAME" ]
-then
+if [ -d "$BASE_DIR/$APP_NAME" ]; then
     error "$APP_NAME is already installed!"
     exit 1
 fi
@@ -39,50 +30,19 @@ cd $BASE_DIR
 info "Updating apt repositories..."
 apt -y update
 
-info "Performing full upgrade..."
-apt -y full-upgrade
-
-info "Setting kernel parameters..."
-echo -n "$(head -n1 /boot/cmdline.txt) cgroup_enable=cpuset cgroup_enable=memory" | tee /boot/cmdline.txt
-
-# TODO: REBOOT
-
-
-info "Checking and installing dependencies..."
-declare -a dependencies=("git" "curl" "python3")
-for d in "${dependencies[@]}"
-do
-    info "Checking if ${d} is installed..."
-    dpkg -s "$d" &> /dev/null
-    if [ $? -ne 0 ]
-    then
-        info "Installing ${d}..."
-        apt -y install "$d"
-    else
-        info "${d} already installed"
-    fi
-done
-
-info "Removing old Docker installations..."
-apt remove docker docker-engine docker.io containerd runc
-
-info "Installing Docker..."
-curl -fsSL https://get.docker.com -o - | sudo sh
+info "Installing dependencies via apt..."
+apt -y install git
+apt -y install python3
+apt -y install python3-pip
 
 info "Cloning $APP_NAME repository from GitHub..."
-git clone "https://github.com/CR1337/$APP_NAME.git"
+git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
 
-if [ ":$PATH:" == *":$BASE_DIR/$APP_NAME/bin"* ]
-then
-    info "bin directory already added to PATH."
-else
-    info "Adding bin directory to PATH..."
+info "Installing dependecies via pip..."
+python3 -m pip -r requirements.txt
 
-    echo "export PATH="\""\$PATH:$BASE_DIR/$APP_NAME/bin"\""" >> /root/.bashrc
-    source /root/.bashrc
-
-    SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
-    echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
-fi
+info "Adding bin directory to SECURE_PATH..."
+SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
+echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
 
 success "Done"

@@ -187,7 +187,7 @@ const device_component = {
 
         host() {
             return (this.on_master_page)
-                ? "http://" + this.ip_address + ":5001"
+                ? "http://" + this.ip_address + ":5000"
                 : "";
         },
 

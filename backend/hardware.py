@@ -7,7 +7,7 @@ from smbus2 import SMBus
 
 from backend.address import Address
 from backend.config import Config
-from backend.environment import Environment
+from backend.instance import Instance
 from backend.logger import logger
 
 
@@ -56,7 +56,7 @@ class Hardware:
     UNLOCK_VALUE: int = 0x00
 
     try:
-        if Environment.on_pi():
+        if Instance.on_pi():
             print("REALLY ON PI")
             BUS: SMBus = SMBus(BUS_ADDRESS)
         else:
