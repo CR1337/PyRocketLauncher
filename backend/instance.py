@@ -5,7 +5,7 @@ import argparse
 
 class Instance:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--master', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--master', action='store_true')
     args = parser.parse_args()
 
     MODEL_PATH: str = "/sys/firmware/devicetree/base/model"
