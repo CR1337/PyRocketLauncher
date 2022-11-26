@@ -7,7 +7,7 @@ from backend.address import Address
 from backend.command import Command
 from backend.config import Config
 from backend.device import Device
-from backend.environment import Environment
+from backend.instance import Instance
 from backend.hardware import Hardware
 from backend.logger import logger
 from backend.program import Program
@@ -388,4 +388,4 @@ class MasterController:
         }
 
 
-Controller = MasterController if Environment.is_master() else DeviceController
+Controller = MasterController if Instance.is_master() else DeviceController

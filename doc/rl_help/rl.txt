@@ -7,7 +7,6 @@ Most of the commands require root previleges!
 Commands
 
     setup       Run a wizard that configures, builds and runs the app and registers a cronjob
-    build       Create a fresh build of the app
     run         Run the app
     stop        Stop the running app
     restart     Restart the running app

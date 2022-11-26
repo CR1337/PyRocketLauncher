@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict, List
 
-from backend.environment import Environment
+from backend.instance import Instance
 
 START: str = ">>>"
 SEP: str = ":::"
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 filename = (
-    f"logs/{Environment.get_prefix()}-"
+    f"logs/{Instance.get_prefix()}-"
     f"{str(datetime.now()).replace(' ', '-').replace(':', '-')}"
     ".log"
 )
