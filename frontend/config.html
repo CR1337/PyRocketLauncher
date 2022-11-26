@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Environment<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -33,6 +33,17 @@
                     id="chip_amount_input"
                     min="1" max="26" step="1"
                     v-model="config.chip_amount"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
+        <tr>
+            <td>Chip amount:</td>
+            <td>
+                <input
+                    type="checkbox"
+                    id="debug_input"
+                    v-model="config.debug"
                     style="width: 200px; text-align: center;"
                 >
             </td>
@@ -127,7 +138,8 @@
                 current_device_id: "",
                 config: {
                     device_id: "",
-                    chip_amount: 0
+                    chip_amount: 0,
+                    debug: null
                 },
                 constants: {
                     bus_address: 0,

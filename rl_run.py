@@ -4,8 +4,9 @@ from flask_cors import CORS
 from backend.endpoints.device import device_bp
 from backend.endpoints.master import master_bp
 from backend.endpoints.shared import shared_bp
-from backend.environment import Environment
+from backend.instance import Instance
 from backend.logger import logger
+from backend.config import Config
 
 
 def run():
@@ -16,23 +17,27 @@ def run():
     app.static_folder = f"{app.root_path}/frontend"
 
     app.register_blueprint(shared_bp)
-    if Environment.is_master():
+    if Instance.is_master():
         logger.info("Initializing in master mode")
         app.register_blueprint(master_bp)
     else:
         logger.info("Initializing in device mode")
         app.register_blueprint(device_bp)
 
+    debug_str = ' in debug mode' if Config.get_value('debug') else ''
     logger.info(
-        f"Running app{' in debug mode' if Environment.debug() else ''}..."
+        f"Running app{debug_str}..."
     )
-    app.run(
-        debug=Environment.debug(),
-        port=Environment.server_port(),
-        host="0.0.0.0",
-        threaded=True,
-        use_reloader=Environment.debug()
-    )
+    try:
+        app.run(
+            debug=Config.get_value('debug'),
+            port=Instance.get_server_port(),
+            host="0.0.0.0",
+            threaded=True,
+            use_reloader=Config.get_value('debug')
+        )
+    except Exception:
+        logger.exception("Exception running app!")
 
 
 if __name__ == "__main__":
