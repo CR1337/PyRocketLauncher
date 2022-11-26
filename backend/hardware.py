@@ -1,7 +1,6 @@
 from functools import wraps
 from threading import Lock
-from types import NoneType
-from typing import Dict, Union
+from typing import Dict
 
 from smbus2 import SMBus
 
@@ -95,7 +94,7 @@ class Hardware:
 
     @classmethod
     @lock_bus
-    def is_locked(cls) -> Union[bool, NoneType]:
+    def is_locked(cls) -> bool:
         logger.info("Check Lock Status")
         locked_states = []
         for chip_address in Address.all_chip_addresses():
@@ -115,7 +114,7 @@ class Hardware:
         logger.info(f"Light {address}")
         value = cls._read(address.chip_address, address.register_address)
         value &= address.rev_register_mask
-        value |= address.register_address
+        value |= address.register_mask
         cls._write(address.chip_address, address.register_address, value)
 
     @classmethod
