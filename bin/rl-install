@@ -9,9 +9,15 @@ export BASE_DIR=/opt/rl
 export APP_NAME="PyRocketLauncher"
 export GITHUB_USER="CR1337"
 
-info () { echo -e "${CYAN}INFO> $1 ${RESET}" }
-error () { >&2 echo -e "${RED}ERROR> $1 ${RESET}" }
-success() { echo -e "${GREEN}SUCCESS> $1 ${RESET}" }
+info () {
+    echo -e "${CYAN}INFO> $1 ${RESET}"
+}
+error () {
+    >&2 echo -e "${RED}ERROR> $1 ${RESET}"
+}
+success() {
+    echo -e "${GREEN}SUCCESS> $1 ${RESET}"
+}
 
 if [ "$EUID" -ne 0 ]; then
     error "Please execute as root!"
@@ -39,7 +45,7 @@ info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
 
 info "Installing dependecies via pip..."
-python3 -m pip -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 info "Adding bin directory to SECURE_PATH..."
 SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)

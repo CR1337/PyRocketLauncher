@@ -10,7 +10,7 @@ function now_ISOstring() {
 }
 
 async function fetch_with_timeout(resource, options={}) {
-    const { timeout = 5000 } = options;
+    const { timeout = 100000 } = options;
 
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
