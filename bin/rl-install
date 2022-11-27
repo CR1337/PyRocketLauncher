@@ -41,8 +41,13 @@ apt -y install git
 apt -y install python3
 apt -y install python3-pip
 
+info "Enabling i²c..."
+raspi-config nonint do_i2c 0
+
 info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
+
+cd $APP_NAME
 
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt

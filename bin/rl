@@ -5,9 +5,12 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime
 from difflib import SequenceMatcher
 from typing import Any, Callable, Dict, List
+
+import requests
 
 
 class Paths:
@@ -581,11 +584,32 @@ class Logs:
 
 class Status:
 
+    @staticmethod
+    def _check_localhost(port: int) -> bool:
+        try:
+            response = requests.get(f"http://localhost:{port}/", timeout=3)
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False
+        except Exception:
+            Output.error("Error connecting to localhost!")
+            return False
+        else:
+            return True
+
     @classmethod
     def is_running(cls) -> bool:
         command = Command("pgrep -af python")
         running_py_scripts = command.get_output()
-        return Paths.RL_RUN in running_py_scripts
+        if Paths.RL_RUN not in running_py_scripts:
+            return False
+        if Config.get_master():
+            if not cls._check_localhost(80):
+                return False
+        if Config.get_device():
+            if not cls._check_localhost(5000):
+                return False
+        return True
 
     @staticmethod
     def is_cronjob_registered() -> bool:
@@ -646,6 +670,9 @@ class RlManager:
                 [sys.executable, Paths.RL_RUN, '--master']
             )
             command.run_background()
+        Output.info("Waiting for server running...")
+        while not Status.is_running():
+            time.sleep(1)
 
     @staticmethod
     def stop():
@@ -750,7 +777,7 @@ class UserInterface:
                 RlManager.stop()
                 Output.success("System was stopped.")
             elif args[0] == 'restart':
-                RlManager.setup()
+                RlManager.restart()
                 Output.success("System was restarted.")
             elif args[0] == 'update':
                 RlManager.update()

@@ -75,7 +75,7 @@ const device_template = /*html*/`
 
         <div v-for="letter in letters">
             <chip
-                :enabled="enabled"
+                :enabled="enabled && !is_locked"
                 :ask="ask"
                 :state="state"
                 :letter="letter"

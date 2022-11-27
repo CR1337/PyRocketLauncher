@@ -121,6 +121,7 @@ class Program:
             self._program_mainloop()
         finally:
             if hardware_was_locked:
+                tu.sleep(Config.get_constant('ignition_duration') * 2)
                 Hardware.lock()
 
         self._callback()
