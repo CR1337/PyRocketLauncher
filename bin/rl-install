@@ -52,6 +52,9 @@ cd $APP_NAME
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt
 
+info "Making logs directory..."
+mkdir -p logs
+
 info "Adding bin directory to SECURE_PATH..."
 SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
 echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
