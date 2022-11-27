@@ -329,7 +329,7 @@ class Config:
             data = json.load(file)
         data[key] = value
         with open(filename, 'w', encoding='utf-8') as file:
-            json.dump(data, filename)
+            json.dump(data, file)
 
     @classmethod
     def _get_config(cls, key: str) -> Any:
