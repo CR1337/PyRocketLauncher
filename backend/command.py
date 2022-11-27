@@ -22,7 +22,7 @@ class Command:
 
     def __init__(self, address: Address, timestamp: float, name: str):
         self._address = address
-        self._timestamp = timestamp
+        self._timestamp = float(timestamp)
         self._name = name
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"light_{self._address}"

@@ -58,10 +58,6 @@ class Address:
             raise ValueError(
                 f"letter has to be an ascii letter: {self._letter}"
             )
-        if self._letter not in self.DEVICE_LETTERS:
-            raise ValueError(
-                f"invalid letter for this device_id: {self._letter}"
-            )
 
     def _raise_on_number(self):
         if self._number < 0 or self._number >= self.NUMBERS_PER_LETTER:
