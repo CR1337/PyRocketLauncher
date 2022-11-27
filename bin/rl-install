@@ -40,6 +40,7 @@ info "Installing dependencies via apt..."
 apt -y install git
 apt -y install python3
 apt -y install python3-pip
+apt -y install i2c-tools
 
 info "Enabling i²c..."
 raspi-config nonint do_i2c 0
