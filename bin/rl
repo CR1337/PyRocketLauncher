@@ -812,7 +812,7 @@ class UserInterface:
                     printed_key = f"{key}:{' ' * (max_key_len - len(key))}"
                     print(f"{printed_key}\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
-                ConfigWizard.run(show_rebuild_info=True)
+                ConfigWizard.run()
                 Output.success("Exited wizard.")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CONFIG)
