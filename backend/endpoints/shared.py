@@ -1,6 +1,7 @@
 from flask import (Blueprint, Response, make_response, redirect, request,
                    send_file, send_from_directory, url_for)
 from flask_api import status
+from flask_cors import CORS
 
 from backend.config import Config
 from backend.controller import Controller
@@ -12,6 +13,7 @@ from backend.logger import (get_log_files, get_log_structured_file_content,
                             logfile_exists)
 
 shared_bp = Blueprint('shared_blueprint', __name__)
+CORS(shared_bp)
 
 
 @shared_bp.route("/", methods=['GET'], endpoint='index')
