@@ -106,7 +106,7 @@ class Output:
 
     @classmethod
     def wrong_usage(cls):
-        cls.error("Wrong arguments! Run 'rl help' for help.")
+        cls.error("Wrong arguments! Run 'sudo rl help' for help.")
 
     @staticmethod
     def print_file(filename: str):
@@ -589,10 +589,7 @@ class Status:
         try:
             response = requests.get(f"http://localhost:{port}/", timeout=3)
             response.raise_for_status()
-        except requests.exceptions.Timeout:
-            return False
         except Exception:
-            Output.error("Error connecting to localhost!")
             return False
         else:
             return True
@@ -652,7 +649,7 @@ class RlManager:
             Cronjob.register()
         cls.run()
         Output.info("This system should now be fully functional.")
-        Output.info("For further options run: 'rl help'")
+        Output.info("For further options run: 'sudo rl help'")
 
     @staticmethod
     def run():
@@ -734,7 +731,7 @@ class UserInterface:
         if len(args) != 1:
             Output.critical(
                 f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
-                f"{args[0]}' takes no further arguments!\nRun 'rl"
+                f"{args[0]}' takes no further arguments!\nRun 'sudo rl"
                 f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
@@ -746,7 +743,7 @@ class UserInterface:
             Output.critical(
                 f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
                 f"{args[0]}' takes {count} further "
-                f"argument{'s' if count > 1 else ''}!\nRun 'rl"
+                f"argument{'s' if count > 1 else ''}!\nRun 'sudo rl"
                 f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
@@ -760,7 +757,9 @@ class UserInterface:
         cls._require_root()
 
         if len(args) < 1:
-            Output.critical("Invalid number of arguments!\nRun 'rl help'.")
+            Output.critical(
+                "Invalid number of arguments!\nRun 'sudo rl help'."
+            )
 
         if args[0] in [
             'setup', 'run', 'stop', 'restart',
@@ -797,13 +796,13 @@ class UserInterface:
         elif args[0] == 'logs':
             cls._logs(args[1:])
         else:
-            Output.critical("Unknown command!\nRun 'rl help'.")
+            Output.critical("Unknown command!\nRun 'sudo rl help'.")
 
     @classmethod
     def _config(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'rl config help'."
+                "Invalid number of arguments!\nRun 'sudo rl config help'."
             )
 
         if args[0] in ['list', 'wizard', 'help']:
@@ -821,10 +820,12 @@ class UserInterface:
             cls._check_for_further_arguments(args, 2, "config")
             key, value = args[1], args[2]
             if key not in Config.SET_METHODS.keys():
-                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
+                Output.critical(
+                    f"Invalid key: {key}!\nRun 'sudo rl config help'."
+                )
             if not Config.validate_value(key, value):
                 Output.critical(
-                    f"Invalid value: {value}\nRun 'rl config help'."
+                    f"Invalid value: {value}\nRun 'sudo rl config help'."
                 )
             Config.SET_METHODS[key](value)
             Output.success(f"Set {key} to {value}.")
@@ -833,23 +834,27 @@ class UserInterface:
             cls._check_for_further_arguments(args, 1, "config")
             key = args[1]
             if key not in Config.SET_METHODS.keys():
-                Output.critical(f"Invalid key: {key}!\nRun 'rl config help'.")
+                Output.critical(
+                    f"Invalid key: {key}!\nRun 'sudo rl config help'."
+                )
             print(f"{key}:\t{Config.GET_METHODS[key]()}")
 
         else:
-            Output.critical("Unknown command!\nRun 'rl config help'.")
+            Output.critical("Unknown command!\nRun 'sudo rl config help'.")
 
     @classmethod
     def _status(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'rl status help'."
+                "Invalid number of arguments!\nRun 'sudo rl status help'."
             )
 
         if args[0] in ['list', 'help']:
             if args[0] == 'list':
+                max_key_len = max([len(k) for k in Status.GET_METHODS.keys()])
                 for key in Status.GET_METHODS.keys():
-                    print(f"{key}:\t{Status.GET_METHODS[key]()}")
+                    printed_key = f"{key}:{' ' * (max_key_len - len(key))}"
+                    print(f"{printed_key}\t{Status.GET_METHODS[key]()}")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_STATUS)
 
@@ -857,17 +862,19 @@ class UserInterface:
             cls._check_for_further_arguments(args, 1, "status")
             key = args[1]
             if key not in Status.GET_METHODS.keys():
-                Output.critical(f"Invalid key: {key}!\nRun 'rl status help'.")
+                Output.critical(
+                    f"Invalid key: {key}!\nRun 'sudo rl status help'."
+                )
             print(f"{key}:\t{Status.GET_METHODS[key]()}")
 
         else:
-            Output.critical("Unknown command!\nRun 'rl status help'.")
+            Output.critical("Unknown command!\nRun 'sudo rl status help'.")
 
     @classmethod
     def _cronjob(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'rl cronjob help'."
+                "Invalid number of arguments!\nRun 'sudo rl cronjob help'."
             )
 
         if args[0] in ['register', 'deregister', 'status', 'help']:
@@ -883,13 +890,13 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_CRONJOB)
 
         else:
-            Output.critical("Unknown command!\nRun 'rl cronjob help'.")
+            Output.critical("Unknown command!\nRun 'sudo rl cronjob help'.")
 
     @classmethod
     def _logs(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'rl logs help'."
+                "Invalid number of arguments!\nRun 'sudo rl logs help'."
             )
 
         if args[0] in ['list', 'latest', 'clear', 'help']:
@@ -909,7 +916,7 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_LOGS)
 
         else:
-            Output.critical("Unknown command!\nRun 'rl logs help'.")
+            Output.critical("Unknown command!\nRun 'sudo rl logs help'.")
 
 
 if __name__ == "__main__":
