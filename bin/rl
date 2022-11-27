@@ -696,7 +696,6 @@ class RlManager:
         command = Command(f"git -C {Paths.HOME} pull")
         if command.get_returncode() != 0:
             Output.unexpected_error()
-        cls.build()
         if was_running:
             cls.run()
 
