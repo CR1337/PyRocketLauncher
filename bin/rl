@@ -807,8 +807,10 @@ class UserInterface:
         if args[0] in ['list', 'wizard', 'help']:
             cls._check_for_no_further_arguments(args, "config")
             if args[0] == 'list':
+                max_key_len = max([len(k) for k in Config.GET_METHODS.keys()])
                 for key in Config.GET_METHODS.keys():
-                    print(f"{key}:\t{Config.GET_METHODS[key]()}")
+                    printed_key = f"{key}:{' ' * (max_key_len - len(key))}"
+                    print(f"{printed_key}\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
                 ConfigWizard.run(show_rebuild_info=True)
                 Output.success("Exited wizard.")
