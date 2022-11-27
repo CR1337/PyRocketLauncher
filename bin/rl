@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -11,6 +12,7 @@ from difflib import SequenceMatcher
 from typing import Any, Callable, Dict, List
 
 import requests
+from smbus2 import SMBus
 
 
 class Paths:
@@ -316,6 +318,61 @@ class Cronjob:
         return os.path.exists(Paths.CRONJOB)
 
 
+class AutoConfig:
+
+    I2C_BUS_ADDRESS: int = 1
+    BASE_CHIP_ADDRESS: int = 0x60
+
+    @staticmethod
+    def _determine_device_id() -> str:
+        return socket.gethostname()
+
+    @classmethod
+    def _determine_chip_amount(cls) -> int:
+        bus = SMBus(cls.I2C_BUS_ADDRESS)
+        for idx in range(8):
+            try:
+                bus.read_byte_data(cls.BASE_CHIP_ADDRESS + idx, 0x00)
+            except OSError:
+                return idx
+
+    @staticmethod
+    def _determine_debug() -> bool:
+        return False
+
+    @staticmethod
+    def _determine_master() -> bool:
+        return Config.get_device_id().lower() in ['master', 'main']
+
+    @staticmethod
+    def _determine_device() -> bool:
+        return True
+
+    @classmethod
+    def run(cls):
+        Output.info("Performing automatic configuration...")
+
+        device_id = cls._determine_device_id()
+        Output.info(f"Auto-setting device_id to '{device_id}'")
+        Config.set_device_id(device_id)
+
+        chip_amount = cls._determine_chip_amount()
+        Output.info(f"Auto-setting chip amount to '{chip_amount}'")
+        Config.set_chip_amount(chip_amount)
+
+        debug = cls._determine_debug()
+        Output.info(f"Auto-setting debug to '{debug}'")
+        Config.set_debug(debug)
+
+        master = cls._determine_master()
+        Output.info(f"Auto-setting master to '{master}'")
+        Config.set_master(master)
+
+        device = cls._determine_device()
+        Output.info(f"Auto-setting device to '{device}'")
+        Config.set_device(device)
+
+
 class Config:
 
     @staticmethod
@@ -423,7 +480,7 @@ class Config:
             else:
                 return True
         elif key == 'chip_amount':
-            FormatValidator.validate_int(value, 1, 26)
+            FormatValidator.validate_int(value, 1, 8)
         elif cls.TYPES[key] == bool:
             return FormatValidator.validate_bool(value)
 
@@ -501,9 +558,9 @@ class ConfigWizard:
             value = Config.ASK_METHODS[key](
                 f"Enter the new value for {key} "
                 f"{'(yn)' if ask_for_bool else ''}"
-                f"{'(1-26)' if ask_for_chip_amount else ''}"
+                f"{'(1-8)' if ask_for_chip_amount else ''}"
                 "> ",
-                *([1, 26] if ask_for_chip_amount else [])
+                *([1, 8] if ask_for_chip_amount else [])
             )
             if value is None:
                 break
@@ -644,6 +701,7 @@ class RlManager:
     def setup(cls):
         if Status.is_running():
             cls.stop()
+        AutoConfig.run()
         ConfigWizard.run()
         if not Status.is_cronjob_registered():
             Cronjob.register()
