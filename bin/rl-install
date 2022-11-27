@@ -40,6 +40,7 @@ info "Installing dependencies via apt..."
 apt -y install git
 apt -y install python3
 apt -y install python3-pip
+apt -y install i2c-tools
 
 info "Enabling i²c..."
 raspi-config nonint do_i2c 0
@@ -51,6 +52,9 @@ cd $APP_NAME
 
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt
+
+info "Making logs directory..."
+mkdir -p logs
 
 info "Adding bin directory to SECURE_PATH..."
 SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
