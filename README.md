@@ -6,7 +6,7 @@ This software was designed for a custom built fireworks ignition system. The cor
 When this software does not run on an Raspberry Pi it simulates the behaviour of the the underlying hardware. It should therefore be able to be installed on any Linux system and provide a mock up of the complete system with its appropriate hardware.
 
 ## Installation
-1. Download  the [rl-install script](https://raw.githubusercontent.com/CR1337/PyRocketLauncher/dev/bin/rl-install).
+1. Download  the [rl-install script](https://raw.githubusercontent.com/CR1337/PyRocketLauncher/main/bin/rl-install).
 2. Set execution permission by running `chmod +x rl-install`
 3. Execute the `rl-install` script as root.
 4. Run `sudo rl setup`.
