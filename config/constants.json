@@ -2,7 +2,7 @@
     "bus_address": 1,
     "time_resolution": 0.1,
     "ignition_duration": 0.2,
-    "request_timeout": 3.0,
+    "request_timeout": 5.0,
     "event_stream_period": 0.5,
     "event_stream_retry_period": 5.0
 }
