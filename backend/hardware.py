@@ -56,7 +56,6 @@ class Hardware:
 
     try:
         if Instance.on_pi():
-            print("REALLY ON PI")
             BUS: SMBus = SMBus(BUS_ADDRESS)
         else:
             BUS = DummySMBus(BUS_ADDRESS)
