@@ -118,4 +118,10 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
+info "Disabling onboard WiFi if on Pi Zero W (reboot needed)..."
+python3 ./bin/zero_wifi_off.py
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
 success "Done"
