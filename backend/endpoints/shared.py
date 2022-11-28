@@ -9,8 +9,7 @@ from backend.endpoints.util import handle_exceptions, log_request
 from backend.event_stream import EventStream
 from backend.hardware import Hardware
 from backend.instance import Instance
-from backend.logger import (get_log_files, get_log_structured_file_content,
-                            logfile_exists)
+from backend.logger import logger
 
 shared_bp = Blueprint('shared_blueprint', __name__)
 CORS(shared_bp)
@@ -185,7 +184,7 @@ def route_state():
 @log_request
 def route_logs():
     return make_response((
-        get_log_files(),
+        logger.get_log_files(),
         status.HTTP_200_OK
     ))
 
@@ -196,7 +195,7 @@ def route_logs():
 @handle_exceptions
 @log_request
 def route_logs_filename(filename: str):
-    if logfile_exists(filename):
+    if logger.logfile_exists(filename):
         return make_response((
             send_file(
                 path_or_file=f"logs/{filename}",
@@ -218,9 +217,9 @@ def route_logs_filename(filename: str):
 @handle_exceptions
 @log_request
 def route_logs_structured_filename(filename: str):
-    if logfile_exists(filename):
+    if logger.logfile_exists(filename):
         return make_response((
-            get_log_structured_file_content(filename),
+            logger.get_log_structured_file_content(filename),
             status.HTTP_200_OK
         ))
     else:
