@@ -12,8 +12,9 @@ class Device:
 
     IP_PREFIX: str = ".".join(Instance.gateway_ip().split(".")[:3]) + "."
     REQUEST_TIMEOUT: int = Config.get_constant('request_timeout')
-    FIRST_IP_LAST_BYTE = 1
-    LAST_IP_LAST_BYTE = 254
+    FIRST_IP_LAST_BYTE: int = 1
+    LAST_IP_LAST_BYTE: int = 254
+    DEVICE_PORT: int = 5000
 
     _ip_address: str
     _device_id: str
@@ -24,7 +25,7 @@ class Device:
         ip_address = cls.IP_PREFIX + str(index)
         try:
             response = requests.get(
-                f"http://{ip_address}:5000/discover",
+                f"http://{ip_address}:{cls.DEVICE_PORT}/discover",
                 timeout=cls.REQUEST_TIMEOUT
             )
             response.raise_for_status()
@@ -78,7 +79,7 @@ class Device:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
         )
-        address = f"http://{self._ip_address}:5000/{url}"
+        address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
             if method == 'post':
                 response = requests.post(
