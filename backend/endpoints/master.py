@@ -9,7 +9,9 @@ master_bp = Blueprint('master_blueprint', __name__)
 CORS(master_bp)
 
 
-@master_bp.route("/search", methods=['GET'], endpoint='search')
+@master_bp.route(
+    "/search", methods=['GET'], endpoint='search'
+)
 @handle_exceptions
 @log_request
 def route_search():
@@ -19,12 +21,13 @@ def route_search():
     ))
 
 
-@master_bp.route("/deregister", methods=['POST'], endpoint='deregister')
+@master_bp.route(
+    "/deregister", methods=['POST'], endpoint='deregister'
+)
 @handle_exceptions
 @log_request
 def route_deregister():
-    json_data = request.get_json(force=True)
-    device_id = json_data['device_id']
+    device_id = request.get_json(force=True)['device_id']
     Controller.deregister(device_id)
     return make_response((
         {'deregistered_device_id': device_id},
@@ -39,12 +42,18 @@ def route_deregister():
 @log_request
 def route_deregister_all():
     Controller.deregister_all()
-    return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
-@master_bp.route("/devices", methods=['GET'], endpoint='devices')
+@master_bp.route(
+    "/devices", methods=['GET'], endpoint='devices'
+)
 @handle_exceptions
 @log_request
 def route_devices():
     devices = Controller.get_devices()
-    return make_response((devices, status.HTTP_200_OK))
+    return make_response((
+        devices, status.HTTP_200_OK
+    ))

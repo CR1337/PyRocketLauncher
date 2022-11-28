@@ -6,17 +6,18 @@ from flask_cors import CORS
 from backend.config import Config
 from backend.controller import Controller
 from backend.endpoints.util import handle_exceptions, log_request
-from backend.instance import Instance
 from backend.event_stream import EventStream
 from backend.hardware import Hardware
-from backend.logger import (get_log_files, get_log_structured_file_content,
-                            logfile_exists)
+from backend.instance import Instance
+from backend.logger import logger
 
 shared_bp = Blueprint('shared_blueprint', __name__)
 CORS(shared_bp)
 
 
-@shared_bp.route("/", methods=['GET'], endpoint='index')
+@shared_bp.route(
+    "/", methods=['GET'], endpoint='index'
+)
 @handle_exceptions
 @log_request
 def route_index():
@@ -24,14 +25,18 @@ def route_index():
     return redirect(url_for('static', filename=path))
 
 
-@shared_bp.route("/favicon.ico", methods=['GET'], endpoint='favicon')
+@shared_bp.route(
+    "/favicon.ico", methods=['GET'], endpoint='favicon'
+)
 @handle_exceptions
 @log_request
 def route_favicon():
     return redirect(url_for('static', filename='assets/favicon.ico'))
 
 
-@shared_bp.route('/static/<path:path>', methods=['GET'], endpoint='static')
+@shared_bp.route(
+    '/static/<path:path>', methods=['GET'], endpoint='static'
+)
 @handle_exceptions
 @log_request
 def route_static(path):
@@ -41,7 +46,9 @@ def route_static(path):
     ))
 
 
-@shared_bp.route("/program", methods=['POST', 'DELETE'], endpoint='program')
+@shared_bp.route(
+    "/program", methods=['POST', 'DELETE'], endpoint='program'
+)
 @handle_exceptions
 @log_request
 def route_program():
@@ -51,7 +58,9 @@ def route_program():
     elif request.method == 'DELETE':
         Controller.unload_program()
 
-    return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
 @shared_bp.route(
@@ -75,10 +84,14 @@ def route_program_control():
     elif action == 'unschedule':
         Controller.unschedule_program()
 
-    return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
-@shared_bp.route("/fire", methods=['POST'], endpoint='fire')
+@shared_bp.route(
+    "/fire", methods=['POST'], endpoint='fire'
+)
 @handle_exceptions
 @log_request
 def route_fire():
@@ -88,24 +101,29 @@ def route_fire():
             json_data['device_id'], json_data['letter'], json_data['number']
         )
     else:
-        if Hardware.is_locked():
-            raise RuntimeError(
-                f"Cannot light {json_data['letter']}{json_data['number']}. "
-                "Hardware is locked!"
-            )
-        Controller.fire(json_data['letter'], json_data['number'])
-    return make_response(({}, status.HTTP_200_OK))
+        Controller.fire(
+            json_data['letter'], json_data['number']
+        )
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
-@shared_bp.route("/testloop", methods=['POST'], endpoint='testloop')
+@shared_bp.route(
+    "/testloop", methods=['POST'], endpoint='testloop'
+)
 @handle_exceptions
 @log_request
 def route_testloop():
     Controller.run_testloop()
-    return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
-@shared_bp.route("/lock", methods=['POST'], endpoint='lock')
+@shared_bp.route(
+    "/lock", methods=['POST'], endpoint='lock'
+)
 @handle_exceptions
 @log_request
 def route_lock():
@@ -117,10 +135,14 @@ def route_lock():
             Hardware.lock()
         else:
             Hardware.unlock()
-    return make_response(({}, status.HTTP_200_OK))
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 
-@shared_bp.route("/system-time", methods=['GET'], endpoint='system_time')
+@shared_bp.route(
+    "/system-time", methods=['GET'], endpoint='system_time'
+)
 @handle_exceptions
 @log_request
 def route_system_time():
@@ -130,7 +152,9 @@ def route_system_time():
     ))
 
 
-@shared_bp.route("/event-stream", methods=['GET'], endpoint='event_stream')
+@shared_bp.route(
+    "/event-stream", methods=['GET'], endpoint='event_stream'
+)
 @handle_exceptions
 @log_request
 def route_event_stream():
@@ -141,7 +165,9 @@ def route_event_stream():
     )
 
 
-@shared_bp.route("/state", methods=['GET'], endpoint='state')
+@shared_bp.route(
+    "/state", methods=['GET'], endpoint='state'
+)
 @handle_exceptions
 @log_request
 def route_state():
@@ -151,21 +177,25 @@ def route_state():
     ))
 
 
-@shared_bp.route("/logs", methods=['GET'], endpoint="logs")
+@shared_bp.route(
+    "/logs", methods=['GET'], endpoint='logs'
+)
 @handle_exceptions
 @log_request
 def route_logs():
     return make_response((
-        get_log_files(),
+        logger.get_log_files(),
         status.HTTP_200_OK
     ))
 
 
-@shared_bp.route("/logs/<filename>", methods=['GET'], endpoint="logs_filename")
+@shared_bp.route(
+    "/logs/<filename>", methods=['GET'], endpoint='logs_filename'
+)
 @handle_exceptions
 @log_request
 def route_logs_filename(filename: str):
-    if logfile_exists(filename):
+    if logger.logfile_exists(filename):
         return make_response((
             send_file(
                 path_or_file=f"logs/{filename}",
@@ -175,26 +205,32 @@ def route_logs_filename(filename: str):
             status.HTTP_200_OK
         ))
     else:
-        return make_response(({}, status.HTTP_404_NOT_FOUND))
+        return make_response((
+            {}, status.HTTP_404_NOT_FOUND
+        ))
 
 
 @shared_bp.route(
     "/logs/structured/<filename>", methods=['GET'],
-    endpoint="logs_structured_filename"
+    endpoint='logs_structured_filename'
 )
 @handle_exceptions
 @log_request
 def route_logs_structured_filename(filename: str):
-    if logfile_exists(filename):
+    if logger.logfile_exists(filename):
         return make_response((
-            get_log_structured_file_content(filename),
+            logger.get_log_structured_file_content(filename),
             status.HTTP_200_OK
         ))
     else:
-        return make_response(({}, status.HTTP_404_NOT_FOUND))
+        return make_response((
+            {}, status.HTTP_404_NOT_FOUND
+        ))
 
 
-@shared_bp.route("/config", methods=['GET', 'POST'], endpoint='config')
+@shared_bp.route(
+    "/config", methods=['GET', 'POST'], endpoint='config'
+)
 @handle_exceptions
 @log_request
 def route_config():
@@ -204,6 +240,7 @@ def route_config():
             status.HTTP_200_OK
         ))
     elif request.method == 'POST':
-        config = request.get_json(force=True)
-        Config.update_state(config)
-        return make_response(({}, status.HTTP_200_OK))
+        Config.update_state(request.get_json(force=True))
+        return make_response((
+            {}, status.HTTP_200_OK
+        ))

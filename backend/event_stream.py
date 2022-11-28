@@ -16,7 +16,7 @@ class EventStream:
         return int(self.RETRY_PERIOD * 1000)
 
     def event_stream_handler(self):
-        logger.info("Started event stream")
+        logger.debug("Started event stream")
         for idx in count(start=0):
             tu.sleep(self.PERIOD)
             data = Controller.get_state()

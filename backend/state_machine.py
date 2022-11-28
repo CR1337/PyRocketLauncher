@@ -14,7 +14,7 @@ class State:
     def __eq__(self, other: 'State') -> bool:
         return self._name == other.name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._name
 
     @property
@@ -23,6 +23,12 @@ class State:
 
 
 class StateMachine:
+
+    class InvalidTransitionError(Exception):
+
+        def __init__(self, message: str):
+            self.message = message
+            super().__init__(self.message)
 
     _initial_state: State
     _current_state: State
@@ -68,7 +74,9 @@ class StateMachine:
 
     def transition(self, state: State, *args, **kwargs):
         if state not in self._transitions[self._current_state]:
-            raise ValueError(f"Invalid Transition: {self} -> {state}")
+            raise self.InvalidTransitionError(
+                f"Invalid Transition: {self} -> {state}"
+            )
         self._callbacks[self._current_state][state](*args, **kwargs)
         self._current_state = state
 
@@ -84,5 +92,5 @@ class StateMachine:
         return self._current_state in self._accepting_states
 
     @property
-    def state(self):
+    def state(self) -> State:
         return self._current_state

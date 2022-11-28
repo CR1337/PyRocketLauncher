@@ -5,23 +5,34 @@ from flask import has_request_context, make_response, request
 from flask_api import status
 
 from backend.logger import logger
+from backend.rl_exception import RlException
+
+
+def _build_excpetion_response_content():
+    exc_type, exc, tb = sys.exc_info()
+    return {
+        'exception_type': str(exc_type),
+        'exception_args': vars(exc),
+        'traceback': traceback.extract_tb(tb).format()
+    }
 
 
 def handle_exceptions(func):
     def wrapper(*args, **kwargs):
         try:
             response = func(*args, **kwargs)
+        except RlException:
+            content = _build_excpetion_response_content()
+            response = make_response(
+                (content, status.HTTP_400_BAD_REQUEST)
+            )
+            logger.exception("RlException occured")
         except Exception:
-            print("EXCEPTION")
-            exc_type, exc, tb = sys.exc_info()
-            content = {
-                'exception_type': str(exc_type),
-                'exception_args': vars(exc),
-                'traceback': traceback.extract_tb(tb).format()
-            }
-            response = make_response((content, status.HTTP_400_BAD_REQUEST))
-            print("REQUEST", request)
-            logger.exception("Exception occured")
+            content = _build_excpetion_response_content()
+            response = make_response(
+                (content, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            )
+            logger.exception("Unexpected Exception occured")
         finally:
             return response
     return wrapper

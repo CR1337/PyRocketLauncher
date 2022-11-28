@@ -3,9 +3,16 @@ from string import ascii_lowercase
 from typing import Dict, List
 
 from backend.config import Config
+from backend.rl_exception import RlException
 
 
 class Address:
+
+    class AddressTypeError(RlException):
+        pass
+
+    class AddressValueError(RlException):
+        pass
 
     LOCK_ADDRESS: int = 0x00
     FUSE_ADDRESSES: List[int] = [0x14, 0x15, 0x16, 0x17]
@@ -33,16 +40,17 @@ class Address:
     @classmethod
     def all_chip_addresses(cls) -> List[int]:
         return [
-            cls.BASE_CHIP_ADDRESS + i for i in range(len(cls.DEVICE_LETTERS))
+            cls.BASE_CHIP_ADDRESS + i
+            for i in range(len(cls.DEVICE_LETTERS))
         ]
 
     def __init__(self, device_id: str, letter: str, number: int):
         if not isinstance(device_id, str):
-            raise TypeError("device_id has to be of type str")
+            raise self.AddressTypeError("device_id has to be of type str")
         if not isinstance(letter, str):
-            raise TypeError("letter has to be of type str")
+            raise self.AddressTypeError("letter has to be of type str")
         if not isinstance(number, int):
-            raise TypeError("number has to be of type int")
+            raise self.AddressTypeError("number has to be of type int")
 
         self._device_id = device_id.lower()
         self._letter = letter.lower()
@@ -53,15 +61,17 @@ class Address:
 
     def _raise_on_letter(self):
         if len(self._letter) != 1:
-            raise ValueError(f"letter has to be of length 1: {self._letter}")
+            raise self.AddressValueError(
+                f"letter has to be of length 1: {self._letter}"
+            )
         if self._letter not in ascii_lowercase:
-            raise ValueError(
+            raise self.AddressValueError(
                 f"letter has to be an ascii letter: {self._letter}"
             )
 
     def _raise_on_number(self):
         if self._number < 0 or self._number >= self.NUMBERS_PER_LETTER:
-            raise ValueError(
+            raise self.AddressValueError(
                 f"number has to be a positive integer in "
                 f"[0,{self.NUMBERS_PER_LETTER - 1}]: {self._number}"
             )

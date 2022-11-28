@@ -1,6 +1,6 @@
 from datetime import datetime
 from threading import Event, Thread
-from typing import Callable
+from typing import Any, Callable, Dict
 
 import backend.time_util as tu
 from backend.logger import logger
@@ -52,7 +52,7 @@ class Schedule:
     def seconds_left(self) -> float:
         return self.timestamp - tu.timestamp_now()
 
-    def get_state(self):
+    def get_state(self) -> Dict[str, Any]:
         return {
             'timestamp': self.timestamp,
             'seconds_left': self.seconds_left,

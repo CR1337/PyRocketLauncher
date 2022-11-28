@@ -2,9 +2,14 @@ import json
 from typing import Any, Dict
 
 from backend.logger import logger
+from backend.rl_exception import RlException
 
 
 class Config:
+
+    class ConfigKeyError(RlException):
+        pass
+
     CONFIG_FILENAME: str = "config/config.json"
     CONSTANTS_FILENAME: str = "config/constants.json"
 
@@ -22,7 +27,9 @@ class Config:
         cls, key: str, dictionary: Dict[str, Any], display_name: str
     ):
         if key not in dictionary.keys():
-            raise KeyError(f"{display_name} key '{key}' does not exist")
+            raise cls.ConfigKeyError(
+                f"{display_name} key '{key}' does not exist"
+            )
 
     @classmethod
     def _get(cls, key: str, dictionary: Dict[str, Any], display_name: str):
@@ -50,7 +57,10 @@ class Config:
 
     @classmethod
     def set_value(cls, key: str, value: Any):
-        cls._set(key, value, cls._config_data, "Config", cls.CONFIG_FILENAME)
+        cls._set(
+            key, value, cls._config_data,
+            "Config", cls.CONFIG_FILENAME
+        )
 
     @classmethod
     def set_constant(cls, key: str, value: Any):
@@ -60,7 +70,7 @@ class Config:
         )
 
     @classmethod
-    def get_state(cls):
+    def get_state(cls) -> Dict[str, Any]:
         return {
             'config': cls._config_data,
             'constants': cls._constants_data
@@ -68,7 +78,7 @@ class Config:
 
     @classmethod
     def update_state(cls, data: Dict[str, Any]):
-        logger.info("Update state")
+        logger.debug("Update state")
         for key, value in data['config'].items():
             cls.set_value(key, value)
         for key, value in data['constants'].items():

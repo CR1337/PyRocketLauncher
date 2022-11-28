@@ -12,19 +12,20 @@ class Device:
 
     IP_PREFIX: str = ".".join(Instance.gateway_ip().split(".")[:3]) + "."
     REQUEST_TIMEOUT: int = Config.get_constant('request_timeout')
-    FIRST_IP_LAST_BYTE = 1
-    LAST_IP_LAST_BYTE = 254
+    FIRST_IP_LAST_BYTE: int = 1
+    LAST_IP_LAST_BYTE: int = 254
+    DEVICE_PORT: int = 5000
 
     _ip_address: str
     _device_id: str
     _initial_state: Dict[str, Any]
 
     @classmethod
-    def _search_for_device(cls, index):
+    def _search_for_device(cls, index) -> Tuple[str, str]:
         ip_address = cls.IP_PREFIX + str(index)
         try:
             response = requests.get(
-                f"http://{ip_address}:5000/discover",
+                f"http://{ip_address}:{cls.DEVICE_PORT}/discover",
                 timeout=cls.REQUEST_TIMEOUT
             )
             response.raise_for_status()
@@ -53,9 +54,13 @@ class Device:
                 if f.result() is not None:
                     devices.add(f.result())
 
-        return [
-            Device(d[0], d[1]) for d in devices
-        ]
+        result = []
+        device_ids_found = set()
+        for ip_address, device_id in devices:
+            if device_id not in device_ids_found:
+                device_ids_found.add(device_id)
+                result.append(Device(ip_address, device_id))
+        return result
 
     def __init__(self, ip_address: str, device_id: str):
         self._ip_address = ip_address
@@ -74,7 +79,7 @@ class Device:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
         )
-        address = f"http://{self._ip_address}:5000/{url}"
+        address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
             if method == 'post':
                 response = requests.post(

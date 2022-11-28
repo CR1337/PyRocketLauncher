@@ -1,13 +1,18 @@
 from threading import Thread
+from typing import Any, Dict
 
 import backend.time_util as tu
 from backend.address import Address
 from backend.config import Config
 from backend.hardware import Hardware
 from backend.logger import logger
+from backend.rl_exception import RlException
 
 
 class Command:
+
+    class AlreadyFiredException(RlException):
+        pass
 
     IGNITION_DURATION: float = Config.get_constant('ignition_duration')
 
@@ -54,7 +59,7 @@ class Command:
                 self._faulty_reason = f"Already fired {self}"
             if self._fireing:
                 self._faulty_reason = f"Already fireing {self}"
-            raise RuntimeError(f"{self._address} already fired")
+            raise self.AlreadyFiredException(f"{self._address} already fired")
         self._thread.start()
 
     def increase_timestamp(self, offset: float):
@@ -87,7 +92,7 @@ class Command:
     def __str__(self):
         return f"{self._name}: {self.address} ({self._timestamp})"
 
-    def get_state(self):
+    def get_state(self) -> Dict[str, Any]:
         return {
             'address': {
                 'device_id': self._address.device_id,
