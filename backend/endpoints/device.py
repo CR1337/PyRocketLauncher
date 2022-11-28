@@ -9,7 +9,9 @@ device_bp = Blueprint('device_blueprint', __name__)
 CORS(device_bp)
 
 
-@device_bp.route("/discover", methods=['GET'], endpoint='discover')
+@device_bp.route(
+    "/discover", methods=['GET'], endpoint='discover'
+)
 @handle_exceptions
 @log_request
 def route_discover():

@@ -1,4 +1,5 @@
 from threading import Thread
+from typing import Any, Dict
 
 import backend.time_util as tu
 from backend.address import Address
@@ -91,7 +92,7 @@ class Command:
     def __str__(self):
         return f"{self._name}: {self.address} ({self._timestamp})"
 
-    def get_state(self):
+    def get_state(self) -> Dict[str, Any]:
         return {
             'address': {
                 'device_id': self._address.device_id,

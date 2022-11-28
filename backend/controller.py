@@ -1,19 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import backend.time_util as tu
 from backend.address import Address
 from backend.command import Command
 from backend.config import Config
 from backend.device import Device
-from backend.instance import Instance
 from backend.hardware import Hardware
+from backend.instance import Instance
 from backend.logger import logger
 from backend.program import Program
+from backend.rl_exception import RlException
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
-from backend.rl_exception import RlException
 
 
 def lock(func):
@@ -197,7 +197,7 @@ class DeviceController:
         return tu.get_system_time()
 
     @classmethod
-    def get_state(cls) -> Dict:
+    def get_state(cls) -> Dict[str, Any]:
         return {
             'controller': {
                 'state': cls._state_machine.state.name,

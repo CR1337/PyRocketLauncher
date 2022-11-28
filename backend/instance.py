@@ -4,13 +4,15 @@ import argparse
 
 
 class Instance:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--master', action='store_true')
-    args = parser.parse_args()
 
     MODEL_PATH: str = "/sys/firmware/devicetree/base/model"
 
-    _is_master: bool = bool(args.master)
+    _is_master: bool
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--master', action='store_true')
+    args = parser.parse_args()
+    _is_master = bool(args.master)
 
     @classmethod
     def is_master(cls) -> bool:

@@ -53,10 +53,11 @@ class Hardware:
     class HardwareLockedError(RlException):
         pass
 
-    _lock: Lock = Lock()
     BUS_ADDRESS: int = Config.get_constant('bus_address')
     LOCK_VALUE: int = 0x10
     UNLOCK_VALUE: int = 0x00
+
+    _lock: Lock = Lock()
 
     if Instance.on_pi():
         BUS: SMBus = SMBus(BUS_ADDRESS)
@@ -99,10 +100,8 @@ class Hardware:
             register_value = cls._read(chip_address, Address.LOCK_ADDRESS)
             locked_states.append(bool(register_value & cls.LOCK_VALUE))
         if all(locked_states):
-
             return True
         if not any(locked_states):
-
             return False
         return None
 

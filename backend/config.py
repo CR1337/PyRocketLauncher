@@ -57,7 +57,10 @@ class Config:
 
     @classmethod
     def set_value(cls, key: str, value: Any):
-        cls._set(key, value, cls._config_data, "Config", cls.CONFIG_FILENAME)
+        cls._set(
+            key, value, cls._config_data,
+            "Config", cls.CONFIG_FILENAME
+        )
 
     @classmethod
     def set_constant(cls, key: str, value: Any):
@@ -67,7 +70,7 @@ class Config:
         )
 
     @classmethod
-    def get_state(cls):
+    def get_state(cls) -> Dict[str, Any]:
         return {
             'config': cls._config_data,
             'constants': cls._constants_data

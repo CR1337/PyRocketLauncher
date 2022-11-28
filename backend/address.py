@@ -40,7 +40,8 @@ class Address:
     @classmethod
     def all_chip_addresses(cls) -> List[int]:
         return [
-            cls.BASE_CHIP_ADDRESS + i for i in range(len(cls.DEVICE_LETTERS))
+            cls.BASE_CHIP_ADDRESS + i
+            for i in range(len(cls.DEVICE_LETTERS))
         ]
 
     def __init__(self, device_id: str, letter: str, number: int):

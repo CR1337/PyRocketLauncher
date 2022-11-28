@@ -1,5 +1,5 @@
 from threading import Event, Thread
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 
 import backend.time_util as tu
 from backend.address import Address
@@ -157,7 +157,7 @@ class Program:
     def name(self) -> str:
         return self._name
 
-    def get_state(self):
+    def get_state(self) -> Dict[str, Any]:
         return {
             'name': self._name,
             'command_list': [

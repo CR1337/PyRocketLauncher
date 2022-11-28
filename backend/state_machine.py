@@ -14,7 +14,7 @@ class State:
     def __eq__(self, other: 'State') -> bool:
         return self._name == other.name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._name
 
     @property
@@ -92,5 +92,5 @@ class StateMachine:
         return self._current_state in self._accepting_states
 
     @property
-    def state(self):
+    def state(self) -> State:
         return self._current_state

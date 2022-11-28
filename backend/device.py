@@ -21,7 +21,7 @@ class Device:
     _initial_state: Dict[str, Any]
 
     @classmethod
-    def _search_for_device(cls, index):
+    def _search_for_device(cls, index) -> Tuple[str, str]:
         ip_address = cls.IP_PREFIX + str(index)
         try:
             response = requests.get(
@@ -56,10 +56,10 @@ class Device:
 
         result = []
         device_ids_found = set()
-        for d in devices:
-            if d[0] not in device_ids_found:
-                device_ids_found.add(d[1])
-                result.append(Device(d[0], d[1]))
+        for ip_address, device_id in devices:
+            if device_id not in device_ids_found:
+                device_ids_found.add(device_id)
+                result.append(Device(ip_address, device_id))
         return result
 
     def __init__(self, ip_address: str, device_id: str):
