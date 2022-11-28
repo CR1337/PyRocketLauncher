@@ -280,6 +280,8 @@ class MasterController:
         logger.info(f"Found devices: {[d.device_id for d in found_devices]}")
         new_devices = []
 
+        # TODO: find devices only once
+
         next_device = False
         for found_device in found_devices:
             for device_id in cls._devices.keys():
@@ -293,7 +295,7 @@ class MasterController:
             cls._devices[found_device.device_id] = found_device
             new_devices.append(found_device)
 
-        logger.info(f"Found devices: {[d.device_id for d in new_devices]}")
+        logger.info(f"New devices: {[d.device_id for d in new_devices]}")
         return {
             device_id: device.get_state()
             for device_id, device

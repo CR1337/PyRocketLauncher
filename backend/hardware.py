@@ -40,10 +40,10 @@ def lock_bus(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         Hardware._lock.acquire(blocking=True)
-        logger.info("Bus locked")
+        logger.debug("Bus locked")
         result = func(*args, **kwargs)
         Hardware._lock.release()
-        logger.info("Bus unlocked")
+        logger.debug("Bus unlocked")
         return result
     return wrapper
 
@@ -65,7 +65,7 @@ class Hardware:
 
     @classmethod
     def _write(cls, chip_address: int, register_address: int, value: int):
-        logger.info(
+        logger.debug(
             f"Write value {value:02x} to "
             f"{chip_address:02x}::{register_address:02x}"
         )
@@ -73,27 +73,27 @@ class Hardware:
 
     @classmethod
     def _read(cls, chip_address: int, register_address: int) -> int:
-        logger.info(f"Read from {chip_address:02x}::{register_address:02x}")
+        logger.debug(f"Read from {chip_address:02x}::{register_address:02x}")
         return cls.BUS.read_byte_data(chip_address, register_address)
 
     @classmethod
     @lock_bus
     def lock(cls):
-        logger.info("Lock Hardware")
+        logger.debug("Lock Hardware")
         for chip_address in Address.all_chip_addresses():
             cls._write(chip_address, Address.LOCK_ADDRESS, cls.LOCK_VALUE)
 
     @classmethod
     @lock_bus
     def unlock(cls):
-        logger.info("Unlock Hardware")
+        logger.debug("Unlock Hardware")
         for chip_address in Address.all_chip_addresses():
             cls._write(chip_address, Address.LOCK_ADDRESS, cls.UNLOCK_VALUE)
 
     @classmethod
     @lock_bus
     def is_locked(cls) -> bool:
-        logger.info("Check Lock Status")
+        logger.debug("Check Lock Status")
         locked_states = []
         for chip_address in Address.all_chip_addresses():
             register_value = cls._read(chip_address, Address.LOCK_ADDRESS)
@@ -109,7 +109,7 @@ class Hardware:
     @classmethod
     @lock_bus
     def light(cls, address: Address):
-        logger.info(f"Light {address}")
+        logger.debug(f"Light {address}")
         value = cls._read(address.chip_address, address.register_address)
         value &= address.rev_register_mask
         value |= address.register_mask
@@ -118,7 +118,7 @@ class Hardware:
     @classmethod
     @lock_bus
     def unlight(cls, address: Address):
-        logger.info(f"Unlight {address}")
+        logger.debug(f"Unlight {address}")
         value = cls._read(address.chip_address, address.register_address)
         value &= address.rev_register_mask
         cls._write(address.chip_address, address.register_address, value)

@@ -75,7 +75,7 @@ class Config:
 
     @classmethod
     def update_state(cls, data: Dict[str, Any]):
-        logger.info("Update state")
+        logger.debug("Update state")
         for key, value in data['config'].items():
             cls.set_value(key, value)
         for key, value in data['constants'].items():
