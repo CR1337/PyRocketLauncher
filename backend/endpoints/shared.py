@@ -88,11 +88,6 @@ def route_fire():
             json_data['device_id'], json_data['letter'], json_data['number']
         )
     else:
-        if Hardware.is_locked():
-            raise RuntimeError(
-                f"Cannot light {json_data['letter']}{json_data['number']}. "
-                "Hardware is locked!"
-            )
         Controller.fire(json_data['letter'], json_data['number'])
     return make_response(({}, status.HTTP_200_OK))
 

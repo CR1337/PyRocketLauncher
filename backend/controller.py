@@ -13,6 +13,7 @@ from backend.logger import logger
 from backend.program import Program
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
+from backend.rl_exception import RlException
 
 
 def lock(func):
@@ -26,7 +27,22 @@ def lock(func):
     return wrapper
 
 
+def raise_for_state_transition(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except StateMachine.InvalidTransitionError as e:
+            raise DeviceController.InvalidTransitionError(e.message)
+    return wrapper
+
+
 class DeviceController:
+
+    class InvalidTransitionError(RlException):
+        pass
+
+    class ProgramIsLoadedError(RlException):
+        pass
 
     _state_machine: StateMachine = StateMachine()
 
@@ -90,6 +106,7 @@ class DeviceController:
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def load_program(cls, name: str, json_data: List):
         logger.info(f"Load program {name}")
         program = Program.from_json(name, json_data)
@@ -97,48 +114,56 @@ class DeviceController:
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def unload_program(cls):
         logger.info("Unload program")
         cls._state_machine.transition(cls.NOT_LOADED)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def schedule_program(cls, time: str):
         logger.info(f"Schedule program for {time}")
         cls._state_machine.transition(cls.SCHEDULED, time)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def unschedule_program(cls):
         logger.info("Unschedule program")
         cls._state_machine.transition(cls.LOADED)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def run_program(cls):
         logger.info("Run program")
         cls._state_machine.transition(cls.RUNNING)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def pause_program(cls):
         logger.info("Pause program")
         cls._state_machine.transition(cls.PAUSED)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def continue_program(cls):
         logger.info("Continue program")
         cls._state_machine.transition(cls.RUNNING)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def stop_program(cls):
         logger.info("Stop program")
         cls._state_machine.transition(cls.NOT_LOADED)
 
     @classmethod
     @lock
+    @raise_for_state_transition
     def run_testloop(cls):
         logger.info("Run testloop")
         program = Program.testloop_program()
@@ -149,6 +174,11 @@ class DeviceController:
     @lock
     def fire(cls, letter: str, number: int):
         logger.info(f"Fire {letter}{number}")
+        if Hardware.is_locked():
+            raise Hardware.HardwareLockedError(
+                f"Cannot light {letter}{number}. "
+                "Hardware is locked!"
+            )
         address = Address(
             Config.get_value('device_id'),
             letter,
@@ -158,7 +188,9 @@ class DeviceController:
             command = Command(address, 0, f"manual_fire_command_{address}")
             command.light()
         else:
-            raise RuntimeError("Can only fire when not program is loaded")
+            raise cls.ProgramIsLoadedError(
+                "Can only fire when not program is loaded"
+            )
 
     @classmethod
     def get_system_time(cls) -> str:

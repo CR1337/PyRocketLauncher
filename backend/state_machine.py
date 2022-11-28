@@ -24,6 +24,12 @@ class State:
 
 class StateMachine:
 
+    class InvalidTransitionError(Exception):
+
+        def __init__(self, message: str):
+            self.message = message
+            super().__init__(self.message)
+
     _initial_state: State
     _current_state: State
     _states: Set[State]
@@ -68,7 +74,9 @@ class StateMachine:
 
     def transition(self, state: State, *args, **kwargs):
         if state not in self._transitions[self._current_state]:
-            raise ValueError(f"Invalid Transition: {self} -> {state}")
+            raise self.InvalidTransitionError(
+                f"Invalid Transition: {self} -> {state}"
+            )
         self._callbacks[self._current_state][state](*args, **kwargs)
         self._current_state = state
 

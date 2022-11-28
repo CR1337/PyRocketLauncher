@@ -5,9 +5,13 @@ from backend.address import Address
 from backend.config import Config
 from backend.hardware import Hardware
 from backend.logger import logger
+from backend.rl_exception import RlException
 
 
 class Command:
+
+    class AlreadyFiredException(RlException):
+        pass
 
     IGNITION_DURATION: float = Config.get_constant('ignition_duration')
 
@@ -54,7 +58,7 @@ class Command:
                 self._faulty_reason = f"Already fired {self}"
             if self._fireing:
                 self._faulty_reason = f"Already fireing {self}"
-            raise RuntimeError(f"{self._address} already fired")
+            raise self.AlreadyFiredException(f"{self._address} already fired")
         self._thread.start()
 
     def increase_timestamp(self, offset: float):

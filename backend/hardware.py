@@ -8,6 +8,7 @@ from backend.address import Address
 from backend.config import Config
 from backend.instance import Instance
 from backend.logger import logger
+from backend.rl_exception import RlException
 
 
 class DummySMBus:
@@ -49,20 +50,18 @@ def lock_bus(func):
 
 class Hardware:
 
+    class HardwareLockedError(RlException):
+        pass
+
     _lock: Lock = Lock()
     BUS_ADDRESS: int = Config.get_constant('bus_address')
     LOCK_VALUE: int = 0x10
     UNLOCK_VALUE: int = 0x00
 
-    try:
-        if Instance.on_pi():
-            BUS: SMBus = SMBus(BUS_ADDRESS)
-        else:
-            BUS = DummySMBus(BUS_ADDRESS)
-    except (TypeError, OSError):
-        raise
-    except Exception:
-        raise
+    if Instance.on_pi():
+        BUS: SMBus = SMBus(BUS_ADDRESS)
+    else:
+        BUS: DummySMBus = DummySMBus(BUS_ADDRESS)
 
     @classmethod
     def _write(cls, chip_address: int, register_address: int, value: int):

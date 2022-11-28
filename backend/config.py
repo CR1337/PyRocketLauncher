@@ -2,9 +2,14 @@ import json
 from typing import Any, Dict
 
 from backend.logger import logger
+from backend.rl_exception import RlException
 
 
 class Config:
+
+    class ConfigKeyError(RlException):
+        pass
+
     CONFIG_FILENAME: str = "config/config.json"
     CONSTANTS_FILENAME: str = "config/constants.json"
 
@@ -22,7 +27,9 @@ class Config:
         cls, key: str, dictionary: Dict[str, Any], display_name: str
     ):
         if key not in dictionary.keys():
-            raise KeyError(f"{display_name} key '{key}' does not exist")
+            raise cls.ConfigKeyError(
+                f"{display_name} key '{key}' does not exist"
+            )
 
     @classmethod
     def _get(cls, key: str, dictionary: Dict[str, Any], display_name: str):
