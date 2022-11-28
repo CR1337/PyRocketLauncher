@@ -32,32 +32,87 @@ fi
 info "Creating base directory..."
 mkdir -p $BASE_DIR
 cd $BASE_DIR
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Updating apt repositories..."
 apt -y update
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Installing dependencies via apt..."
 apt -y install git
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 apt -y install python3
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 apt -y install python3-pip
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 apt -y install i2c-tools
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Enabling i²c..."
 raspi-config nonint do_i2c 0
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 cd $APP_NAME
 
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Making logs directory..."
 mkdir -p logs
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 info "Adding bin directory to SECURE_PATH..."
 SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
 echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    error "Unexpected error!"
+    exit $ret_val
+fi
 
 success "Done"
