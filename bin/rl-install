@@ -35,6 +35,11 @@ fi
 
 info "Creating base directory..."
 mkdir -p $BASE_DIR
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+info "Changing to base directory..."
 cd $BASE_DIR
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
@@ -84,7 +89,12 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
+info "Changing to app directory..."
 cd $APP_NAME
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt
