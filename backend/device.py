@@ -53,9 +53,13 @@ class Device:
                 if f.result() is not None:
                     devices.add(f.result())
 
-        return [
-            Device(d[0], d[1]) for d in devices
-        ]
+        result = []
+        device_ids_found = set()
+        for d in devices:
+            if d[0] not in device_ids_found:
+                device_ids_found.add(d[1])
+                result.append(Device(d[0], d[1]))
+        return result
 
     def __init__(self, ip_address: str, device_id: str):
         self._ip_address = ip_address
