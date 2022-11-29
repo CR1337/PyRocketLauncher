@@ -96,7 +96,7 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
-info "Installing dependecies via pip..."
+info "Installing dependencies via pip..."
 python3 -m pip install -r requirements.txt
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
