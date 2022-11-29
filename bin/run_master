@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "ONLY RUN FOR DEBUGGING PURPOSES!"
+
+python3 rl_run.py --master
