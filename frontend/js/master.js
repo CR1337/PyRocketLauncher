@@ -133,15 +133,19 @@ const master_template = /*html*/`
 
     </fieldset>
 
-    <div v-for="(device, device_id, _) in devices">
+    <div v-for="(device_id, index) of device_ids" :key="device_id">
         <device
             :enabled="enabled"
             :ask="ask"
-            :initial_ip_address="device.ip_address"
+            :initial_ip_address="devices[device_id].ip_address"
             :on_master_page="true"
+            :first_in_list="index==0"
+            :last_in_list="index==Object.keys(devices).length-1"
             :deregister_button_status="button_status['deregister_' + device_id]"
             @state-updated="device_state_updated"
             @deregister-button-clicked="deregister_device"
+            @move-up="move_device_up"
+            @move-down="move_device_down"
         ></device>
     </div>
 `;
@@ -157,6 +161,7 @@ const master_component = {
             error_occured: false,
             system_time: "###T--:--:--.***",
             devices: {},
+            device_ids: [],
             event_source: null,
             last_loaded_program_name: "",
             selected_schedule_time: "00:00:00",
@@ -193,6 +198,7 @@ const master_component = {
             .then((data) => {
                 if (data !== null) {
                     this.devices = data;
+                    this.device_ids = Object.keys(this.devices);
                     for (let device_id in this.devices) {
                         if (("deregister_" + device_id) in this.button_status) {
                             continue;
@@ -214,6 +220,7 @@ const master_component = {
                         }
                     }
                     this.devices = {};
+                    this.device_ids = [];
                 }
             });
         },
@@ -224,6 +231,7 @@ const master_component = {
                 if (data !== null) {
                     const device_id = data.deregistered_device_id;
                     delete this.devices[device_id];
+                    this.device_ids.splice(this.device_ids.indexOf(device_id), 1);
                     delete this.button_status["deregister_" + device_id];
                 }
             });
@@ -374,6 +382,21 @@ const master_component = {
             const device_id = data.device_id;
             const state = data.state;
             this.devices[device_id] = state;
+        },
+
+        _move_device(device_id, direction) {
+            let index = this.device_ids.indexOf(device_id);
+            const item = this.device_ids[index];
+            this.device_ids.splice(index, 1);
+            this.device_ids.splice(index + direction, 0, item);
+        },
+
+        move_device_up(device_id) {
+            this._move_device(device_id, -1);
+        },
+
+        move_device_down(device_id) {
+            this._move_device(device_id, 1);
         }
     },
     computed: {
@@ -505,6 +528,7 @@ const master_component = {
         request("/devices", 'GET', {}, this._error_callback, ()=>{})
         .then((devices) => {
             this.devices = devices;
+            this.device_ids = Object.keys(this.devices);
         });
         this.event_source = new EventSource("/event-stream");
         this.event_source.onmessage = (event) => {
@@ -515,6 +539,7 @@ const master_component = {
                 for (const existing_device_id in this.devices) {
                     if (!data.device_ids.includes(existing_device_id)) {
                         delete this.devices[existing_device_id];
+                        this.device_ids.splice(this.device_ids.indexOf(existing_device_id), 1);
                         delete this.button_status["deregister_" + existing_device_id];
                     }
                 }

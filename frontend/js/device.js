@@ -6,6 +6,7 @@ const device_template = /*html*/`
     </legend>
         <div>
             <span :class="['icon', display_system_time_color_class]"><i class="las la-clock"></i></span><span :class="['label', display_system_time_color_class]">{{displayed_system_time}}</span>
+
             <button
                 class="base-button red"
                 @click="error_button_clicked"
@@ -28,6 +29,25 @@ const device_template = /*html*/`
             ><i
                 class="las la-list"
             ></i></button>
+
+            <template v-if="on_master_page">
+                <button
+                    class="base-button"
+                    @click="move_up"
+                    :disabled="first_in_list"
+                    style="float: right;"
+                ><i
+                    class="las la-arrow-up"
+                ></i></button>
+                <button
+                    class="base-button"
+                    @click="move_down"
+                    :disabled="last_in_list"
+                    style="float: right;"
+                ><i
+                    class="las la-arrow-down"
+                ></i></button>
+            </template>
         </div>
 
         <div class="v-spacing"></div>
@@ -91,7 +111,9 @@ const device_component = {
         enabled: Boolean,
         ask: Boolean,
         initial_ip_address: String,
-        on_master_page: Boolean
+        on_master_page: Boolean,
+        first_in_list: Boolean,
+        last_in_list: Boolean
     },
     data() {
         return {
@@ -153,6 +175,14 @@ const device_component = {
         config_button_clicked(event) {
             window.open(this.host + "/static/config.html", "_blank").focus();
         },
+
+        move_up() {
+            this.$emit('move-up', this.device_id);
+        },
+
+        move_down() {
+            this.$emit('move-down', this.device_id);
+        }
     },
     computed: {
         controller_state() {
