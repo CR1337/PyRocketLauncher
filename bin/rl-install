@@ -18,6 +18,10 @@ error () {
 success() {
     echo -e "${GREEN}SUCCESS> $1 ${RESET}"
 }
+unexpected_error() {
+    error "Unexpected error!"
+    exit $1
+}
 
 if [ "$EUID" -ne 0 ]; then
     error "Please execute as root!"
@@ -31,33 +35,97 @@ fi
 
 info "Creating base directory..."
 mkdir -p $BASE_DIR
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+info "Changing to base directory..."
 cd $BASE_DIR
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Updating apt repositories..."
 apt -y update
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Installing dependencies via apt..."
 apt -y install git
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 apt -y install python3
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 apt -y install python3-pip
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 apt -y install i2c-tools
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Enabling i²c..."
 raspi-config nonint do_i2c 0
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
+info "Changing to app directory..."
 cd $APP_NAME
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Installing dependecies via pip..."
 python3 -m pip install -r requirements.txt
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Making logs directory..."
 mkdir -p logs
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Adding bin directory to SECURE_PATH..."
 SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
 echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+python3 ./bin/on_zero.py
+ret_val=$?
+if [ $ret_val -ne 1 ]; then
+    info "Disabling onboard WiFi if on Pi Zero W (reboot needed)..."
+    python3 ./bin/zero_wifi_off.py
+    if [ $ret_val -ne 0 ]; then
+        unexpected_error $ret_val
+    fi
+fi
 
 success "Done"

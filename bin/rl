@@ -43,6 +43,7 @@ class Paths:
     I2C: str = "/dev/i2c-1"
     SUDOERS_RL: str = "/etc/sudoers.d/rl"
     CRONJOB: str = "/etc/cron.d/rl"
+    CONFIG_TXT: str = "/boot/config.txt"
 
 
 class Ids:
@@ -757,6 +758,21 @@ class RlManager:
         if was_running:
             cls.run()
 
+    @staticmethod
+    def _reenable_wifi_on_pi_zero_w():
+        with open(Paths.MODEL, 'r', encoding='ascii') as file:
+            if "Zero W" not in file.read():
+                return
+        Output.info("Enabling onboard WiFi on Pi Zero W (reboot needed)...")
+        with open(Paths.CONFIG_TXT, 'r', encoding='ascii') as file:
+            lines = file.readlines()
+        lines = [
+            line for line in lines
+            if "dtoverlay=disable-wifi" not in line
+        ]
+        with open(Paths.CONFIG_TXT, 'w', encoding='ascii') as file:
+            file.writelines(lines)
+
     @classmethod
     def uninstall(cls):
         Output.info("Starting deinstallation process...")
@@ -773,6 +789,7 @@ class RlManager:
             Cronjob.deregister()
         Output.info("Removing bin directory from SECURE_PATH...")
         os.remove(Paths.SUDOERS_RL)
+        cls._reenable_wifi_on_pi_zero_w()
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
         Output.info("Removing all files...")
