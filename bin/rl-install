@@ -96,7 +96,7 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
-info "Installing dependecies via pip..."
+info "Installing dependencies via pip..."
 python3 -m pip install -r requirements.txt
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
@@ -118,9 +118,9 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
-python3 ./bin/on_zero.py
+python3 ./bin/on_zero_w.py
 ret_val=$?
-if [ $ret_val -ne 1 ]; then
+if ! [ $ret_val -ne 0 ]; then
     info "Disabling onboard WiFi if on Pi Zero W (reboot needed)..."
     python3 ./bin/zero_wifi_off.py
     if [ $ret_val -ne 0 ]; then
