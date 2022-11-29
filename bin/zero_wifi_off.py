@@ -12,7 +12,7 @@ try:
         if "Zero W" not in file:
             raise ValueError()
 except (FileNotFoundError, ValueError):
-    exit(0)
+    exit(1)
 
 with open(CONFIG_TXT, 'r', encoding='ascii') as file:
     in_lines = file.readlines()
