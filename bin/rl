@@ -1215,9 +1215,7 @@ class UserInterface:
                     f"Invalid key: {key}!\nRun 'sudo rl config help'."
                 )
             value = Config.GET_METHODS[key]()
-            if key == 'static_ip_byte' and value == -1:
-                value = False
-            print(f"{key}:\t{Config.GET_METHODS[key]()}")
+            print(f"{key}:\t{value}")
 
         else:
             Output.critical("Unknown command!\nRun 'sudo rl config help'.")
