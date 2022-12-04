@@ -567,10 +567,7 @@ class Config:
 
     @classmethod
     def get_static_ip_byte(cls) -> int:
-        if Network.is_ip_static():
-            return Network.get_static_ip_byte()
-        else:
-            return -1
+        return Network.get_static_ip_byte()
 
     @classmethod
     def set_static_ip_byte(cls, value: int):
@@ -954,7 +951,7 @@ class Dns:
 
     @classmethod
     def install(cls):
-        Output("Installing dns...")
+        Output.info("Installing dns...")
         if cls.is_installed():
             Output.critical("dns is already installed!")
         Output.info("Installing dns...")
