@@ -912,7 +912,7 @@ class Dns:
     @staticmethod
     def restart():
         Output.info("Restarting dns service...")
-        command = Command("systemctl restart dnsmasq ")
+        command = Command("systemctl restart dnsmasq")
         if command.get_returncode() != 0:
             Output.unexpected_error()
 
@@ -961,13 +961,13 @@ class Dns:
 
         with open(Paths.DNSMASQ_CONF, 'w', encoding='ascii') as file:
             file.writelines([
-                "listen-address=127.0.0.1",
+                "listen-address=127.0.0.1\n",
                 f"listen-address={Network.get_ip()}"
             ])
 
         with open(Paths.RESOLV_CONF, 'w', encoding='ascii') as file:
             file.writelines([
-                "nameserver 127.0.0.1",
+                "nameserver 127.0.0.1\n",
                 f"nameserver {Network.get_gateway_ip()}"
             ])
 
@@ -978,8 +978,12 @@ class Dns:
         Output.info("Uninstalling dns...")
         if not cls.is_installed():
             Output.critical("dns is not installed!")
+        Output.info("Disabling dns service...")
+        command = Command("systemctl disable dnsmasq")
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
         Output.info("Uninstalling dns...")
-        command = Command("apt -y remove dnsmasq")
+        command = Command("apt -y purge dnsmasq")
         if command.get_returncode() != 0:
             Output.unexpected_error()
 
@@ -991,7 +995,19 @@ class Dns:
     @staticmethod
     def is_installed() -> bool:
         command = Command("dpkg -l dnsmasq")
-        return command.get_returncode() == 0
+        if command.get_returncode() != 0:
+            return False
+        lines = command.get_output().split("\n")
+        dnsmasq_line = None
+        for line in lines:
+            if 'dnsmasq' in line:
+                dnsmasq_line = line
+                break
+        else:
+            return False
+        parts = [p for p in dnsmasq_line.split() if len(p) > 0]
+        index = parts.index('dnsmasq')
+        return parts[index + 1] != '<none>'
 
 
 class RlManager:
