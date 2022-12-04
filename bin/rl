@@ -49,6 +49,8 @@ class Paths:
     DNSMASQ_CONF: str = "/etc/dnsmasq.conf"
     RESOLV_CONF: str = "/etc/resolv.conf"
 
+    DHCPCD_CONF: str = "/etc/dhcpcd.conf"
+
 
 class Ids:
 
@@ -308,6 +310,8 @@ class Ask:
 
 class Network:
 
+    INTERFACE_LINE: str = "interface wlan0"
+
     @staticmethod
     def get_gateway_ip() -> str:
         command = Command("/sbin/ip route|awk '/default/ { print $3 }'")
@@ -319,13 +323,69 @@ class Network:
         ips = command.get_output().strip()
         ips = ips.split(" ")
 
-        gateway_ip_start = ".".join(cls.get_gatewway_ip().split(".")[0:3])
-
         for ip in ips:
-            if ip.startswith(gateway_ip_start):
+            if ip.startswith(cls._get_gateway_ip_begin()):
                 return ip
 
         Output.critical("Could not determine own ip!")
+
+    @classmethod
+    def _get_gateway_ip_begin(cls) -> str:
+        return ".".join(cls.get_gateway_ip().split(".")[0:3])
+
+    @classmethod
+    def _is_interface_line(cls, line: str) -> bool:
+        return not line.startswith("#") and cls.INTERFACE_LINE in line
+
+    @classmethod
+    def set_static_ip(cls, last_byte: int):
+        ip_begin = cls._get_gateway_ip_begin()
+        content = (
+            f"{cls.INTERFACE_LINE}\n"
+            f"static routers={ip_begin}.1\n"
+            f"static domain_name_servers={ip_begin}.1\n"
+            f"static ip_address={ip_begin}.{last_byte}\n"
+        )
+        with open(Paths.DHCPCD_CONF, 'a', encoding='ascii') as file:
+            file.write(content)
+
+    @classmethod
+    def unset_static_ip(cls):
+        with open(Paths.DHCPCD_CONF, 'r', encoding='ascii') as file:
+            lines = file.readlines()
+        keep_lines = []
+        counter = -1
+        for line in lines:
+            if cls._is_interface_line(line):
+                counter = 0
+            if counter >= 0:
+                counter += 1
+            if counter < 0 or counter > 4:
+                keep_lines.append(line)
+        with open(Paths.DHCPCD_CONF, 'w', encoding='ascii') as file:
+            file.writelines()
+
+    @classmethod
+    def get_static_ip_byte(cls) -> int:
+        if cls.is_ip_static():
+            return -1
+        with open(Paths.DHCPCD_CONF, 'r', encoding='ascii') as file:
+            lines = file.readlines()
+        ip_line = None
+        for idx, line in enumerate(lines):
+            if cls._is_interface_line(line):
+                ip_line = lines[idx + 3]
+                break
+        return int(ip_line.strip().split(".")[-1])
+
+    @classmethod
+    def is_ip_static(cls) -> bool:
+        with open(Paths.DHCPCD_CONF, 'r', encoding='ascii') as file:
+            lines = file.readlines()
+        for line in lines:
+            if cls._is_interface_line(line):
+                return True
+        return False
 
 
 class Cronjob:
@@ -504,6 +564,20 @@ class Config:
         Output.info(f"Set time to {time_string}.")
 
     @classmethod
+    def get_static_ip_byte(cls) -> int:
+        if Network.is_ip_static():
+            return Network.get_static_ip_byte()
+        else:
+            return -1
+
+    @classmethod
+    def set_static_ip_byte(cls, value: int):
+        if value == -1:
+            Network.unset_static_ip()
+        else:
+            Network.set_static_ip(value)
+
+    @classmethod
     def validate_value(cls, key: str, value: Any) -> bool:
         if cls.TYPES[key] == str:
             if key == 'timezone':
@@ -514,6 +588,8 @@ class Config:
                 return True
         elif key == 'chip_amount':
             FormatValidator.validate_int(value, 1, 8)
+        elif key == 'static_ip_byte':
+            FormatValidator.validate_int(value, -1, 254)
         elif cls.TYPES[key] == bool:
             return FormatValidator.validate_bool(value)
 
@@ -524,7 +600,8 @@ class Config:
         'master': Ask.boolean,
         'device': Ask.boolean,
         'timezone': Ask.timezone,
-        'system_time': Ask.datetime
+        'system_time': Ask.datetime,
+        'static_ip_byte': Ask.integer
     }
 
     TYPES: Dict[str, type] = {
@@ -534,7 +611,8 @@ class Config:
         'master': bool,
         'device': bool,
         'timezone': str,
-        'system_time': str
+        'system_time': str,
+        'static_ip_byte': int
     }
 
 
@@ -545,7 +623,8 @@ Config.SET_METHODS: Dict[str, Callable] = {
     'master': Config.set_master,
     'device': Config.set_device,
     'timezone': Config.set_timezone,
-    'system_time': Config.set_system_time
+    'system_time': Config.set_system_time,
+    'static_ip_byte': Config.set_static_ip_byte
 }
 
 
@@ -556,7 +635,8 @@ Config.GET_METHODS: Dict[str, Callable] = {
     'master': Config.get_master,
     'device': Config.get_device,
     'timezone': Config.get_timezone,
-    'system_time': Config.get_system_time
+    'system_time': Config.get_system_time,
+    'static_ip_byte': Config.get_static_ip_byte
 }
 
 
@@ -588,12 +668,16 @@ class ConfigWizard:
 
             ask_for_bool = (Config.ASK_METHODS[key] == Ask.boolean)
             ask_for_chip_amount = (key == 'chip_amount')
+            ask_for_static_ip_byte = (key == 'static_ip_byte')
+
             value = Config.ASK_METHODS[key](
                 f"Enter the new value for {key} "
                 f"{'(yn)' if ask_for_bool else ''}"
                 f"{'(1-8)' if ask_for_chip_amount else ''}"
+                f"{'(-1-254)' if ask_for_static_ip_byte else ''}"
                 "> ",
-                *([1, 8] if ask_for_chip_amount else [])
+                *([1, 8] if ask_for_chip_amount else []),
+                *([-1, 254] if ask_for_static_ip_byte else [])
             )
             if value is None:
                 break
@@ -1130,6 +1214,9 @@ class UserInterface:
                 Output.critical(
                     f"Invalid key: {key}!\nRun 'sudo rl config help'."
                 )
+            value = Config.GET_METHODS[key]()
+            if key == 'static_ip_byte' and value == -1:
+                value = False
             print(f"{key}:\t{Config.GET_METHODS[key]()}")
 
         else:
