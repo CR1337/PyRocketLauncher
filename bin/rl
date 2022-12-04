@@ -339,6 +339,8 @@ class Network:
 
     @classmethod
     def set_static_ip(cls, last_byte: int):
+        if cls.is_ip_static():
+            cls.unset_static_ip()
         ip_begin = cls._get_gateway_ip_begin()
         content = (
             f"{cls.INTERFACE_LINE}\n"
