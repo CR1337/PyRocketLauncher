@@ -16,13 +16,14 @@ Commands that require arguments:
         Set the value of a specific option.
         Possible keys are:
 
-        device_id:          The name of this device
-        chip_amount [1-26]: The number of installed i²c chips
-        debug [0, 1]:       Debug mode
-        master [0, 1]:      Run a master instance on this hardware
-        device [0, 1]:      Run a device instance on this hardware
-        timezone:           The timezone this software is used in
-        system_time:        The system time
+        device_id:                  The name of this device
+        chip_amount [1-26]:         The number of installed i²c chips
+        debug [0, 1]:               Debug mode
+        master [0, 1]:              Run a master instance on this hardware
+        device [0, 1]:              Run a device instance on this hardware
+        timezone:                   The timezone this software is used in
+        system_time:                The system time
+        static_ip_byte [-1, 254]:   The last byte of the static ip, -1 for dynamic ip
 
     get KEY
 
