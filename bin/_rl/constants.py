@@ -3,7 +3,11 @@ import os
 
 class Paths:
 
-    SELF: str = os.path.realpath(__file__)
+    SELF: str = "/" + os.path.join(
+        *os.path.realpath(__file__).split(os.path.sep)[:-2], "rl"
+    )
+
+    print(SELF)
 
     PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
     HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
