@@ -7,8 +7,6 @@ class Paths:
         *os.path.realpath(__file__).split(os.path.sep)[:-2], "rl"
     )
 
-    print(SELF)
-
     PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
     HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
     CONFIG_PATH: str = os.path.join(HOME, "config")
