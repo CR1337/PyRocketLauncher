@@ -73,6 +73,8 @@ class Network:
             if cls._is_interface_line(line):
                 ip_line = lines[idx + 3]
                 break
+        else:
+            return -1
         return int(ip_line.strip().split(".")[-1])
 
     @classmethod
