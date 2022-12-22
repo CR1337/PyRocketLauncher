@@ -70,7 +70,7 @@ class DnsWizard():
                 cls._add_entry_wizard()
             elif selection == 2:
                 cls._remove_entry_wizard()
-        if cls._needs_restart():
+        if cls._needs_restart:
             Dns.restart()
 
     @classmethod
