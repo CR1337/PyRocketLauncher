@@ -4,6 +4,7 @@ const control_template = /*html*/`
         class="base-button toggle-button"
         @click="toggle_enabled()"
         :checked="enabled"
+        title="Enable/Disable buttons"
     ><i
         :class="['las', 'la-' + ((enabled) ? 'toggle-on' : 'toggle-off')]"
     ></i></button>
@@ -12,6 +13,7 @@ const control_template = /*html*/`
         class="base-button toggle-button"
         @click="toggle_ask()"
         :checked="ask"
+        title="Toggle confirmation prompt"
     ><i
         :class="['las', 'la-' + ((ask) ? 'question-circle' : 'exclamation-circle')]"
     ></i></button>
@@ -20,6 +22,7 @@ const control_template = /*html*/`
         class="base-button"
         @click="open_editor()"
         style="float: right;"
+        title="Program editor"
     ><i
         class="las la-pen"
     ></i></button>

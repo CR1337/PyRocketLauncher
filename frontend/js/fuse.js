@@ -22,6 +22,7 @@ const fuse_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.fire]"
                 @click="fire_button_clicked"
                 :disabled="!enabled"
+                title="Fire"
                 v-else
             ><i
                 class="las la-fire-alt"

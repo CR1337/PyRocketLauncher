@@ -8,6 +8,7 @@ const master_template = /*html*/`
                 @click="error_button_clicked"
                 v-if="error_occured"
                 style="float: right;"
+                title="An error occured"
             ><i
                 class="las la-exclamation-triangle"
             ></i></button>
@@ -15,6 +16,7 @@ const master_template = /*html*/`
                 class="base-button"
                 @click="config_button_clicked"
                 style="float: right;"
+                title="Configuration"
             ><i
                 class="las la-wrench"
             ></i></button>
@@ -22,6 +24,7 @@ const master_template = /*html*/`
                 class="base-button"
                 @click="logs_button_clicked"
                 style="float: right;"
+                title="Logs"
             ><i
                 class="las la-list"
             ></i></button>
@@ -34,6 +37,7 @@ const master_template = /*html*/`
                 :class="['base-button', button_status.search]"
                 @click="search_button_clicked"
                 :disabled="!enabled"
+                title="Search for devices"
             ><i
                 class="las la-search"
             ></i></button>
@@ -41,6 +45,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'red', button_status.deregister_all]"
                 @click="deregister_all_button_clicked"
                 :disabled="!deregister_all_button_enabled"
+                title="Deregister all devices"
             ><i
                 class="las la-times"
             ></i></button>
@@ -49,6 +54,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.testloop]"
                 @click="testloop_button_clicked"
                 :disabled="!testloop_button_enabled"
+                title="Testloop"
             ><i
                 class="las la-flask"
             ></i></button>
@@ -57,6 +63,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'green', button_status.unlock]"
                 @click="unlock_button_clicked"
                 :disabled="!unlock_button_enabled"
+                title="Unlock all devices"
             ><i
                 class="las la-lock-open"
             ></i></button>
@@ -64,6 +71,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'red', button_status.lock]"
                 @click="lock_button_clicked"
                 :disabled="!lock_button_enabled"
+                title="Lock all devices"
             ><i
                 class="las la-lock"
             ></i></button>
@@ -74,6 +82,7 @@ const master_template = /*html*/`
                 :class="['base-button', button_status.load]"
                 onclick="document.getElementById('program_file_upload_button').click()"
                 :disabled="!load_button_enabled"
+                title="Upload program"
             ><i
                 class="las la-upload"
             ></i></button>
@@ -82,6 +91,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'red', button_status.unload]"
                 @click="unload_button_clicked"
                 :disabled="!unload_button_enabled"
+                title="Unload program"
             ><i
                 class="las la-trash-alt"
             ></i></button>
@@ -89,6 +99,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'green', button_status.play]"
                 @click="play_button_clicked"
                 :disabled="!play_button_enabled"
+                title="Run program"
             ><i
                 class="las la-play"
             ></i></button>
@@ -96,6 +107,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.pause]"
                 @click="pause_button_clicked"
                 :disabled="!pause_button_enabled"
+                title="Pause program"
             ><i
                 class="las la-pause-circle"
             ></i></button>
@@ -103,6 +115,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.continue]"
                 @click="continue_button_clicked"
                 :disabled="!continue_button_enabled"
+                title="Continue program"
             ><i
                 class="las la-play-circle"
             ></i></button>
@@ -110,6 +123,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'red', button_status.stop]"
                 @click="stop_button_clicked"
                 :disabled="!stop_button_enabled"
+                title="Stop program"
             ><i
                 class="las la-stop"
             ></i></button>
@@ -118,6 +132,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'red', button_status.unschedule]"
                 @click="unschedule_button_clicked"
                 :disabled="!unschedule_button_enabled"
+                title="Unschedule program"
             ><i
                 class="las la-calendar-times"
             ></i></button>
@@ -125,6 +140,7 @@ const master_template = /*html*/`
                 :class="['base-button', 'purple', button_status.schedule]"
                 @click="schedule_button_clicked"
                 :disabled="!schedule_button_enabled"
+                title="Schedule program"
             ><i
                 class="las la-calendar-plus"
             ></i></button>
