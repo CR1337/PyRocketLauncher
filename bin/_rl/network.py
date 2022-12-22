@@ -60,7 +60,7 @@ class Network:
             if counter < 0 or counter > 4:
                 keep_lines.append(line)
         with open(Paths.DHCPCD_CONF, 'w', encoding='ascii') as file:
-            file.writelines()
+            file.writelines(keep_lines)
 
     @classmethod
     def get_static_ip_byte(cls) -> int:
