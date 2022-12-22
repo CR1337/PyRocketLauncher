@@ -12,6 +12,7 @@ const device_template = /*html*/`
                 @click="error_button_clicked"
                 v-if="error_occured"
                 style="float: right;"
+                title="An error occured"
             ><i
                 class="las la-exclamation-triangle"
             ></i></button>
@@ -19,6 +20,7 @@ const device_template = /*html*/`
                 class="base-button"
                 @click="config_button_clicked"
                 style="float: right;"
+                title="Configuration"
             ><i
                 class="las la-wrench"
             ></i></button>
@@ -26,6 +28,7 @@ const device_template = /*html*/`
                 class="base-button"
                 @click="logs_button_clicked"
                 style="float: right;"
+                title="Logs"
             ><i
                 class="las la-list"
             ></i></button>
@@ -36,6 +39,7 @@ const device_template = /*html*/`
                     @click="move_up"
                     :disabled="first_in_list"
                     style="float: right;"
+                    title="Move device up"
                 ><i
                     class="las la-arrow-up"
                 ></i></button>
@@ -44,6 +48,7 @@ const device_template = /*html*/`
                     @click="move_down"
                     :disabled="last_in_list"
                     style="float: right;"
+                    title="Move device down"
                 ><i
                     class="las la-arrow-down"
                 ></i></button>
@@ -57,6 +62,7 @@ const device_template = /*html*/`
                 :class="['base-button', 'red', button_status.shutdown]"
                 @click="shutdown_button_clicked"
                 :disabled="!enabled"
+                title="Shutdown"
             ><i
                 class="las la-power-off"
             ></i></button>
@@ -65,6 +71,7 @@ const device_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.reboot]"
                 @click="reboot_button_clicked"
                 :disabled="!enabled"
+                title="Reboot"
             ><i
                 class="las la-redo-alt"
             ></i></button>
@@ -75,6 +82,7 @@ const device_template = /*html*/`
                     :class="['base-button', 'red', deregister_button_status]"
                     @click="deregister_button_clicked"
                     :disabled="!enabled"
+                    title="Deregister"
                 ><i
                     class="las la-times"
                 ></i></button>
@@ -85,6 +93,7 @@ const device_template = /*html*/`
                 :class="['base-button', 'yellow', button_status.testloop]"
                 @click="testloop_button_clicked"
                 :disabled="!testloop_button_enabled"
+                title="Testloop"
             ><i
                 class="las la-flask"
             ></i></button>
@@ -93,6 +102,7 @@ const device_template = /*html*/`
                 :class="['base-button', 'green', button_status.unlock]"
                 @click="unlock_button_clicked"
                 :disabled="!unlock_button_enabled"
+                title="Unlock"
             ><i
                 class="las la-lock-open"
             ></i></button>
@@ -100,6 +110,7 @@ const device_template = /*html*/`
                 :class="['base-button', 'red', button_status.lock]"
                 @click="lock_button_clicked"
                 :disabled="!lock_button_enabled"
+                title="Lock"
             ><i
                 class="las la-lock"
             ></i></button>
