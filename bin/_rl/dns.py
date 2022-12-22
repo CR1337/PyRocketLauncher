@@ -104,7 +104,7 @@ class Dns:
 
     @classmethod
     def add_entry(cls, domain: str, ip: str):
-        Output(f"Adding dns entry {domain} -> {ip}...")
+        Output.info(f"Adding dns entry {domain} -> {ip}...")
         with open(Paths.DNSMASQ_CONF, 'a', encoding='ascii') as file:
             file.writelines([
                 f"address=/{domain}/{ip}"
@@ -112,7 +112,7 @@ class Dns:
 
     @classmethod
     def remove_entry(cls, domain: str, ip: str):
-        Output(f"Removing dns entry {domain} -> {ip}...")
+        Output.info(f"Removing dns entry {domain} -> {ip}...")
         with open(Paths.DNSMASQ_CONF, 'r', encoding='ascii') as file:
             lines = file.readlines()
         keep_lines = []
