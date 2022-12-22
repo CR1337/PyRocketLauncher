@@ -32,7 +32,7 @@ class FormatValidator:
         return value in ['0', '1']
 
     @staticmethod
-    def validate_int(value: str, max_value: int, min_value: int) -> bool:
+    def validate_int(value: str, min_value: int, max_value: int) -> bool:
         try:
             value = int(value)
         except ValueError:
