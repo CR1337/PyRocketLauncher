@@ -53,6 +53,15 @@ const device_template = /*html*/`
         <div class="v-spacing"></div>
 
         <div>
+            <button
+                :class="['base-button', 'red', button_status.shutdown]"
+                @click="shutdown_button_clicked"
+                :disabled="!enabled"
+            ><i
+                class="las la-power-off"
+            ></i></button>
+            <span class="h-spacing"></span>
+
             <template v-if="on_master_page">
                 <button
                     :class="['base-button', 'red', deregister_button_status]"
@@ -127,13 +136,26 @@ const device_component = {
             button_status: {
                 testloop: '',
                 unlock: '',
-                lock: ''
+                lock: '',
+                shutdown: ''
             }
         };
     },
     methods: {
         _error_callback() {
             this.error_occured = true;
+        },
+
+        shutdown_button_clicked(event) {
+            const confirm_prompt = "Shutdown device?";
+            if (!this.ask) {
+                if (!confirm(confirm_prompt)) return;
+            }
+            button_request(
+                this.host + "/shutdown", 'POST',
+                {},
+                'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
+            );
         },
 
         deregister_button_clicked(event) {
