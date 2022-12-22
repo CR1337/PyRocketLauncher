@@ -2,8 +2,6 @@ import argparse
 import os
 import subprocess
 
-from backend.logger import logger
-
 
 class Instance:
 
@@ -55,7 +53,6 @@ class Instance:
 
     @classmethod
     def shutdown(cls):
-        logger.info("Shutting down system...")
         process = subprocess.Popen("halt", shell=True)
         process.wait()
         if process.returncode != 0:
