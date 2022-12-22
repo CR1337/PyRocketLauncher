@@ -64,7 +64,7 @@ class Network:
 
     @classmethod
     def get_static_ip_byte(cls) -> int:
-        if cls.is_ip_static():
+        if not cls.is_ip_static():
             return -1
         with open(Paths.DHCPCD_CONF, 'r', encoding='ascii') as file:
             lines = file.readlines()
