@@ -185,9 +185,9 @@ class Config:
             else:
                 return True
         elif key == 'chip_amount':
-            FormatValidator.validate_int(value, 1, 8)
+            return FormatValidator.validate_int(value, 1, 8)
         elif key == 'static_ip_byte':
-            FormatValidator.validate_int(value, -1, 254)
+            return FormatValidator.validate_int(value, -1, 254)
         elif cls.TYPES[key] == bool:
             return FormatValidator.validate_bool(value)
 
