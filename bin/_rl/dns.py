@@ -181,7 +181,7 @@ class Dns:
     @staticmethod
     def is_installed() -> bool:
         command = Command("dpkg -l dnsmasq")
-        if command.get_returncode() != 0:
+        if command.get_returncode(show_output=False) != 0:
             return False
         lines = command.get_output().split("\n")
         dnsmasq_line = None
