@@ -57,3 +57,10 @@ class Instance:
         process.wait()
         if process.returncode != 0:
             raise cls.ShutdownError()
+
+    @classmethod
+    def reboot(cls):
+        process = subprocess.Popen("reboot", shell=True)
+        process.wait()
+        if process.returncode != 0:
+            raise cls.ShutdownError()

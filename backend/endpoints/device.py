@@ -30,3 +30,13 @@ def route_discover():
 def route_shutdown():
     Instance.shutdown()
     return make_response(({}, status.HTTP_200_OK))
+
+
+@device_bp.route(
+    "/reboot", methods=['POST'], endpoint='reboot'
+)
+@handle_exceptions
+@log_request
+def route_reboot():
+    Instance.reboot()
+    return make_response(({}, status.HTTP_200_OK))
