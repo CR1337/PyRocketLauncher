@@ -62,7 +62,7 @@ const device_template = /*html*/`
             ></i></button>
 
             <button
-                :class="['base-button', 'red', button_status.reboot]"
+                :class="['base-button', 'yellow', button_status.reboot]"
                 @click="reboot_button_clicked"
                 :disabled="!enabled"
             ><i
