@@ -60,6 +60,14 @@ const device_template = /*html*/`
             ><i
                 class="las la-power-off"
             ></i></button>
+
+            <button
+                :class="['base-button', 'red', button_status.reboot]"
+                @click="reboot_button_clicked"
+                :disabled="!enabled"
+            ><i
+                class="las la-redo-alt"
+            ></i></button>
             <span class="h-spacing"></span>
 
             <template v-if="on_master_page">
@@ -137,7 +145,8 @@ const device_component = {
                 testloop: '',
                 unlock: '',
                 lock: '',
-                shutdown: ''
+                shutdown: '',
+                reboot: ''
             }
         };
     },
@@ -153,6 +162,18 @@ const device_component = {
             }
             button_request(
                 this.host + "/shutdown", 'POST',
+                {},
+                'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
+            );
+        },
+
+        reboot_button_clicked(event) {
+            const confirm_prompt = "Reboot device?";
+            if (!this.ask) {
+                if (!confirm(confirm_prompt)) return;
+            }
+            button_request(
+                this.host + "/reboot", 'POST',
                 {},
                 'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
