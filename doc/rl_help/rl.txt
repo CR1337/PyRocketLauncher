@@ -20,7 +20,6 @@ Commands that require subcommands:
     status      Display status information. Run 'rl status help'
     cronjob     Manage the app's cronjob. Run 'rl cronjob help'
     logs        Manage the app's logfiles. Run 'rl logs help'
-    dns         Manage the dns service. Run 'rl dns help'
 
 Examples:
 

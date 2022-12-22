@@ -84,8 +84,9 @@ class UserInterface:
             cls._cronjob(args[1:])
         elif args[0] == 'logs':
             cls._logs(args[1:])
-        elif args[0] == 'dns':
-            cls._dns(args[1:])
+        # disabled for now
+        # elif args[0] == 'dns':
+        #     cls._dns(args[1:])
         else:
             Output.critical("Unknown command!\nRun 'sudo rl help'.")
 
