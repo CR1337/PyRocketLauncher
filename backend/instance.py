@@ -1,9 +1,14 @@
+import argparse
 import os
 import subprocess
-import argparse
+
+from backend.logger import logger
 
 
 class Instance:
+
+    class ShutdownError(Exception):
+        pass
 
     MODEL_PATH: str = "/sys/firmware/devicetree/base/model"
 
@@ -47,3 +52,11 @@ class Instance:
     @classmethod
     def get_prefix(cls) -> str:
         return "master" if cls._is_master else "device"
+
+    @classmethod
+    def shutdown(cls):
+        logger.info("Shutting down system...")
+        process = subprocess.Popen("halt", shell=True)
+        process.wait()
+        if process.returncode != 0:
+            raise cls.ShutdownError()
