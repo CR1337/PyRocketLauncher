@@ -48,6 +48,17 @@
                 >
             </td>
         </tr>
+        <tr>
+            <td>Music:</td>
+            <td>
+                <input
+                    type="checkbox"
+                    id="music_input"
+                    v-model="config.music"
+                    style="width: 200px; text-align: center;"
+                >
+            </td>
+        </tr>
     </table>
     <br>
     <h2>Constants</h2>
@@ -139,7 +150,8 @@
                 config: {
                     device_id: "",
                     chip_amount: 0,
-                    debug: null
+                    debug: null,
+                    music: null
                 },
                 constants: {
                     bus_address: 0,

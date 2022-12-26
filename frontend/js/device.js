@@ -116,6 +116,10 @@ const device_template = /*html*/`
             ></i></button>
             <span class="h-spacing"></span>
             <span :class="['icon', lock_icon_color]"><i :class="['las', lock_icon_id]"></i></span>
+            <template v-if="plays_music">
+                <span class="h-spacing"></span>
+                <span :class="['icon', music_icon_color]"><i class="las la-music"></i></span>
+            </template>
             <span class="h-spacing"></span>
             <span :class="['icon', status_icon_color]"><i :class="['las', status_icon_id]"></i></span>
             <span class="label">{{status_text}}</span>
@@ -326,6 +330,15 @@ const device_component = {
 
         lock_icon_color() {
             return (this.is_locked) ? "red" : "green";
+        },
+
+        music_icon_color() {
+            return (this.state['music_loaded'] ? "green" : "gray");
+        },
+
+        plays_music() {
+            if (this.state == null) return false;
+            return this.state['config']['config']['music'];
         },
 
         status_icon_id() {

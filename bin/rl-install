@@ -82,6 +82,41 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
+info "Creating i²c user group..."
+groupadd i2c
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Changing group ownership of i²c bus..."
+chown :i2c /dev/i2c-1
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Changing permissions of i²c bus..."
+chmod g+rw /dev/i2c-1
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Adding rl user to i²c group..."
+usermod -aG i2c rl
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Making i²c permissions permanent..."
+echo 'KERNEL=="i2c-[0-9]*", GROUP="i2c"' >> /etc/udev/rules.d/10-local_i2c_group.rules
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
 info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
 ret_val=$?
@@ -97,7 +132,7 @@ if [ $ret_val -ne 0 ]; then
 fi
 
 info "Installing dependencies via pip..."
-python3 -m pip install -r requirements.txt
+python3 -m pip install --system -r requirements.txt
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
@@ -110,9 +145,9 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
-info "Adding bin directory to SECURE_PATH..."
-SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
-echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+info "Adding bin directory to PATH..."
+PATH=$PATH:$BASE_DIR/$APP_NAME/bin
+echo PATH=\$PATH:$BASE_DIR/$APP_NAME/bin >> /home/rl/.bashrc
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val

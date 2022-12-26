@@ -12,8 +12,8 @@ class Cronjob:
         if cls.is_registered():
             Output.critical("A cronjob was already registered!")
         with open(Paths.CRONJOB, 'w', encoding='ascii') as file:
-            file.write(f"@reboot root {Paths.SELF} run\n")
-        os.chmod(Paths.CRONJOB, int('600', 8))
+            file.write(f"@reboot rl {Paths.SELF} run\n")
+        os.chmod(Paths.CRONJOB, int('666', 8))
 
     @classmethod
     def deregister(cls):

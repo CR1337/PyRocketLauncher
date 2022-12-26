@@ -75,6 +75,26 @@ const master_template = /*html*/`
             ><i
                 class="las la-lock"
             ></i></button>
+
+            <span class="h-spacing"></span>
+
+            <button
+                :class="['base-button', 'white', button_status.load_music]"
+                onclick="document.getElementById('music_file_upload_button').click()"
+                :disabled="!load_music_button_enabled"
+                title="Upload music"
+            ><i
+                class="las la-music"
+            ></i></button>
+            <input type="file" id="music_file_upload_button" style="display:none" accept=".mp3" @change="load_music_button_clicked">
+            <button
+                :class="['base-button', 'red', button_status.unload_music]"
+                @click="unload_music_button_clicked"
+                :disabled="!unload_music_button_enabled"
+                title="Delete music"
+            ><i
+                class="las la-trash-alt"
+            ></i></button>
         </div>
 
         <div>
@@ -86,7 +106,7 @@ const master_template = /*html*/`
             ><i
                 class="las la-upload"
             ></i></button>
-            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_button_clicked">
+            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_program_button_clicked">
             <button
                 :class="['base-button', 'red', button_status.unload]"
                 @click="unload_button_clicked"
@@ -180,6 +200,7 @@ const master_component = {
             device_ids: [],
             event_source: null,
             last_loaded_program_name: "",
+            // last_loaded_music_name: "",
             selected_schedule_time: "00:00:00",
             event_stream_pending_seconds: 0,
             event_stream_timeout_id: null,
@@ -200,6 +221,8 @@ const master_component = {
                 lock: '',
                 set_system_time: '',
                 set_system_time_now: '',
+                load_music: '',
+                unload_music: ''
             }
         }
     },
@@ -253,14 +276,14 @@ const master_component = {
             });
         },
 
-        load_button_clicked(event) {
+        load_program_button_clicked(event) {
             const reader = new FileReader();
-            reader.onload = this._on_reader_loaded;
+            reader.onload = this._on_program_file_reader_loaded;
             this.last_loaded_program_name = event.target.files[0].name;
             reader.readAsText(event.target.files[0]);
         },
 
-        _on_reader_loaded(event) {
+        _on_program_file_reader_loaded(event) {
             let loaded_program = [];
             try {
                 loaded_program = JSON.parse(event.target.result);
@@ -363,6 +386,36 @@ const master_component = {
                 "/lock", 'POST',
                 {is_locked: true},
                 'lock', "Lock hardware?", this.ask, this.button_status, this._error_callback
+            );
+        },
+
+        load_music_button_clicked(event) {
+            // const reader = new FileReader();
+            // reader.onload = this._on_music_file_reader_loaded;
+            // this.last_loaded_music_name = event.target.files[0].name;
+            // reader.readAsArrayBuffer(event.target.files[0]);
+
+            const file = event.target.files[0];
+            button_request_mp3(
+                "/music", 'POST', file,
+                'load_music', "Upload music?", this.ask, this.button_status, this._error_callback
+            );
+        },
+
+        // _on_music_file_reader_loaded(event) {
+        //     let loaded_music = event.target.result;
+        //     button_request_raw(
+        //         "/music", 'POST',
+        //         loaded_music,
+        //         'load_music', "Upload music?", this.ask, this.button_status, this._error_callback
+        //     );
+        // },
+
+        unload_music_button_clicked(event) {
+            button_request(
+                "/music", 'DELETE',
+                {},
+                'unload_music', "Delete music?", this.ask, this.button_status, this._error_callback
             );
         },
 
@@ -521,6 +574,28 @@ const master_component = {
             for (device_id in this.devices) {
                 if (!this.devices[device_id].hardware.is_locked) {
                     return this.enabled;
+                }
+            }
+            return false;
+        },
+
+        load_music_button_enabled() {
+            for (device_id in this.devices) {
+                if (this.devices[device_id].config.config.music) {
+                    if (!this.devices[device_id].music_loaded) {
+                        return this.enabled;
+                    }
+                }
+            }
+            return false;
+        },
+
+        unload_music_button_enabled() {
+            for (device_id in this.devices) {
+                if (this.devices[device_id].config.config.music) {
+                    if (this.devices[device_id].music_loaded) {
+                        return this.enabled;
+                    }
                 }
             }
             return false;

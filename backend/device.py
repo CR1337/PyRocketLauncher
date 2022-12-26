@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import requests
 
@@ -74,29 +74,40 @@ class Device:
         return self._device_id == other.device_id
 
     def _request(
-        self, method: str, url: str, data: Dict[str, Any]
+        self, method: str, url: str, data: Union[Dict[str, Any], bytes],
+        mp3_file: bool = False
     ) -> Tuple[Dict[str, Any], int]:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
         )
         address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
-            if method == 'post':
-                response = requests.post(
-                    address,
-                    json=data,
-                    timeout=self.REQUEST_TIMEOUT
-                )
-            elif method == 'get':
+            if method == 'get':
                 response = requests.get(
                     address,
                     timeout=self.REQUEST_TIMEOUT
                 )
-            elif method == 'delete':
-                response = requests.delete(
+            elif not mp3_file:
+                if method == 'post':
+                    response = requests.post(
+                        address,
+                        json=data,
+                        timeout=self.REQUEST_TIMEOUT,
+                        headers={'Content-Type': 'application/json'}
+                    )
+                elif method == 'delete':
+                    response = requests.delete(
+                        address,
+                        json=data,
+                        timeout=self.REQUEST_TIMEOUT,
+                        headers={'Content-Type': 'application/json'}
+                    )
+            elif method == 'post' and mp3_file:
+                response = requests.post(
                     address,
-                    json=data,
-                    timeout=self.REQUEST_TIMEOUT
+                    data=data,
+                    timeout=self.REQUEST_TIMEOUT,
+                    headers={'Content-Type': 'audio/mpeg'}
                 )
             return response.json()
         except requests.exceptions.Timeout:
@@ -162,6 +173,16 @@ class Device:
     def run_testloop(self):
         logger.debug(f"{self._device_id}: run testloop")
         return self._post("testloop", {})
+
+    def load_music(self, mp3_file: bytes):
+        if not self._initial_state['config']['config']['music']:
+            return
+        return self._request('post', "music", mp3_file, mp3_file=True)
+
+    def unload_music(self):
+        if not self._initial_state['config']['config']['music']:
+            return
+        return self._delete("music", {})
 
     def fire(self, letter: str, number: int):
         logger.debug(f"{self._device_id}: fire {letter}{number}")

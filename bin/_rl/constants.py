@@ -30,7 +30,7 @@ class Paths:
 
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
-    SUDOERS_RL: str = "/etc/sudoers.d/rl"
+    BASHRC: str = "/home/rl/.bashrc"
     CRONJOB: str = "/etc/cron.d/rl"
     CONFIG_TXT: str = "/boot/config.txt"
 

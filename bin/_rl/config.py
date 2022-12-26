@@ -34,6 +34,10 @@ class AutoConfig:
         return False
 
     @staticmethod
+    def _determine_music() -> bool:
+        return False
+
+    @staticmethod
     def _determine_master() -> bool:
         return Config.get_device_id().lower() in ['master', 'main']
 
@@ -56,6 +60,10 @@ class AutoConfig:
         debug = cls._determine_debug()
         Output.info(f"Auto-setting debug to '{debug}'")
         Config.set_debug(debug)
+
+        music = cls._determine_music()
+        Output.info(f"Auto-setting music to '{music}'")
+        Config.set_music(music)
 
         master = cls._determine_master()
         Output.info(f"Auto-setting master to '{master}'")
@@ -120,6 +128,14 @@ class Config:
     @classmethod
     def set_debug(cls, value: bool):
         cls._set_config('debug', bool(value))
+
+    @classmethod
+    def get_music(cls) -> bool:
+        return cls._get_config('music')
+
+    @classmethod
+    def set_music(cls, value: bool):
+        cls._set_config('music', bool(value))
 
     @classmethod
     def get_master(cls) -> bool:
@@ -195,6 +211,7 @@ class Config:
         'device_id': Ask.string,
         'chip_amount': Ask.integer,
         'debug': Ask.boolean,
+        'music': Ask.boolean,
         'master': Ask.boolean,
         'device': Ask.boolean,
         'timezone': Ask.timezone,
@@ -206,6 +223,7 @@ class Config:
         'device_id': str,
         'chip_amount': int,
         'debug': bool,
+        'music': bool,
         'master': bool,
         'device': bool,
         'timezone': str,
@@ -218,6 +236,7 @@ Config.SET_METHODS: Dict[str, Callable] = {
     'device_id': Config.set_device_id,
     'chip_amount': Config.set_chip_amount,
     'debug': Config.set_debug,
+    'music': Config.set_music,
     'master': Config.set_master,
     'device': Config.set_device,
     'timezone': Config.set_timezone,
@@ -230,6 +249,7 @@ Config.GET_METHODS: Dict[str, Callable] = {
     'device_id': Config.get_device_id,
     'chip_amount': Config.get_chip_amount,
     'debug': Config.get_debug,
+    'music': Config.get_music,
     'master': Config.get_master,
     'device': Config.get_device,
     'timezone': Config.get_timezone,

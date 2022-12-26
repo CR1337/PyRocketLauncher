@@ -10,6 +10,7 @@ from backend.device import Device
 from backend.hardware import Hardware
 from backend.instance import Instance
 from backend.logger import logger
+from backend.music_player import MusicPlayer
 from backend.program import Program
 from backend.rl_exception import RlException
 from backend.schedule import Schedule
@@ -44,6 +45,15 @@ class DeviceController:
     class ProgramIsLoadedError(RlException):
         pass
 
+    class ProgramRunning(RlException):
+        pass
+
+    class ProgramPaused(RlException):
+        pass
+
+    class ProgramScheduled(RlException):
+        pass
+
     _state_machine: StateMachine = StateMachine()
 
     NOT_LOADED: State = _state_machine.add_state('not_loaded', is_initial=True)
@@ -54,6 +64,7 @@ class DeviceController:
 
     _program: Program = None
     _schedule: Schedule = None
+    _music_player: MusicPlayer = MusicPlayer()
     controller_lock: Lock = Lock()
 
     @classmethod
@@ -69,6 +80,8 @@ class DeviceController:
     @classmethod
     def _run_program(cls):
         cls._program.run(callback=cls._program_finished)
+        if cls._music_player.is_music_loaded():
+            cls._music_player.play()
         logger.debug("Programm running")
 
     @classmethod
@@ -85,16 +98,22 @@ class DeviceController:
 
     @classmethod
     def _pause_program(cls):
+        if cls._music_player.is_music_loaded():
+            cls._music_player.pause()
         cls._program.pause()
         logger.debug("Program paused")
 
     @classmethod
     def _continue_program(cls):
+        if cls._music_player.is_music_loaded():
+            cls._music_player.continue_()
         cls._program.continue_()
         logger.debug("Program continued")
 
     @classmethod
     def _stop_program(cls):
+        if cls._music_player.is_music_loaded():
+            cls._music_player.stop()
         cls._program.stop()
         logger.debug("Program stopped")
 
@@ -193,6 +212,26 @@ class DeviceController:
             )
 
     @classmethod
+    def load_music(cls, file: bytes):
+        if cls._state_machine.state == cls.SCHEDULED:
+            raise cls.ProgramScheduled()
+        if cls._state_machine.state == cls.RUNNING:
+            raise cls.ProgramRunning()
+        if cls._state_machine.state == cls.PAUSED:
+            raise cls.ProgramPaused()
+        cls._music_player.load_music(file)
+
+    @classmethod
+    def unload_music(cls):
+        if cls._state_machine.state == cls.SCHEDULED:
+            raise cls.ProgramScheduled()
+        if cls._state_machine.state == cls.RUNNING:
+            raise cls.ProgramRunning()
+        if cls._state_machine.state == cls.PAUSED:
+            raise cls.ProgramPaused()
+        cls._music_player.unload_music()
+
+    @classmethod
     def get_system_time(cls) -> str:
         return tu.get_system_time()
 
@@ -213,6 +252,7 @@ class DeviceController:
                 None if cls._program is None
                 else cls._program.get_state()
             ),
+            'music_loaded': cls._music_player.is_music_loaded()
         }
 
 
@@ -404,6 +444,16 @@ class MasterController:
     def deregister_all(cls):
         logger.info("Deregister all")
         cls._devices = dict()
+
+    @classmethod
+    def load_music(cls, mp3_file: bytes):
+        logger.info("Load music")
+        return cls._call_device_method("load_music", mp3_file)
+
+    @classmethod
+    def unload_music(cls):
+        logger.info("Unload music")
+        return cls._call_device_method("unload_music")
 
     @classmethod
     def get_state(cls) -> Dict:

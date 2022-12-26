@@ -24,7 +24,7 @@ async function fetch_with_timeout(resource, options={}) {
     return response;
 }
 
-async function request(url, method, body, error_callback, success_callback) {
+async function request(url, method, body, error_callback, success_callback, mp3_file_body) {
     let response;
     try {
         if (method == 'GET') {
@@ -32,8 +32,8 @@ async function request(url, method, body, error_callback, success_callback) {
         } else {
             response = await fetch_with_timeout(url, {
                 method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(body)
+                headers: {'Content-Type': (!mp3_file_body) ? 'application/json' : 'audio/mpeg'},
+                body: (!mp3_file_body) ? JSON.stringify(body) : body
             });
         }
     } catch (error) {
@@ -72,37 +72,29 @@ async function button_request(
         },
         () => {
             button_status[button_key] = 'status-success';
-        }
+        },
+        false
     );
+}
 
-    // let response;
-    // try {
-    //     if (method == 'GET') {
-    //         response = await fetch_with_timeout(url);
-    //     } else {
-    //         response = await fetch_with_timeout(url, {
-    //             method: method,
-    //             headers: {'Content-Type': 'application/json'},
-    //             body: JSON.stringify(body)
-    //         });
-    //     }
-    // } catch (error) {
-    //     button_status[button_key] = 'status-failure';
-    //     console.log(error);
-    //     error_callback();
-    //     return null;
-    // }
+async function button_request_mp3(
+    url, method, body, button_key, confirm_prompt, ask, button_status, error_callback
+) {
+    if (ask) {
+        if (!confirm(confirm_prompt)) return null;
+    }
 
-    // if (response.status < 200 || response.status > 299) {
-    //     button_status[button_key] = 'status-failure';
-    //     console.log(response.status, response.statusText);
-    //     const data = await response.json();
-    //     console.log(data);
-    //     error_callback();
-    //     return null;
-    // }
+    button_status[button_key] = 'status-pending';
 
-    // button_status[button_key] = 'status-success';
-    // const data = await response.json();
-    // return data;
+    return request(
+        url, method, body,
+        () => {
+            button_status[button_key] = 'status-failure';
+            error_callback();
+        },
+        () => {
+            button_status[button_key] = 'status-success';
+        },
+        true
+    );
 }

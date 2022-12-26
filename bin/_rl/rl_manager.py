@@ -1,4 +1,3 @@
-import os
 import shutil
 import sys
 import time
@@ -102,8 +101,15 @@ class RlManager:
             cls.stop()
         if Cronjob.is_registered():
             Cronjob.deregister()
-        Output.info("Removing bin directory from SECURE_PATH...")
-        os.remove(Paths.SUDOERS_RL)
+        Output.info("Removing bin directory from PATH...")
+        with open(Paths.BASHRC, 'r', encoding='ascii') as file:
+            lines = file.readlines()
+        keep_lines = [
+            line for line in lines
+            if "PATH=" not in line and "PyRocketLauncher/bin" not in line
+        ]
+        with open(Paths.BASHRC, 'w', encoding='ascii') as file:
+            file.writelines(keep_lines)
         cls._reenable_wifi_on_pi_zero_w()
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)

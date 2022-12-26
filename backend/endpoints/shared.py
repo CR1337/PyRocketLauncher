@@ -64,6 +64,23 @@ def route_program():
 
 
 @shared_bp.route(
+    "/music", methods=['POST', 'DELETE'], endpoint='music'
+)
+@handle_exceptions
+@log_request
+def route_music():
+    if request.method == 'POST':
+        mp3_file = request.get_data()
+        Controller.load_music(mp3_file)
+    elif request.method == 'DELETE':
+        Controller.unload_music()
+
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
+
+
+@shared_bp.route(
     "/program/control", methods=['POST'], endpoint='program_control'
 )
 @handle_exceptions
