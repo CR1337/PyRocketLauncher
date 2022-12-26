@@ -9,6 +9,10 @@ from backend.logger import logger
 from backend.rl_exception import RlException
 
 
+# TODO: change permissions for port 80
+# https://gist.github.com/justinmklam/f13bb53be9bb15ec182b4877c9e9958d
+
+
 class MusicPlayer:
 
     class MusicLoaded(RlException):
@@ -18,7 +22,7 @@ class MusicPlayer:
         pass
 
     _temp_file_path: str
-    _is_music_loaded: bool
+    _is_music_loaded: bool = False
     _player: vlc.MediaPlayer
 
     _pause_event: Event = Event()
@@ -31,7 +35,8 @@ class MusicPlayer:
         self._thread.name = 'music_player'
 
     def __del__(self):
-        self.unload_music()
+        if self._is_music_loaded:
+            self.unload_music()
 
     def _thread_target(self):
         self._player.play()
@@ -58,7 +63,7 @@ class MusicPlayer:
 
     def load_music(self, mp3_file: bytes):
         if self._is_music_loaded:
-            raise self.MusicLoaded()
+            raise self.MusicLoaded("Music is already loaded")
         with NamedTemporaryFile(delete=False, mode='wb') as file:
             self._temp_file_path = file.name
             file.write(mp3_file)
@@ -71,7 +76,7 @@ class MusicPlayer:
 
     def unload_music(self):
         if not self._is_music_loaded:
-            raise self.NoMusicLoaded()
+            raise self.NoMusicLoaded("No music loaded!")
         self._player = None
         os.remove(self._temp_file_path)
         self._is_music_loaded = False
