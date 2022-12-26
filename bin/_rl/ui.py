@@ -1,5 +1,7 @@
 import os
 from typing import List
+import subprocess
+import sys
 
 from _rl.config import Config, ConfigWizard
 from _rl.constants import Paths
@@ -20,7 +22,7 @@ class UserInterface:
         if len(args) != 1:
             Output.critical(
                 f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
-                f"{args[0]}' takes no further arguments!\nRun 'sudo rl"
+                f"{args[0]}' takes no further arguments!\nRun 'rl"
                 f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
@@ -32,22 +34,23 @@ class UserInterface:
             Output.critical(
                 f"'rl {subcommand_name}{' ' if subcommand_name else ''}"
                 f"{args[0]}' takes {count} further "
-                f"argument{'s' if count > 1 else ''}!\nRun 'sudo rl"
+                f"argument{'s' if count > 1 else ''}!\nRun 'rl"
                 f"{' ' if subcommand_name else ''}{subcommand_name} help'."
             )
 
     @staticmethod
     def _require_root():
         if os.geteuid() != 0:
-            Output.critical("Please run as root!")
+            subprocess.call(['sudo', 'python3'] + sys.argv)
+            sys.exit()
 
     @classmethod
     def run(cls, args: List[str]):
-        cls._require_root()
+        # cls._require_root()
 
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl help'."
+                "Invalid number of arguments!\nRun 'rl help'."
             )
 
         if args[0] in [
@@ -56,6 +59,7 @@ class UserInterface:
         ]:
             cls._check_for_no_further_arguments(args, "")
             if args[0] == 'setup':
+                cls._require_root()
                 RlManager.setup()
                 Output.success("Setup done.")
             elif args[0] == 'run':
@@ -71,6 +75,7 @@ class UserInterface:
                 RlManager.update()
                 Output.success("Update done.")
             elif args[0] == 'uninstall':
+                cls._require_root()
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
             elif args[0] == 'help':
@@ -88,13 +93,13 @@ class UserInterface:
         # elif args[0] == 'dns':
         #     cls._dns(args[1:])
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl help'.")
+            Output.critical("Unknown command!\nRun 'rl help'.")
 
     @classmethod
     def _config(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl config help'."
+                "Invalid number of arguments!\nRun 'rl config help'."
             )
 
         if args[0] in ['list', 'wizard', 'help']:
@@ -105,21 +110,23 @@ class UserInterface:
                     printed_key = f"{key}:{' ' * (max_key_len - len(key))}"
                     print(f"{printed_key}\t{Config.GET_METHODS[key]()}")
             elif args[0] == 'wizard':
+                cls._require_root()
                 ConfigWizard.run()
                 Output.success("Exited wizard.")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL_CONFIG)
 
         elif args[0] == 'set':
+            cls._require_root()
             cls._check_for_further_arguments(args, 2, "config")
             key, value = args[1], args[2]
             if key not in Config.SET_METHODS.keys():
                 Output.critical(
-                    f"Invalid key: {key}!\nRun 'sudo rl config help'."
+                    f"Invalid key: {key}!\nRun 'rl config help'."
                 )
             if not Config.validate_value(key, value):
                 Output.critical(
-                    f"Invalid value: {value}\nRun 'sudo rl config help'."
+                    f"Invalid value: {value}\nRun 'rl config help'."
                 )
             Config.SET_METHODS[key](value)
             Output.success(f"Set {key} to {value}.")
@@ -129,19 +136,19 @@ class UserInterface:
             key = args[1]
             if key not in Config.SET_METHODS.keys():
                 Output.critical(
-                    f"Invalid key: {key}!\nRun 'sudo rl config help'."
+                    f"Invalid key: {key}!\nRun 'rl config help'."
                 )
             value = Config.GET_METHODS[key]()
             print(f"{key}:\t{value}")
 
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl config help'.")
+            Output.critical("Unknown command!\nRun 'rl config help'.")
 
     @classmethod
     def _status(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl status help'."
+                "Invalid number of arguments!\nRun 'rl status help'."
             )
 
         if args[0] in ['list', 'help']:
@@ -158,25 +165,27 @@ class UserInterface:
             key = args[1]
             if key not in Status.GET_METHODS.keys():
                 Output.critical(
-                    f"Invalid key: {key}!\nRun 'sudo rl status help'."
+                    f"Invalid key: {key}!\nRun 'rl status help'."
                 )
             print(f"{key}:\t{Status.GET_METHODS[key]()}")
 
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl status help'.")
+            Output.critical("Unknown command!\nRun 'rl status help'.")
 
     @classmethod
     def _cronjob(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl cronjob help'."
+                "Invalid number of arguments!\nRun 'rl cronjob help'."
             )
 
         if args[0] in ['register', 'deregister', 'status', 'help']:
             if args[0] == 'register':
+                cls._require_root()
                 Cronjob.register()
                 Output.success("Cronjob registered.")
             elif args[0] == 'deregister':
+                cls._require_root()
                 Cronjob.deregister()
                 Output.success("Cronjob deregistered.")
             elif args[0] == 'status':
@@ -185,13 +194,13 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_CRONJOB)
 
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl cronjob help'.")
+            Output.critical("Unknown command!\nRun 'rl cronjob help'.")
 
     @classmethod
     def _logs(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl logs help'."
+                "Invalid number of arguments!\nRun 'rl logs help'."
             )
 
         if args[0] in ['list', 'latest', 'clear', 'help']:
@@ -211,13 +220,13 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_LOGS)
 
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl logs help'.")
+            Output.critical("Unknown command!\nRun 'rl logs help'.")
 
     @classmethod
     def _dns(cls, args: List[str]):
         if len(args) < 1:
             Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl dns help'."
+                "Invalid number of arguments!\nRun 'rl dns help'."
             )
 
         if args[0] in [
@@ -240,4 +249,4 @@ class UserInterface:
                 Output.print_file(Paths.HELP_RL_DNS)
 
         else:
-            Output.critical("Unknown command!\nRun 'sudo rl dns help'.")
+            Output.critical("Unknown command!\nRun 'rl dns help'.")

@@ -22,7 +22,7 @@ class RlManager:
             Cronjob.register()
         cls.run()
         Output.info("This system should now be fully functional.")
-        Output.info("For further options run: 'sudo rl help'")
+        Output.info("For further options run: 'rl help'")
 
     @staticmethod
     def run():

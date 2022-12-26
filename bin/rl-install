@@ -131,6 +131,13 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
+info "Changing ownership of app directory..."
+chown -R rl:rl $BASE_DIR
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
 info "Installing dependencies via pip..."
 python3 -m pip install --system -r requirements.txt
 ret_val=$?

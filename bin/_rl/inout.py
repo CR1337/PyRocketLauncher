@@ -121,7 +121,7 @@ class Output:
 
     @classmethod
     def wrong_usage(cls):
-        cls.error("Wrong arguments! Run 'sudo rl help' for help.")
+        cls.error("Wrong arguments! Run 'rl help' for help.")
 
     @staticmethod
     def print_file(filename: str):

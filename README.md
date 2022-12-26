@@ -10,4 +10,4 @@ This software was designed for a custom built fireworks ignition system. The cor
 4. Run `sudo rl setup`.
 5. Configure your device by interacting with the config wizard.
 6. Your device is now fully functional.
-7. Check further options by running `sudo rl help`.
+7. Check further options by running `rl help`.
