@@ -74,6 +74,11 @@ ret_val=$?
 if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
+apt -y install ntp
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
 
 info "Enabling i²c..."
 raspi-config nonint do_i2c 0
