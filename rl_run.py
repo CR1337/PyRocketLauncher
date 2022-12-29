@@ -29,6 +29,7 @@ def run():
         f"Running app{debug_str}..."
     )
     try:
+        Instance.run_ntp_service()
         app.run(
             debug=Config.get_value('debug'),
             port=Instance.get_server_port(),

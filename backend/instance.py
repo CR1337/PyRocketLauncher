@@ -64,3 +64,7 @@ class Instance:
         process.wait()
         if process.returncode != 0:
             raise cls.ShutdownError()
+
+    @classmethod
+    def run_ntp_service(cls):
+        subprocess.Popen("service ntp start", shell=True)
