@@ -86,7 +86,7 @@ const master_template = /*html*/`
             ><i
                 class="las la-upload"
             ></i></button>
-            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_button_clicked">
+            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_button_clicked" @click="$event.target.value=''">
             <button
                 :class="['base-button', 'red', button_status.unload]"
                 @click="unload_button_clicked"
