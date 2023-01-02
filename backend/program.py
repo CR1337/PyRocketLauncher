@@ -69,6 +69,7 @@ class Program:
         self._command_list.append(command)
 
     def run(self, callback: Callable):
+        self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
         self._thread.start()
 
