@@ -4,7 +4,7 @@ from flask_cors import CORS
 
 from backend.config import Config
 from backend.endpoints.util import handle_exceptions, log_request
-from backend.instance import Instance
+from backend.system import System
 
 device_bp = Blueprint('device_blueprint', __name__)
 CORS(device_bp)
@@ -28,7 +28,7 @@ def route_discover():
 @handle_exceptions
 @log_request
 def route_shutdown():
-    Instance.shutdown()
+    System.shutdown()
     return make_response(({}, status.HTTP_200_OK))
 
 
@@ -38,5 +38,5 @@ def route_shutdown():
 @handle_exceptions
 @log_request
 def route_reboot():
-    Instance.reboot()
+    System.reboot()
     return make_response(({}, status.HTTP_200_OK))
