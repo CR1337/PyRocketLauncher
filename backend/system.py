@@ -1,4 +1,5 @@
 import subprocess
+from threading import Thread
 
 from backend.logger import logger
 
@@ -32,4 +33,8 @@ class System:
     @classmethod
     def update(cls):
         logger.info("Installing updates")
-        subprocess.Popen("rl update", shell=True)
+        thread = Thread(
+            target=lambda: subprocess.Popen("rl update", shell=True)
+        )
+        thread.name = "update"
+        thread.start()
