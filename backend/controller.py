@@ -14,6 +14,7 @@ from backend.program import Program
 from backend.rl_exception import RlException
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
+from backend.system import System
 
 
 def lock(func):
@@ -191,6 +192,11 @@ class DeviceController:
             raise cls.ProgramIsLoadedError(
                 "Can only fire when not program is loaded"
             )
+
+    @classmethod
+    def update(cls):
+        logger.info("Update all")
+        System.update()
 
     @classmethod
     def get_system_time(cls) -> str:
@@ -405,6 +411,11 @@ class MasterController:
     def deregister_all(cls):
         logger.info("Deregister all")
         cls._devices = dict()
+
+    @classmethod
+    def update(cls):
+        logger.info("Update all")
+        return cls._call_device_method("update")
 
     @classmethod
     def get_state(cls) -> Dict:

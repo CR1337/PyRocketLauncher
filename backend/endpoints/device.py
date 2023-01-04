@@ -40,13 +40,3 @@ def route_shutdown():
 def route_reboot():
     System.reboot()
     return make_response(({}, status.HTTP_200_OK))
-
-
-@device_bp.route(
-    "/update", methods=['POST'], endpoint='update'
-)
-@handle_exceptions
-@log_request
-def route_update():
-    System.update()
-    return make_response(({}, status.HTTP_200_OK))

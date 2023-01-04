@@ -244,3 +244,13 @@ def route_config():
         return make_response((
             {}, status.HTTP_200_OK
         ))
+
+
+@shared_bp.route(
+    "/update", methods=['POST'], endpoint='update'
+)
+@handle_exceptions
+@log_request
+def route_update():
+    Controller.update()
+    return make_response(({}, status.HTTP_200_OK))

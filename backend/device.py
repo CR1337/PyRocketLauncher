@@ -183,6 +183,10 @@ class Device:
         state['ip_address'] = self._ip_address
         return state
 
+    def update(self):
+        logger.debug(f"{self._device_id}: update")
+        return self._post("update", {})
+
     @property
     def device_id(self) -> str:
         return self._device_id
