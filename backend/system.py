@@ -1,5 +1,6 @@
 import subprocess
 from threading import Thread
+import backend.time_util as tu
 
 from backend.logger import logger
 
@@ -32,9 +33,10 @@ class System:
 
     @classmethod
     def update(cls):
+        def thread_handler():
+            tu.sleep(1)
+            subprocess.Popen("rl update", shell=True)
         logger.info("Installing updates")
-        thread = Thread(
-            target=lambda: subprocess.Popen("rl update", shell=True)
-        )
+        thread = Thread(target=thread_handler)
         thread.name = "update"
         thread.start()
