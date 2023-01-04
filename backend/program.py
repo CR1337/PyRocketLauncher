@@ -83,6 +83,9 @@ class Program:
         self._stop_event.set()
         self._thread.join()
 
+    def join(self):
+        self._thread.join()
+
     @property
     def _current_total_seconds(self) -> float:
         return tu.timestamp_now()
@@ -170,3 +173,11 @@ class Program:
             'current_timestamp': self._current_timestamp,
             'is_running': self.is_running
         }
+
+    def __str__(self) -> str:
+        string = "Program:\n"
+        for command in self._command_list:
+            string += (
+                f"\n{command.timestamp} - {command.name} - {command.address}"
+            )
+        return string

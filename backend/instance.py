@@ -1,18 +1,13 @@
-import argparse
 import os
 import subprocess
+import sys
 
 
 class Instance:
 
     MODEL_PATH: str = "/sys/firmware/devicetree/base/model"
 
-    _is_master: bool
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--master', action='store_true')
-    args = parser.parse_args()
-    _is_master = bool(args.master)
+    _is_master: bool = sys.argv[1] == '--master'
 
     @classmethod
     def is_master(cls) -> bool:
