@@ -28,3 +28,8 @@ class System:
     def run_ntp_service(cls):
         logger.info("Start NTP service")
         subprocess.Popen("service ntp start", shell=True)
+
+    @classmethod
+    def update(cls):
+        logger.info("Installing updates")
+        subprocess.Popen("rl update", shell=True)

@@ -33,6 +33,17 @@ const device_template = /*html*/`
                 class="las la-list"
             ></i></button>
 
+            <template v-if="on_master_page && status.version < master_version">
+                <button
+                    :class="['base-button', 'yellow', button_status.update]"
+                    @click="update_button_clicked"
+                    style="float: right;"
+                    title="Install updates"
+                ><i
+                    class="las la-sync"
+                ></i></button>
+            </template>
+
             <template v-if="on_master_page">
                 <button
                     class="base-button"
@@ -140,6 +151,7 @@ const device_component = {
         ask: Boolean,
         initial_ip_address: String,
         on_master_page: Boolean,
+        master_version: Number,
         first_in_list: Boolean,
         last_in_list: Boolean
     },
@@ -157,7 +169,8 @@ const device_component = {
                 unlock: '',
                 lock: '',
                 shutdown: '',
-                reboot: ''
+                reboot: '',
+                update: ''
             }
         };
     },
@@ -236,6 +249,18 @@ const device_component = {
 
         move_down() {
             this.$emit('move-down', this.device_id);
+        },
+
+        update_button_clicked() {
+            const confirm_prompt = "Install updates?";
+            if (!this.ask) {
+                if (!confirm(confirm_prompt)) return;
+            }
+            button_request(
+                this.host + "/update", 'POST',
+                {},
+                'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
+            );
         }
     },
     computed: {

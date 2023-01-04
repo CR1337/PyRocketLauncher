@@ -213,6 +213,7 @@ class DeviceController:
                 None if cls._program is None
                 else cls._program.get_state()
             ),
+            'version': Instance.version()
         }
 
 
@@ -409,7 +410,8 @@ class MasterController:
     def get_state(cls) -> Dict:
         return {
             'system_time': cls.get_system_time(),
-            'device_ids': list(cls._devices.keys())
+            'device_ids': list(cls._devices.keys()),
+            'version': Instance.version()
         }
 
     @classmethod

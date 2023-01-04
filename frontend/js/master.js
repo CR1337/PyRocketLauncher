@@ -155,6 +155,7 @@ const master_template = /*html*/`
             :ask="ask"
             :initial_ip_address="devices[device_id].ip_address"
             :on_master_page="true"
+            :master_version="version"
             :first_in_list="index==0"
             :last_in_list="index==Object.keys(devices).length-1"
             :deregister_button_status="button_status['deregister_' + device_id]"
@@ -176,6 +177,7 @@ const master_component = {
         return {
             error_occured: false,
             system_time: "###T--:--:--.***",
+            version: 0,
             devices: {},
             device_ids: [],
             event_source: null,
@@ -550,6 +552,7 @@ const master_component = {
         this.event_source.onmessage = (event) => {
             const data = JSON.parse(event.data);
             this.system_time = data.system_time;
+            this.version = data.version;
 
             if (!this.searching_devices) {
                 for (const existing_device_id in this.devices) {
