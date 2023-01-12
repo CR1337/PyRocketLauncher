@@ -33,7 +33,7 @@ const device_template = /*html*/`
                 class="las la-list"
             ></i></button>
 
-            <template v-if="on_master_page && status.version < master_version">
+            <template v-if="state.update_needed">
                 <button
                     :class="['base-button', 'yellow', button_status.update]"
                     @click="update_button_clicked"
@@ -151,7 +151,6 @@ const device_component = {
         ask: Boolean,
         initial_ip_address: String,
         on_master_page: Boolean,
-        master_version: Number,
         first_in_list: Boolean,
         last_in_list: Boolean
     },

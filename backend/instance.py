@@ -46,17 +46,3 @@ class Instance:
     @classmethod
     def get_prefix(cls) -> str:
         return "master" if cls._is_master else "device"
-
-    @staticmethod
-    def _get_version() -> int:
-        return int(subprocess.check_output(
-            r"git log -1 --format=%ct",
-            shell=True,
-            stderr=subprocess.DEVNULL
-        ).decode(encoding='ascii').strip())
-
-    _version: int = _get_version()
-
-    @classmethod
-    def version(cls) -> int:
-        return cls._version

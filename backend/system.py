@@ -40,3 +40,24 @@ class System:
         thread = Thread(target=thread_handler)
         thread.name = "update"
         thread.start()
+
+    @classmethod
+    def update_nedded(cls) -> bool:
+        logger.debug("Checking for updates")
+        output = subprocess.check_output(
+            "rl status get update",
+            shell=True
+        ).decode(encoding='ascii')
+        status = output.split()[-1]
+        if status == 'ahead':
+            logger.warning("This branch is ahead!")
+            return False
+        elif status == 'diverged':
+            logger.warning("This branch is diverged!")
+            return False
+        elif status == 'behind':
+            logger.info("This branch is behind.")
+            return True
+        elif status == 'up_to_date':
+            logger.debug("This branch in up to date.")
+            return False

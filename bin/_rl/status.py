@@ -61,11 +61,35 @@ class Status:
     def dns() -> bool:
         return Dns.is_installed()
 
+    @staticmethod
+    def update() -> str:
+        command = Command("git remote update")
+        command.run(show_output=False)
+
+        command = Command("git rev-parse @")
+        local = command.get_output()
+
+        command = Command(r"git rev-parse @{u}")
+        remote = command.get_output()
+
+        command = Command(r"git merge-base @ @{u}")
+        base = command.get_output()
+
+        if local == remote:
+            return 'up_to_date'
+        elif local == base:
+            return 'behind'
+        elif remote == base:
+            return 'ahead'
+        else:
+            return 'diverged'
+
 
 Status.GET_METHODS: Dict[str, Callable] = {
     'running': Status.is_running,
     'cronjob': Status.is_cronjob_registered,
     'pi': Status.is_on_pi,
     'gateway_ip': Status.get_gateway_ip,
-    'dns': Status.dns
+    'dns': Status.dns,
+    'update': Status.update
 }
