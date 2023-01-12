@@ -1,5 +1,5 @@
 {
-    "device_id": "main",
+    "device_id": "master",
     "chip_amount": 3,
     "debug": false
 }

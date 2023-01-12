@@ -14,6 +14,7 @@ from backend.program import Program
 from backend.rl_exception import RlException
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
+from backend.system import System
 
 
 def lock(func):
@@ -193,6 +194,14 @@ class DeviceController:
             )
 
     @classmethod
+    def update(cls):
+        logger.info("Updating")
+        if System.update_nedded():
+            System.update()
+        else:
+            logger.info("No update needed")
+
+    @classmethod
     def get_system_time(cls) -> str:
         return tu.get_system_time()
 
@@ -213,6 +222,7 @@ class DeviceController:
                 None if cls._program is None
                 else cls._program.get_state()
             ),
+            'update_needed': System.update_nedded()
         }
 
 
@@ -326,6 +336,7 @@ class MasterController:
     @lock
     def load_program(cls, name: str, event_list: List):
         logger.info(f"Load program {name}")
+        Program.raise_on_json(event_list)
         return cls._call_device_method("load_program", name, event_list)
 
     @classmethod
@@ -404,6 +415,11 @@ class MasterController:
     def deregister_all(cls):
         logger.info("Deregister all")
         cls._devices = dict()
+
+    @classmethod
+    def update(cls):
+        logger.info("Update all")
+        return cls._call_device_method("update")
 
     @classmethod
     def get_state(cls) -> Dict:

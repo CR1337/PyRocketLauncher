@@ -11,6 +11,9 @@ from backend.logger import logger
 
 class Program:
 
+    class InvalidProgram(Exception):
+        pass
+
     _name: str
     _command_list: List[Command]
     _thread: Thread
@@ -23,6 +26,51 @@ class Program:
     _callback: Callable
     _seconds_paused: float
     _command_idx: int
+
+    @classmethod
+    def raise_on_json(cls, json_data: List):
+        if not isinstance(json_data, list):
+            raise cls.InvalidProgram("A program has to be a list!")
+
+        for idx, event in enumerate(json_data):
+            if not isinstance(event, Dict):
+                raise cls.InvalidProgram(f"Element {idx}: has to be a dict!")
+
+            for key in ['name', 'device_id', 'letter', 'number', 'timestamp']:
+                if key not in event.keys():
+                    raise cls.InvalidProgram(
+                        f"Element {idx}: Key '{key}' missing!"
+                    )
+
+            if not isinstance(event['name'], str):
+                raise cls.InvalidProgram(
+                    f"Element {idx}: 'name' has to be a string!"
+                )
+            if not isinstance(event['device_id'], str):
+                raise cls.InvalidProgram(
+                    f"Element {idx}: 'device_id' has to be a string!"
+                )
+
+            try:
+                number = int(event['number'])
+                if not 0 <= number <= 15:
+                    raise cls.InvalidProgram(
+                        f"Element {idx}: 'number' {number} out of range!"
+                    )
+            except ValueError:
+                raise cls.InvalidProgram(
+                    f"Element {idx}: 'number' has to be an integer!"
+                )
+            try:
+                timestamp = float(event['timestamp'])
+                if timestamp < 0.0:
+                    raise cls.InvalidProgram(
+                        f"Element {idx}: 'timestamp' {timestamp} is negative!"
+                    )
+            except ValueError:
+                raise cls.InvalidProgram(
+                    f"Element {idx}: 'timestamp' has to be a float!"
+                )
 
     @classmethod
     def from_json(cls, name: str, json_data: List) -> 'Program':
@@ -69,6 +117,7 @@ class Program:
         self._command_list.append(command)
 
     def run(self, callback: Callable):
+        self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
         self._thread.start()
 
@@ -80,6 +129,9 @@ class Program:
 
     def stop(self):
         self._stop_event.set()
+        self._thread.join()
+
+    def join(self):
         self._thread.join()
 
     @property
@@ -169,3 +221,11 @@ class Program:
             'current_timestamp': self._current_timestamp,
             'is_running': self.is_running
         }
+
+    def __str__(self) -> str:
+        string = "Program:\n"
+        for command in self._command_list:
+            string += (
+                f"\n{command.timestamp} - {command.name} - {command.address}"
+            )
+        return string

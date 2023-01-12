@@ -6,7 +6,9 @@ from backend.endpoints.device import device_bp
 from backend.endpoints.master import master_bp
 from backend.endpoints.shared import shared_bp
 from backend.instance import Instance
+from backend.led_controller import LedController
 from backend.logger import logger
+from backend.system import System
 
 
 def run():
@@ -29,7 +31,8 @@ def run():
         f"Running app{debug_str}..."
     )
     try:
-        Instance.run_ntp_service()
+        System.run_ntp_service()
+        LedController.turn_on()
         app.run(
             debug=Config.get_value('debug'),
             port=Instance.get_server_port(),
@@ -39,6 +42,9 @@ def run():
         )
     except Exception:
         logger.exception("Exception running app!")
+    finally:
+        LedController.turn_off()
+        LedController.cleanup()
 
 
 if __name__ == "__main__":

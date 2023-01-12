@@ -6,7 +6,6 @@ from _rl.command import Command
 from _rl.config import Config
 from _rl.constants import Paths
 from _rl.cronjob import Cronjob
-from _rl.dns import Dns
 from _rl.network import Network
 
 
@@ -58,8 +57,27 @@ class Status:
         return Network.get_gateway_ip()
 
     @staticmethod
-    def dns() -> bool:
-        return Dns.is_installed()
+    def update() -> str:
+        command = Command("git remote update")
+        command.run(show_output=False)
+
+        command = Command("git rev-parse @")
+        local = command.get_output()
+
+        command = Command(r"git rev-parse @{u}")
+        remote = command.get_output()
+
+        command = Command(r"git merge-base @ @{u}")
+        base = command.get_output()
+
+        if local == remote:
+            return 'up_to_date'
+        elif local == base:
+            return 'behind'
+        elif remote == base:
+            return 'ahead'
+        else:
+            return 'diverged'
 
 
 Status.GET_METHODS: Dict[str, Callable] = {
@@ -67,5 +85,5 @@ Status.GET_METHODS: Dict[str, Callable] = {
     'cronjob': Status.is_cronjob_registered,
     'pi': Status.is_on_pi,
     'gateway_ip': Status.get_gateway_ip,
-    'dns': Status.dns
+    'update': Status.update
 }

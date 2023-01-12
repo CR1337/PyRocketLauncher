@@ -75,6 +75,17 @@ const master_template = /*html*/`
             ><i
                 class="las la-lock"
             ></i></button>
+
+            <span class="h-spacing"></span>
+
+            <button
+                :class="['base-button', 'yellow', button_status.update]"
+                @click="update_button_clicked"
+                :disabled="!update_button_enabled"
+                title="Update all devices"
+            ><i
+                class="las la-sync"
+            ></i></button>
         </div>
 
         <div>
@@ -200,6 +211,7 @@ const master_component = {
                 lock: '',
                 set_system_time: '',
                 set_system_time_now: '',
+                update: ''
             }
         }
     },
@@ -366,6 +378,14 @@ const master_component = {
             );
         },
 
+        update_button_clicked(event) {
+            button_request(
+                "/update", 'POST',
+                {},
+                'update', "Update all devices?", this.ask, this.button_status, this._error_callback
+            );
+        },
+
         error_button_clicked(event) {
             this.error_occured = false;
         },
@@ -521,6 +541,18 @@ const master_component = {
             for (device_id in this.devices) {
                 if (!this.devices[device_id].hardware.is_locked) {
                     return this.enabled;
+                }
+            }
+            return false;
+        },
+
+        update_button_enabled() {
+            if (!this.enabled || !this._devices_found()) {
+                return false;
+            }
+            for (const device of this.devices) {
+                if (device.update_needed) {
+                    return true;
                 }
             }
             return false;

@@ -30,6 +30,9 @@ class Schedule:
         self._cancel_event.set()
         self._thread.join()
 
+    def join(self):
+        self._thread.join()
+
     def _thread_handler(self):
         while not self._cancel_event.is_set():
             if tu.datetime_reached(self._datetime):

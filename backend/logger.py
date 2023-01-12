@@ -48,6 +48,12 @@ class Logger:
     def info(self, message: str):
         self._logger.info(message)
 
+    def warning(self, message: str):
+        self._logger.warning(message)
+
+    def error(self, message: str):
+        self._logger.error(message)
+
     def exception(self, message: str):
         self._logger.exception(message)
 

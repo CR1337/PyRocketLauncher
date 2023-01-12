@@ -12,6 +12,7 @@ Commands
     restart     Restart the running app
     update      Pull the latest update and rebuild
     uninstall   Completely remove the app from the system
+    emergency   Asks for filename and time and runs the program and the given time
     help        Display this help
 
 Commands that require subcommands:
