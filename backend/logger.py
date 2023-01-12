@@ -51,6 +51,9 @@ class Logger:
     def warning(self, message: str):
         self._logger.warning(message)
 
+    def error(self, message: str):
+        self._logger.error(message)
+
     def exception(self, message: str):
         self._logger.exception(message)
 
