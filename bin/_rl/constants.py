@@ -21,7 +21,6 @@ class Paths:
     HELP_RL_STATUS: str = os.path.join(HELP, "rl_status.txt")
     HELP_RL_CRONJOB: str = os.path.join(HELP, "rl_cronjob.txt")
     HELP_RL_LOGS: str = os.path.join(HELP, "rl_logs.txt")
-    HELP_RL_DNS: str = os.path.join(HELP, "rl_dns.txt")
 
     RL_INSTALL: str = os.path.join(BIN, "rl-install")
 
@@ -34,7 +33,6 @@ class Paths:
     CRONJOB: str = "/etc/cron.d/rl"
     CONFIG_TXT: str = "/boot/config.txt"
 
-    DNSMASQ_CONF: str = "/etc/dnsmasq.conf"
     RESOLV_CONF: str = "/etc/resolv.conf"
 
     DHCPCD_CONF: str = "/etc/dhcpcd.conf"

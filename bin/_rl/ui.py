@@ -4,7 +4,6 @@ from typing import List
 from _rl.config import Config, ConfigWizard
 from _rl.constants import Paths
 from _rl.cronjob import Cronjob
-from _rl.dns import Dns, DnsWizard
 from _rl.inout import Output
 from _rl.logs import Logs
 from _rl.rl_manager import RlManager
@@ -84,9 +83,6 @@ class UserInterface:
             cls._cronjob(args[1:])
         elif args[0] == 'logs':
             cls._logs(args[1:])
-        # disabled for now
-        # elif args[0] == 'dns':
-        #     cls._dns(args[1:])
         else:
             Output.critical("Unknown command!\nRun 'sudo rl help'.")
 
@@ -212,32 +208,3 @@ class UserInterface:
 
         else:
             Output.critical("Unknown command!\nRun 'sudo rl logs help'.")
-
-    @classmethod
-    def _dns(cls, args: List[str]):
-        if len(args) < 1:
-            Output.critical(
-                "Invalid number of arguments!\nRun 'sudo rl dns help'."
-            )
-
-        if args[0] in [
-            'install', 'uninstall', 'wizard', 'status', 'list', 'help'
-        ]:
-            if args[0] == 'install':
-                Dns.install()
-                Output.success("Dns installed.")
-            elif args[0] == 'uninstall':
-                Dns.uninstall()
-                Output.success("Dns uninstalled.")
-            elif args[0] == 'wizard':
-                DnsWizard.run()
-                Output.success("Exited wizard.")
-            elif args[0] == 'status':
-                print(f"dns:\t{Dns.is_installed()}")
-            elif args[0] == 'list':
-                Dns.print_entries()
-            elif args[0] == 'help':
-                Output.print_file(Paths.HELP_RL_DNS)
-
-        else:
-            Output.critical("Unknown command!\nRun 'sudo rl dns help'.")

@@ -19,7 +19,6 @@ Commands that require arguments:
         cronjob:        Wether the cronjob is registered
         pi:             Wether the app is running on a Raspberry Pi with i²c hardware
         gateway_ip:     The networks gateway ip
-        dns:            Wether the dns service is installed
 
 Examples:
 
