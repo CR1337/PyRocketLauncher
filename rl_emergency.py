@@ -36,6 +36,7 @@ def get_program():
 
 
 def report(program: Program, scheduled_time: str):
+    print(f"Filename: {sys.argv[1]}")
     print(program)
     print()
     print(f"Running program at: {scheduled_time}")

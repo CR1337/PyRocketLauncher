@@ -114,7 +114,8 @@ class RlManager:
     @classmethod
     def emergency(cls):
         program_filename = input("Program filename> ")
-        if not os.path.exists(os.path.join(Paths.HOME, program_filename)):
+        program_filename = os.path.join(Paths.HOME, program_filename)
+        if not os.path.exists(program_filename):
             Output.error(f"File {program_filename} does not exist!")
 
         schedule_time = input("Schedule time> ")
