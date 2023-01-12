@@ -116,12 +116,12 @@ class RlManager:
         program_filename = input("Program filename> ")
         program_filename = os.path.join(Paths.HOME, program_filename)
         if not os.path.exists(program_filename):
-            Output.error(f"File {program_filename} does not exist!")
+            Output.critical(f"File {program_filename} does not exist!")
 
         schedule_time = input("Schedule time> ")
         if not FormatValidator.validate_time(schedule_time):
-            Output.error(
-                f"Invalid time: {schedule_time}!"
+            Output.critical(
+                f"Invalid time: {schedule_time}! "
                 "Format should be: HH:MM:SS"
             )
 
