@@ -336,6 +336,7 @@ class MasterController:
     @lock
     def load_program(cls, name: str, event_list: List):
         logger.info(f"Load program {name}")
+        Program.raise_on_json(event_list)
         return cls._call_device_method("load_program", name, event_list)
 
     @classmethod
