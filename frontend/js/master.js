@@ -547,7 +547,7 @@ const master_component = {
         },
 
         update_button_enabled() {
-            if (!this.enabled || !this._devices_found()) {
+            if (!this.enabled || !this._devices_found) {
                 return false;
             }
             for (const device of this.devices) {
