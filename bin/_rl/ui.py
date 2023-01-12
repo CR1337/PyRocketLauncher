@@ -51,7 +51,7 @@ class UserInterface:
 
         if args[0] in [
             'setup', 'run', 'stop', 'restart',
-            'update', 'uninstall', 'help'
+            'update', 'uninstall', 'emergency', 'help'
         ]:
             cls._check_for_no_further_arguments(args, "")
             if args[0] == 'setup':
@@ -72,6 +72,9 @@ class UserInterface:
             elif args[0] == 'uninstall':
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
+            elif args[0] == 'emergency':
+                RlManager.emergency()
+                Output.success("Emergency run done.")
             elif args[0] == 'help':
                 Output.print_file(Paths.HELP_RL)
 

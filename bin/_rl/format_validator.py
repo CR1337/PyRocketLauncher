@@ -28,6 +28,27 @@ class FormatValidator:
             return True
 
     @staticmethod
+    def validate_time(value: str) -> bool:
+        if len(value) != len("00:00:00"):
+            return False
+        values = value.split(":")
+        if len(values) != 3:
+            return False
+        try:
+            hours, minutes, seconds = [
+                int(v) for v in values
+            ]
+        except ValueError:
+            return False
+        if not (0 <= hours <= 23):
+            return False
+        if not (0 <= minutes <= 59):
+            return False
+        if not (0 <= seconds <= 59):
+            return False
+        return True
+
+    @staticmethod
     def validate_bool(value: str) -> bool:
         return value in ['0', '1']
 

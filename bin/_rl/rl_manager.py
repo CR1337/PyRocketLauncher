@@ -7,6 +7,7 @@ from _rl.command import Command
 from _rl.config import AutoConfig, Config, ConfigWizard
 from _rl.constants import Paths
 from _rl.cronjob import Cronjob
+from _rl.format_validator import FormatValidator
 from _rl.inout import Ask, Output
 from _rl.status import Status
 
@@ -109,3 +110,22 @@ class RlManager:
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
         Output.info("Removing all files...")
         shutil.rmtree(Paths.HOME)
+
+    @classmethod
+    def emergency(cls):
+        program_filename = input("Program filename> ")
+        if not os.path.exists(os.path.join(Paths.HOME, program_filename)):
+            Output.error(f"File {program_filename} does not exist!")
+
+        schedule_time = input("Schedule time> ")
+        if not FormatValidator.validate_time(schedule_time):
+            Output.error(
+                f"Invalid time: {schedule_time}!"
+                "Format should be: HH:MM:SS"
+            )
+
+        command = Command(
+            f"python3 {Paths.RL_EMERGENCY} "
+            f"{program_filename} {schedule_time}"
+        )
+        command.run()

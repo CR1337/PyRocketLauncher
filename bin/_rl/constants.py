@@ -15,6 +15,7 @@ class Paths:
     HELP: str = os.path.join(HOME, "doc/rl_help")
 
     RL_RUN: str = os.path.join(HOME, "rl_run.py")
+    RL_EMERGENCY: str = os.path.join(HOME, "rl_emergency.py")
 
     HELP_RL: str = os.path.join(HELP, "rl.txt")
     HELP_RL_CONFIG: str = os.path.join(HELP, "rl_config.txt")
