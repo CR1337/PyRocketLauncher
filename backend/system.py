@@ -10,6 +10,8 @@ class System:
     class ShutdownError(Exception):
         pass
 
+    update_needed: bool
+
     @classmethod
     def shutdown(cls):
         logger.info("Shutdown system")
@@ -41,8 +43,8 @@ class System:
         thread.name = "update"
         thread.start()
 
-    @classmethod
-    def _update_needed(cls) -> bool:
+    @staticmethod
+    def _update_needed() -> bool:
         logger.debug("Checking for updates")
         if not Instance.on_pi():
             return False
@@ -64,4 +66,5 @@ class System:
             logger.debug("This branch in up to date.")
             return False
 
-    update_needed: bool = _update_needed()
+
+System.update_needed = System._update_needed()
