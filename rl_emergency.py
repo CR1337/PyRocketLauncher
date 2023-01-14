@@ -3,6 +3,7 @@ import sys
 from datetime import datetime, timedelta
 
 import backend.time_util as tu
+from backend.instance import Instance
 from backend.led_controller import LedController
 from backend.program import Program
 from backend.schedule import Schedule
@@ -43,6 +44,7 @@ def report(program: Program, scheduled_time: str):
 
 
 def main():
+    Instance.initialize()
     led_controller = LedController()
     led_controller.load_preset('idle')
     program = get_program()
