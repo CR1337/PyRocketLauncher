@@ -3,6 +3,7 @@ from threading import Event, Thread
 from typing import Any, Callable, Dict
 
 import backend.time_util as tu
+from backend.led_controller import LedController
 from backend.logger import logger
 
 
@@ -25,13 +26,15 @@ class Schedule:
 
     def start(self):
         self._thread.start()
+        LedController.instance().blink(3.0, 0.5)
 
     def cancel(self):
         self._cancel_event.set()
-        self._thread.join()
+        self.join()
 
     def join(self):
         self._thread.join()
+        LedController.instance().blink(1.0, 0.5)
 
     def _thread_handler(self):
         while not self._cancel_event.is_set():

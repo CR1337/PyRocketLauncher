@@ -32,7 +32,8 @@ def run():
     )
     try:
         System.run_ntp_service()
-        LedController.turn_on()
+        led_controller = LedController()
+        led_controller.turn_on()
         app.run(
             debug=Config.get_value('debug'),
             port=Instance.get_server_port(),
@@ -43,8 +44,7 @@ def run():
     except Exception:
         logger.exception("Exception running app!")
     finally:
-        LedController.turn_off()
-        LedController.cleanup()
+        led_controller.turn_off()
 
 
 if __name__ == "__main__":
