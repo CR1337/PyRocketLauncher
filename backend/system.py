@@ -41,8 +41,8 @@ class System:
         thread.name = "update"
         thread.start()
 
-    @staticmethod
-    def _update_needed() -> bool:
+    @classmethod
+    def _update_needed(cls) -> bool:
         logger.debug("Checking for updates")
         if not Instance.on_pi():
             return False
