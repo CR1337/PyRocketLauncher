@@ -5,8 +5,8 @@ import backend.time_util as tu
 from backend.logger import logger
 from backend.instance import Instance
 
-class System:
 
+class System:
     class ShutdownError(Exception):
         pass
 
