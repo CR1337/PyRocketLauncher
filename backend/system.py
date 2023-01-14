@@ -41,8 +41,8 @@ class System:
         thread.name = "update"
         thread.start()
 
-    @classmethod
-    def update_nedded(cls) -> bool:
+    @staticmethod
+    def _update_needed() -> bool:
         logger.debug("Checking for updates")
         if not Instance.on_pi():
             return False
@@ -63,3 +63,5 @@ class System:
         elif status == 'up_to_date':
             logger.debug("This branch in up to date.")
             return False
+
+    update_needed: bool = _update_needed()
