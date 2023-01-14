@@ -43,7 +43,8 @@ def report(program: Program, scheduled_time: str):
 
 
 def main():
-    LedController.turn_on()
+    led_controller = LedController()
+    led_controller.turn_on()
     program = get_program()
     schedule_time = get_schedule_time()
     schedule = Schedule(schedule_time, lambda: program.run(lambda: None))
@@ -60,8 +61,7 @@ def main():
     else:
         print("Done.")
     finally:
-        LedController.turn_off()
-        LedController.cleanup()
+        led_controller.turn_off()
 
 
 if __name__ == "__main__":

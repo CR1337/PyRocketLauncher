@@ -9,6 +9,7 @@ from backend.config import Config
 from backend.device import Device
 from backend.hardware import Hardware
 from backend.instance import Instance
+from backend.led_controller import LedController
 from backend.logger import logger
 from backend.program import Program
 from backend.rl_exception import RlException
@@ -60,11 +61,13 @@ class DeviceController:
     @classmethod
     def _load_program(cls, program: Program):
         cls._program = program
+        LedController.instance().blink(1.0, 0.5)
         logger.debug(f"Program {program.name} loaded")
 
     @classmethod
     def _unload_program(cls):
         cls._program = None
+        LedController.instance().turn_on()
         logger.debug("Program unloaded")
 
     @classmethod
@@ -101,7 +104,7 @@ class DeviceController:
 
     @classmethod
     def _program_finished(cls):
-        cls._program = None
+        cls._unload_program()
         cls._state_machine.reset()
         logger.info("Program finished")
 

@@ -6,6 +6,7 @@ from backend.address import Address
 from backend.command import Command
 from backend.config import Config
 from backend.hardware import Hardware
+from backend.led_controller import LedController
 from backend.logger import logger
 
 
@@ -120,6 +121,7 @@ class Program:
         self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
         self._thread.start()
+        LedController.instance().blink(0.3, 0.05)
 
     def pause(self):
         self._pause_event.set()
@@ -129,10 +131,11 @@ class Program:
 
     def stop(self):
         self._stop_event.set()
-        self._thread.join()
+        self.join()
 
     def join(self):
         self._thread.join()
+        LedController.instance().turn_on()
 
     @property
     def _current_total_seconds(self) -> float:
