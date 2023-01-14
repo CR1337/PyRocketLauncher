@@ -61,13 +61,13 @@ class DeviceController:
     @classmethod
     def _load_program(cls, program: Program):
         cls._program = program
-        LedController.instance().blink(1.0, 0.5)
+        LedController.instance().load_preset('loaded')
         logger.debug(f"Program {program.name} loaded")
 
     @classmethod
     def _unload_program(cls):
         cls._program = None
-        LedController.instance().turn_on()
+        LedController.instance().load_preset('idle')
         logger.debug("Program unloaded")
 
     @classmethod

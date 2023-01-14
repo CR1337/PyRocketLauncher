@@ -1,0 +1,23 @@
+{
+    "idle": {
+        "pattern": "on"
+    },
+    "loaded": {
+        "pattern": "blink",
+        "frequency": 1.0,
+        "duty": 0.5
+    },
+    "scheduled": {
+        "pattern": "blink",
+        "frequency": 3.0,
+        "duty": 0.5
+    },
+    "running": {
+        "pattern": "blink",
+        "frequency": 0.5,
+        "duty": 0.05
+    },
+    "off": {
+        "pattern": "off"
+    }
+}

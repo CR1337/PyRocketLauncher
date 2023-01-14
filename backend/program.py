@@ -121,7 +121,7 @@ class Program:
         self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
         self._thread.start()
-        LedController.instance().blink(0.3, 0.05)
+        LedController.instance().load_preset('running')
 
     def pause(self):
         self._pause_event.set()
@@ -135,7 +135,7 @@ class Program:
 
     def join(self):
         self._thread.join()
-        LedController.instance().turn_on()
+        LedController.instance().load_preset('idle')
 
     @property
     def _current_total_seconds(self) -> float:
