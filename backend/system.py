@@ -1,13 +1,17 @@
+import signal
 import subprocess
 from threading import Thread
-import backend.time_util as tu
 
-from backend.logger import logger
+import backend.time_util as tu
 from backend.instance import Instance
+from backend.logger import logger
 
 
 class System:
     class ShutdownError(Exception):
+        pass
+
+    class ExternalTermination(Exception):
         pass
 
     update_needed: bool
@@ -66,5 +70,10 @@ class System:
             logger.debug("This branch in up to date.")
             return False
 
+    @classmethod
+    def sigterm_handler(cls, *args):
+        raise cls.ExternalTermination("SIGTERM received")
+
 
 System.update_needed = System._update_needed()
+signal.signal(signal.SIGTERM, System.sigterm_handler)
