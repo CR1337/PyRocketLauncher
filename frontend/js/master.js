@@ -550,8 +550,8 @@ const master_component = {
             if (!this.enabled || !this._devices_found) {
                 return false;
             }
-            for (const device of this.devices) {
-                if (device.update_needed) {
+            for (const device_id in this.devices) {
+                if (this.devices[device_id].update_needed) {
                     return true;
                 }
             }

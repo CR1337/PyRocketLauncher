@@ -3,10 +3,10 @@ from threading import Thread
 import backend.time_util as tu
 
 from backend.logger import logger
+from backend.instance import Instance
 
 
 class System:
-
     class ShutdownError(Exception):
         pass
 
@@ -44,6 +44,8 @@ class System:
     @classmethod
     def update_nedded(cls) -> bool:
         logger.debug("Checking for updates")
+        if not Instance.on_pi():
+            return False
         output = subprocess.check_output(
             "rl status get update",
             shell=True
