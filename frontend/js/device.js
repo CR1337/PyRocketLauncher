@@ -33,7 +33,7 @@ const device_template = /*html*/`
                 class="las la-list"
             ></i></button>
 
-            <template v-if="state.update_needed">
+            <template v-if="update_needed">
                 <button
                     :class="['base-button', 'yellow', button_status.update]"
                     @click="update_button_clicked"
@@ -152,7 +152,8 @@ const device_component = {
         initial_ip_address: String,
         on_master_page: Boolean,
         first_in_list: Boolean,
-        last_in_list: Boolean
+        last_in_list: Boolean,
+        deregister_button_status: String
     },
     data() {
         return {
@@ -162,7 +163,6 @@ const device_component = {
             event_source: null,
             event_stream_pending_seconds: 0,
             event_stream_timeout_id: null,
-            deregister_button_status: '',
             button_status: {
                 testloop: '',
                 unlock: '',
@@ -399,6 +399,11 @@ const device_component = {
             } else {
                 return "";
             }
+        },
+
+        update_needed() {
+            if (this.state === null) return false;
+            return this.state.update_needed;
         }
     },
     created() {
