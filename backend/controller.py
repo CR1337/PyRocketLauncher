@@ -196,7 +196,7 @@ class DeviceController:
     @classmethod
     def update(cls):
         logger.info("Updating")
-        if System.update_nedded():
+        if System.update_needed:
             System.update()
         else:
             logger.info("No update needed")
