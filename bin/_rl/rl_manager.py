@@ -51,7 +51,7 @@ class RlManager:
         if not Status.is_running():
             Output.critical("System is not running!")
         Output.info("Stopping system...")
-        command = Command(f"pkill -9 -f {Paths.RL_RUN}")
+        command = Command(f"pkill -15 -f {Paths.RL_RUN}")
         if command.get_returncode() != -9:
             Output.error("Error stopping device!")
 
