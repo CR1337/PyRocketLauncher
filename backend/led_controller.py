@@ -84,8 +84,8 @@ class LedController:
                 yield period - timestamp_inside_period
 
     def _thread_handler(self, period: float, duty: float):
-        GPIO.output(self.LED_PIN, GPIO.HIGH)
-        currently_on = True
+        GPIO.output(self.LED_PIN, GPIO.LOW)
+        currently_on = False
         wait_times = self._wait_times(period, duty)
         while not self._stop_blink_event.is_set():
             tu.sleep(next(wait_times))
