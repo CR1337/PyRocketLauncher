@@ -222,7 +222,7 @@ class DeviceController:
                 None if cls._program is None
                 else cls._program.get_state()
             ),
-            'update_needed': System.update_nedded()
+            'update_needed': System.update_needed
         }
 
 
