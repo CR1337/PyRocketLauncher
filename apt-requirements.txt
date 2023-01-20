@@ -1,0 +1,6 @@
+git
+python3
+python3-pip
+i2c-tools
+ntp
+nmap=7.70+dfsg1-6+deb10u2

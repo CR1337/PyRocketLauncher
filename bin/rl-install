@@ -46,47 +46,6 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
-info "Updating apt repositories..."
-apt -y update
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-
-info "Installing dependencies via apt..."
-apt -y install git
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-apt -y install python3
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-apt -y install python3-pip
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-apt -y install i2c-tools
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-apt -y install ntp
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-
-info "Enabling i²c..."
-raspi-config nonint do_i2c 0
-ret_val=$?
-if [ $ret_val -ne 0 ]; then
-    unexpected_error $ret_val
-fi
-
 info "Cloning $APP_NAME repository from GitHub..."
 git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
 ret_val=$?
@@ -101,8 +60,29 @@ if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
 fi
 
+info "Updating apt repositories..."
+apt -y update
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Installing dependencies via apt..."
+apt install $(grep -vE "^\s*#" apt-dependencies.txt  | tr "\n" " ")
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+info "Enabling i²c..."
+raspi-config nonint do_i2c 0
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
 info "Installing dependencies via pip..."
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r pip-requirements.txt
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
