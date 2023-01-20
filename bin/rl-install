@@ -68,7 +68,7 @@ if [ $ret_val -ne 0 ]; then
 fi
 
 info "Installing dependencies via apt..."
-apt install $(grep -vE "^\s*#" apt-dependencies.txt  | tr "\n" " ")
+apt install $(grep -vE "^\s*#" apt-requirements.txt  | tr "\n" " ")
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
     unexpected_error $ret_val
