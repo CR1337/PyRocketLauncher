@@ -68,23 +68,16 @@ class RlManager:
         if Status.is_running():
             was_running = True
             cls.stop()
-        command = Command(f"git -C {Paths.HOME} pull")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command("apt update")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command(
+        commands = [
+            f"git -C {Paths.HOME} pull",
+            "apt update",
             'apt -y install $(grep -vE "^\\s*#" '
-            f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")'
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command(
+            f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")',
             f"python3 -m pip install -r {Paths.HOME}/pip-requirements.txt"
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
+        ]
+        for command in commands:
+            if command.get_returncode() != 0:
+                Output.unexpected_error()
         if was_running:
             cls.run()
 
