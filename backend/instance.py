@@ -8,13 +8,10 @@ class Instance:
     MODEL_PATH: str = "/sys/firmware/devicetree/base/model"
 
     _is_master: bool
-
-    @classmethod
-    def initialize(cls):
-        try:
-            cls._is_master = sys.argv[1] == '--master'
-        except IndexError:
-            cls._is_master = False
+    try:
+        _is_master = sys.argv[1] == '--master'
+    except IndexError:
+        _is_master = False
 
     @classmethod
     def is_master(cls) -> bool:

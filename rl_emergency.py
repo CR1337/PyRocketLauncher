@@ -44,7 +44,6 @@ def report(program: Program, scheduled_time: str):
 
 
 def main():
-    Instance.initialize()
     led_controller = LedController()
     led_controller.load_preset('idle')
     program = get_program()
