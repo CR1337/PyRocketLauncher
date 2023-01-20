@@ -20,7 +20,7 @@ class Network:
     @classmethod
     def local_ips(cls) -> List[str]:
         lines = subprocess.check_output(
-            f"nmap -sP {cls.local_ip_prefix}*",
+            f"nmap -sP {cls.local_ip_prefix()}*",
             shell=True,
             stderr=subprocess.DEVNULL
         ).decode(encoding='ascii').split("\n")
