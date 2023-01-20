@@ -72,7 +72,7 @@ class RlManager:
         if command.get_returncode() != 0:
             Output.unexpected_error()
         command = Command(
-            'apt install $(grep -vE "^\\s*#" '
+            'apt -y install $(grep -vE "^\\s*#" '
             f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")'
         )
         if command.get_returncode() != 0:
