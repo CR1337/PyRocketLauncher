@@ -71,6 +71,9 @@ class RlManager:
         command = Command(f"git -C {Paths.HOME} pull")
         if command.get_returncode() != 0:
             Output.unexpected_error()
+        command = Command("apt update")
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
         command = Command(
             'apt -y install $(grep -vE "^\\s*#" '
             f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")'
