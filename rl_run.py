@@ -12,8 +12,6 @@ from backend.system import System
 
 
 def run():
-    Instance.initialize()
-
     app = Flask(__name__)
 
     CORS(app)
