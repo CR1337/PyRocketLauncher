@@ -4,16 +4,16 @@ from typing import Any, Dict, List, Tuple
 import requests
 
 from backend.config import Config
-from backend.instance import Instance
+from backend.network import Network
 from backend.logger import logger
 
 
 class Device:
 
-    IP_PREFIX: str = ".".join(Instance.gateway_ip().split(".")[:3]) + "."
+    # IP_PREFIX: str = ".".join(Instance.gateway_ip().split(".")[:3]) + "."
     REQUEST_TIMEOUT: int = Config.get_constant('request_timeout')
-    FIRST_IP_LAST_BYTE: int = 1
-    LAST_IP_LAST_BYTE: int = 254
+    # FIRST_IP_LAST_BYTE: int = 1
+    # LAST_IP_LAST_BYTE: int = 254
     DEVICE_PORT: int = 5000
 
     _ip_address: str
@@ -21,8 +21,8 @@ class Device:
     _initial_state: Dict[str, Any]
 
     @classmethod
-    def _search_for_device(cls, index) -> Tuple[str, str]:
-        ip_address = cls.IP_PREFIX + str(index)
+    def _search_for_device(cls, ip_address) -> Tuple[str, str]:
+        # ip_address = cls.IP_PREFIX + str(index)
         try:
             response = requests.get(
                 f"http://{ip_address}:{cls.DEVICE_PORT}/discover",
@@ -36,17 +36,16 @@ class Device:
 
     @classmethod
     def find_all(cls) -> List['Device']:
+        ip_addresses = Network.local_ips()
         with ThreadPoolExecutor(
-            max_workers=cls.LAST_IP_LAST_BYTE,
+            max_workers=len(ip_addresses),
             thread_name_prefix="find_all_devices"
         ) as executor:
             futures = []
 
-            for idx in range(
-                cls.FIRST_IP_LAST_BYTE, cls.LAST_IP_LAST_BYTE + 1
-            ):
+            for ip_address in ip_addresses:
                 futures.append(
-                    executor.submit(cls._search_for_device, idx)
+                    executor.submit(cls._search_for_device, ip_address)
                 )
 
             devices = set()
