@@ -26,7 +26,7 @@ class Schedule:
 
     def start(self):
         self._thread.start()
-        LedController.instance().blink(3.0, 0.5)
+        LedController.instance().load_preset('scheduled')
 
     def cancel(self):
         self._cancel_event.set()
@@ -34,7 +34,7 @@ class Schedule:
 
     def join(self):
         self._thread.join()
-        LedController.instance().blink(1.0, 0.5)
+        LedController.instance().load_preset('loaded')
 
     def _thread_handler(self):
         while not self._cancel_event.is_set():

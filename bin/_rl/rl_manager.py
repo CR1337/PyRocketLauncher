@@ -71,6 +71,17 @@ class RlManager:
         command = Command(f"git -C {Paths.HOME} pull")
         if command.get_returncode() != 0:
             Output.unexpected_error()
+        command = Command(
+            'apt install $(grep -vE "^\\s*#" '
+            f'{Paths.HOME}/apt-dependencies.txt  | tr "\\n" " ")'
+        )
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
+        command = Command(
+            f"python3 -m pip install -r {Paths.HOME}/pip-requirements.txt"
+        )
+        if command.get_returncode() != 0:
+            Output.unexpected_error()
         if was_running:
             cls.run()
 

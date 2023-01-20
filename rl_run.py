@@ -12,6 +12,8 @@ from backend.system import System
 
 
 def run():
+    Instance.initialize()
+
     app = Flask(__name__)
 
     CORS(app)
@@ -33,7 +35,7 @@ def run():
     try:
         System.run_ntp_service()
         led_controller = LedController()
-        led_controller.turn_on()
+        led_controller.load_preset('idle')
         app.run(
             debug=Config.get_value('debug'),
             port=Instance.get_server_port(),
@@ -44,7 +46,7 @@ def run():
     except Exception:
         logger.exception("Exception running app!")
     finally:
-        led_controller.turn_off()
+        led_controller.off()
 
 
 if __name__ == "__main__":
