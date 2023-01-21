@@ -239,18 +239,7 @@ const master_component = {
         },
 
         deregister_all_button_clicked(event) {
-            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask, this.button_status, this._error_callback)
-            .then((data) => {
-                if (data !== null) {
-                    for (let device_id of this.devices) {
-                        if (("deregister_" + device_id) in this.button_status) {
-                            delete this.button_status["degerister_" + device_id];
-                        }
-                    }
-                    this.devices = {};
-                    this.device_ids = [];
-                }
-            });
+            this._deregister_all()
         },
 
         deregister_device(device_id) {
@@ -384,6 +373,7 @@ const master_component = {
                 {},
                 'update', "Update all devices?", this.ask, this.button_status, this._error_callback
             );
+            this._deregister_all();
         },
 
         error_button_clicked(event) {
@@ -396,6 +386,21 @@ const master_component = {
 
         config_button_clicked(event) {
             window.open("config.html", "_blank").focus();
+        },
+
+        _deregister_all() {
+            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask, this.button_status, this._error_callback)
+            .then((data) => {
+                if (data !== null) {
+                    for (let device_id of this.devices) {
+                        if (("deregister_" + device_id) in this.button_status) {
+                            delete this.button_status["degerister_" + device_id];
+                        }
+                    }
+                    this.devices = {};
+                    this.device_ids = [];
+                }
+            });
         },
 
         _next_datetime_ISOstring(time_string) {
