@@ -96,14 +96,11 @@ class LedController:
         switch_time_inside_period = period * duty
         while True:
             timestamp_inside_period = tu.timestamp_now() % period
-            yield min(
-                period * (
+            yield period * (
                     duty
                     if timestamp_inside_period <= switch_time_inside_period
                     else 1
                 ) - timestamp_inside_period,
-                tu.TIME_RESOLUTION
-            )
 
     def _thread_handler(self, period: float, duty: float):
         GPIO.output(self.LED_PIN, GPIO.LOW)
