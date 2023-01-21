@@ -45,7 +45,7 @@ class AutoConfig:
 
     @staticmethod
     def _create_config_files():
-        for default_filename, filename in zip(
+        for filename, default_filename in zip(
             [
                 Paths.CONSTANTS,
                 Paths.CONFIG,
