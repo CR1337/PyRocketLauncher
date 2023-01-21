@@ -50,7 +50,7 @@ class UserInterface:
             )
 
         if args[0] in [
-            'setup', 'run', 'stop', 'restart',
+            'setup', 'run', 'run_no_wait', 'stop', 'restart',
             'update', 'uninstall', 'emergency', 'help'
         ]:
             cls._check_for_no_further_arguments(args, "")
@@ -60,6 +60,8 @@ class UserInterface:
             elif args[0] == 'run':
                 RlManager.run()
                 Output.success("System is now running.")
+            elif args[0] == 'run_no_wait':
+                RlManager.run(no_wait=True)
             elif args[0] == 'stop':
                 RlManager.stop()
                 Output.success("System was stopped.")

@@ -12,7 +12,7 @@ class Cronjob:
         if cls.is_registered():
             Output.critical("A cronjob was already registered!")
         with open(Paths.CRONJOB, 'w', encoding='ascii') as file:
-            file.write(f"@reboot root {Paths.SELF} run\n")
+            file.write(f"@reboot root {Paths.SELF} run_no_wait\n")
         os.chmod(Paths.CRONJOB, int('600', 8))
 
     @classmethod

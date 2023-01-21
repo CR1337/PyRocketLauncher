@@ -8,6 +8,7 @@ Commands
 
     setup       Run a wizard that configures, builds and runs the app and registers a cronjob
     run         Run the app
+    run_no_wait Run the app without waiting for the server running
     stop        Stop the running app
     restart     Restart the running app
     update      Pull the latest update and rebuild

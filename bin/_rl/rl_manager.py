@@ -28,7 +28,7 @@ class RlManager:
         Output.info("For further options run: 'sudo rl help'")
 
     @staticmethod
-    def run():
+    def run(no_wait: bool = False):
         if Status.is_running():
             Output.critical("System is already running!")
         if Config.get_device():
@@ -43,6 +43,8 @@ class RlManager:
                 [sys.executable, Paths.RL_RUN, '--master']
             )
             command.run_background()
+        if no_wait:
+            return
         Output.info("Waiting for server running...")
         while not Status.is_running():
             time.sleep(1)
