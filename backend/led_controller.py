@@ -92,26 +92,21 @@ class LedController:
                 duty=preset['duty']
             )
 
-    def _wait_times(self, period: float, duty: float) -> float:
-        switch_time_inside_period = period * duty
-        while True:
-            timestamp_inside_period = tu.timestamp_now() % period
-            yield min(
-                period * (
-                    duty
-                    if timestamp_inside_period <= switch_time_inside_period
-                    else 1
-                ) - timestamp_inside_period,
-                tu.TIME_RESOLUTION
-            )
+    def _led_status(self, period: float, duty: float) -> Any:
+        timestamp_inside_period = tu.timestamp_now() % period
+        return (
+            GPIO.HIGH
+            if timestamp_inside_period <= period * duty
+            else GPIO.LOW
+        )
 
     def _thread_handler(self, period: float, duty: float):
         GPIO.output(self.LED_PIN, GPIO.LOW)
         currently_on = False
-        wait_times = self._wait_times(period, duty)
+        time_resolution = (period * duty) / 2
         while not self._stop_blink_event.is_set():
-            tu.sleep(next(wait_times))
-            GPIO.output(self.LED_PIN, GPIO.LOW if currently_on else GPIO.HIGH)
+            tu.sleep(time_resolution)
+            GPIO.output(self.LED_PIN, self._led_status(period, duty))
             currently_on = not currently_on
 
     def _stop_blink(self):
