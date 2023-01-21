@@ -1,7 +1,7 @@
 import sys
 from difflib import SequenceMatcher
 
-from _rl.constants import TerminalColors
+from _rl.constants import ExitCodes, TerminalColors
 from _rl.format_validator import FormatValidator
 
 
@@ -117,7 +117,7 @@ class Output:
         print(
             f"{TerminalColors.GREEN}SUCCESS> {message}{TerminalColors.RESET}"
         )
-        exit(0)
+        exit(ExitCodes.SUCCESS)
 
     @classmethod
     def wrong_usage(cls):
@@ -127,7 +127,7 @@ class Output:
     def print_file(filename: str):
         with open(filename, 'r', encoding='utf-8') as file:
             print(file.read())
-        exit(0)
+        exit(ExitCodes.SUCCESS)
 
     @classmethod
     def unexpected_error(cls):

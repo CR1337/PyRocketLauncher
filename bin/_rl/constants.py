@@ -66,3 +66,13 @@ class TerminalColors:
     CYAN: str = "\033[96m"
     WHITE: str = "\033[97m"
     RESET: str = '\033[0m'
+
+
+class ExitCodes:
+
+    SUCCESS: int = 0
+
+
+class UserIds:
+
+    ROOT: int = 0

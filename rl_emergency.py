@@ -53,6 +53,8 @@ def main():
     try:
         schedule.join()
         program.join()
+    except Exception:
+        print("Unexpected exception!")
     except KeyboardInterrupt:
         schedule.cancel()
         if program.is_running:

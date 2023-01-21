@@ -69,6 +69,9 @@ class System:
         elif status == 'up_to_date':
             logger.debug("This branch in up to date.")
             return False
+        elif status == 'no_internet':
+            logger.info("Cannot check for updates. No Internet.")
+            return False
 
     @classmethod
     def sigterm_handler(cls, *args):

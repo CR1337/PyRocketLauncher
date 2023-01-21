@@ -1,11 +1,12 @@
 import os
 import shutil
+import signal
 import sys
 import time
 
 from _rl.command import Command
 from _rl.config import AutoConfig, Config, ConfigWizard
-from _rl.constants import Paths
+from _rl.constants import ExitCodes, Paths
 from _rl.cronjob import Cronjob
 from _rl.format_validator import FormatValidator
 from _rl.inout import Ask, Output
@@ -51,8 +52,8 @@ class RlManager:
         if not Status.is_running():
             Output.critical("System is not running!")
         Output.info("Stopping system...")
-        command = Command(f"pkill -15 -f {Paths.RL_RUN}")
-        if command.get_returncode() != -15:
+        command = Command(f"pkill -{int(signal.SIGTERM)} -f {Paths.RL_RUN}")
+        if command.get_returncode() != -int(signal.SIGTERM):
             Output.error("Error stopping device!")
 
     @classmethod
@@ -68,23 +69,16 @@ class RlManager:
         if Status.is_running():
             was_running = True
             cls.stop()
-        command = Command(f"git -C {Paths.HOME} pull")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command("apt update")
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command(
+        commands = [
+            f"git -C {Paths.HOME} pull",
+            "apt update",
             'apt -y install $(grep -vE "^\\s*#" '
-            f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")'
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
-        command = Command(
+            f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")',
             f"python3 -m pip install -r {Paths.HOME}/pip-requirements.txt"
-        )
-        if command.get_returncode() != 0:
-            Output.unexpected_error()
+        ]
+        for command in commands:
+            if command.get_returncode() != ExitCodes.SUCCESS:
+                Output.unexpected_error()
         if was_running:
             cls.run()
 

@@ -43,6 +43,8 @@ def run():
         )
     except Exception:
         logger.exception("Exception running app!")
+    except KeyboardInterrupt:
+        logger.info("Termination due to KeyboardInterrupt.")
     finally:
         led_controller.off()
 

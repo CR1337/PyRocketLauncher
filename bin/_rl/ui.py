@@ -2,7 +2,7 @@ import os
 from typing import List
 
 from _rl.config import Config, ConfigWizard
-from _rl.constants import Paths
+from _rl.constants import Paths, UserIds
 from _rl.cronjob import Cronjob
 from _rl.inout import Output
 from _rl.logs import Logs
@@ -37,7 +37,7 @@ class UserInterface:
 
     @staticmethod
     def _require_root():
-        if os.geteuid() != 0:
+        if os.geteuid() != UserIds.ROOT:
             Output.critical("Please run as root!")
 
     @classmethod
