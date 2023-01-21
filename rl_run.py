@@ -32,6 +32,7 @@ def run():
     )
     try:
         System.run_ntp_service()
+        System.check_for_update()
         led_controller = LedController()
         led_controller.load_preset('idle')
         app.run(
