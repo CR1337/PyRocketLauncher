@@ -199,7 +199,7 @@ const device_component = {
             button_request(
                 this.host + "/reboot", 'POST',
                 {},
-                'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
+                'reboot', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
             this._deregister();
         },
@@ -260,7 +260,7 @@ const device_component = {
             button_request(
                 this.host + "/update", 'POST',
                 {},
-                'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
+                'update', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
         },
 
