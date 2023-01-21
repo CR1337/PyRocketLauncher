@@ -170,7 +170,7 @@ const master_template = /*html*/`
             :last_in_list="index==Object.keys(devices).length-1"
             :deregister_button_status="button_status['deregister_' + device_id]"
             @state-updated="device_state_updated"
-            @deregister-button-clicked="deregister_device"
+            @deregister-button-clicked="deregister_device(true)"
             @move-up="move_device_up"
             @move-down="move_device_down"
         ></device>
@@ -242,8 +242,8 @@ const master_component = {
             this._deregister_all()
         },
 
-        deregister_device(device_id) {
-            button_request("/deregister", 'POST', {device_id: device_id}, 'deregister_' + device_id, 'Deregister ' + device_id + "?", this.ask, this.button_status, this._error_callback)
+        deregister_device(device_id, dont_ask=false) {
+            button_request("/deregister", 'POST', {device_id: device_id}, 'deregister_' + device_id, 'Deregister ' + device_id + "?", this.ask && !dont_ask, this.button_status, this._error_callback)
             .then((data) => {
                 if (data !== null) {
                     const device_id = data.deregistered_device_id;
@@ -373,7 +373,7 @@ const master_component = {
                 {},
                 'update', "Update all devices?", this.ask, this.button_status, this._error_callback
             );
-            this._deregister_all();
+            this._deregister_all(true);
         },
 
         error_button_clicked(event) {
@@ -388,8 +388,8 @@ const master_component = {
             window.open("config.html", "_blank").focus();
         },
 
-        _deregister_all() {
-            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask, this.button_status, this._error_callback)
+        _deregister_all(dont_ask=false) {
+            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask && !dont_ask, this.button_status, this._error_callback)
             .then((data) => {
                 if (data !== null) {
                     for (let device_id of this.devices) {
