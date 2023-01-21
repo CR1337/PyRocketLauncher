@@ -24,7 +24,7 @@ class Logs:
             for fn in os.listdir(Paths.LOGS)
         ]
         log_filenames = [fn for fn in filenames if fn.endswith(".log")]
-        if len(log_filenames) == 0:
+        if not len(log_filenames):
             Output.critical("There are no logfiles.")
         return log_filenames
 

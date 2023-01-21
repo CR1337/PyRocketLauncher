@@ -4,7 +4,7 @@ from typing import Callable, Dict
 import requests
 from _rl.command import Command
 from _rl.config import Config
-from _rl.constants import Paths
+from _rl.constants import ExitCodes, Paths
 from _rl.cronjob import Cronjob
 from _rl.network import Network
 
@@ -60,7 +60,7 @@ class Status:
     def update() -> str:
         command = Command(f"git -C {Paths.HOME} remote update")
         status = command.get_returncode(show_output=False)
-        if status != 0:
+        if status != ExitCodes.SUCCESS:
             return 'no_internet'
 
         command = Command(f"git -C {Paths.HOME} rev-parse @")

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict
 
 from _rl.command import Command
-from _rl.constants import Paths
+from _rl.constants import Paths, ExitCodes
 from _rl.format_validator import FormatValidator
 from _rl.inout import Ask, Output
 from _rl.network import Network
@@ -145,7 +145,7 @@ class Config:
     @classmethod
     def set_timezone(cls, value: str):
         command = Command(f"timedatectl set-timezone {value}")
-        if command.get_returncode() != 0:
+        if command.get_returncode() != ExitCodes.SUCCESS:
             Output.critical("Error setting timezone!")
 
     @classmethod
@@ -156,7 +156,7 @@ class Config:
     def set_system_time(cls, value: str) -> str:
         time_string = str(value).strip()
         command = Command(f"timedatectl set-time '{time_string}'")
-        if command.get_returncode() != 0:
+        if command.get_returncode() != ExitCodes.SUCCESS:
             Output.critical(
                 f"Invalid time format: {time_string}\n"
                 "Format has to be 'YYYY-MM-DD HH:MM:SS'"
