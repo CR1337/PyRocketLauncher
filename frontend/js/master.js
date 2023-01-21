@@ -373,7 +373,7 @@ const master_component = {
                 {},
                 'update', "Update all devices?", this.ask, this.button_status, this._error_callback
             );
-            this._deregister_all();
+            this._deregister_all(true);
         },
 
         error_button_clicked(event) {
@@ -388,8 +388,8 @@ const master_component = {
             window.open("config.html", "_blank").focus();
         },
 
-        _deregister_all() {
-            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask, this.button_status, this._error_callback)
+        _deregister_all(dont_ask=false) {
+            button_request("/deregister-all", 'POST', {}, 'deregister_all', "Deregister all devices?", this.ask && !dont_ask, this.button_status, this._error_callback)
             .then((data) => {
                 if (data !== null) {
                     for (let device_id of this.devices) {
