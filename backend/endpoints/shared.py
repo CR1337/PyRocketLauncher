@@ -22,7 +22,6 @@ CORS(shared_bp)
 @handle_exceptions
 @log_request
 def route_index():
-    System.check_for_update()
     path = f"{Instance.get_prefix()}.html"
     return redirect(url_for('static', filename=path))
 
@@ -160,6 +159,7 @@ def route_system_time():
 @handle_exceptions
 @log_request
 def route_event_stream():
+    System.check_for_update()
     event_stream = EventStream()
     return Response(
         event_stream.event_stream_handler(),
