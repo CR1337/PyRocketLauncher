@@ -80,7 +80,7 @@ class LedController:
         self._thread.start()
 
     def load_preset(self, name: str):
-        logger.info(f"Loading LED preeset '{name}'")
+        logger.info(f"Loading LED preset '{name}'")
         preset = self._presets[name]
         if preset['pattern'] == 'on':
             self.on()
