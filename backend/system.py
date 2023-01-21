@@ -14,7 +14,7 @@ class System:
     class ExternalTermination(Exception):
         pass
 
-    update_needed: bool
+    update_needed: bool = False
 
     @classmethod
     def shutdown(cls):
@@ -45,6 +45,15 @@ class System:
         logger.info("Installing updates")
         thread = Thread(target=thread_handler)
         thread.name = "update"
+        thread.start()
+
+    @classmethod
+    def check_for_update(cls):
+        def thread_handler():
+            tu.sleep(1)
+            cls.update_needed = cls._update_needed()
+        thread = Thread(target=thread_handler)
+        thread.name = "update_check"
         thread.start()
 
     @staticmethod
@@ -78,8 +87,4 @@ class System:
         raise cls.ExternalTermination("SIGTERM received")
 
 
-try:
-    System.update_needed = System._update_needed()
-except Exception:
-    logger.exception("Error in update check!")
 signal.signal(signal.SIGTERM, System.sigterm_handler)

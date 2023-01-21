@@ -10,6 +10,7 @@ from backend.event_stream import EventStream
 from backend.hardware import Hardware
 from backend.instance import Instance
 from backend.logger import logger
+from backend.system import System
 
 shared_bp = Blueprint('shared_blueprint', __name__)
 CORS(shared_bp)
@@ -21,6 +22,7 @@ CORS(shared_bp)
 @handle_exceptions
 @log_request
 def route_index():
+    System.check_for_update()
     path = f"{Instance.get_prefix()}.html"
     return redirect(url_for('static', filename=path))
 
