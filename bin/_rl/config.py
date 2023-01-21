@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import socket
 from datetime import datetime
 from typing import Any, Callable, Dict
@@ -41,8 +43,28 @@ class AutoConfig:
     def _determine_device() -> bool:
         return True
 
+    @staticmethod
+    def _create_config_files():
+        for default_filename, filename in zip(
+            [
+                Paths.CONSTANTS,
+                Paths.CONFIG,
+                Paths.RUN_CONFIG
+            ],
+            [
+                Paths.DEFAULT_CONSTANTS,
+                Paths.DEFAULT_CONFIG,
+                Paths.DEFAULT_RUN_CONFIG
+            ]
+        ):
+            if not os.path.exists(filename):
+                shutil.copy(default_filename, Paths.CONFIG_PATH)
+
     @classmethod
     def run(cls):
+        Output.info("Creating config files...")
+        cls._create_config_files()
+
         Output.info("Performing automatic configuration...")
 
         device_id = cls._determine_device_id()

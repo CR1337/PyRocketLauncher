@@ -10,6 +10,7 @@ class Paths:
     PARENT: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-3]))
     HOME: str = "/" + os.path.join(*(SELF.split(os.path.sep)[:-2]))
     CONFIG_PATH: str = os.path.join(HOME, "config")
+    DEFAULT_CONFIG_PATH: str = os.path.join(CONFIG_PATH, "defaults")
     BIN: str = os.path.join(HOME, "bin")
     LOGS: str = os.path.join(HOME, "logs")
     HELP: str = os.path.join(HOME, "doc/rl_help")
@@ -28,8 +29,17 @@ class Paths:
 
     RL_INSTALL: str = os.path.join(BIN, "rl-install")
 
+    CONSTANTS: str = os.path.join(CONFIG_PATH, "constants.json")
     CONFIG: str = os.path.join(CONFIG_PATH, "config.json")
     RUN_CONFIG: str = os.path.join(CONFIG_PATH, "run_config.json")
+
+    DEFAULT_CONSTANTS: str = os.path.join(
+        DEFAULT_CONFIG_PATH, "constants.json"
+    )
+    DEFAULT_CONFIG: str = os.path.join(DEFAULT_CONFIG_PATH, "config.json")
+    DEFAULT_RUN_CONFIG: str = os.path.join(
+        DEFAULT_CONFIG_PATH, "run_config.json"
+    )
 
     MODEL: str = "/sys/firmware/devicetree/base/model"
     I2C: str = "/dev/i2c-1"
