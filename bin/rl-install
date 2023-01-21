@@ -88,7 +88,7 @@ if ! [ $ret_val -ne 0 ]; then
 fi
 
 info "Starting rl setup..."
-rl setup
+./bin/rl setup
 check_success $?
 
 success "Installation done."
