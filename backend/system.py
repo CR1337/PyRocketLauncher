@@ -78,5 +78,8 @@ class System:
         raise cls.ExternalTermination("SIGTERM received")
 
 
-System.update_needed = System._update_needed()
+try:
+    System.update_needed = System._update_needed()
+except Exception:
+    logger.exception("Error in update check!")
 signal.signal(signal.SIGTERM, System.sigterm_handler)
