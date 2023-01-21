@@ -14,6 +14,9 @@ class Paths:
     LOGS: str = os.path.join(HOME, "logs")
     HELP: str = os.path.join(HOME, "doc/rl_help")
 
+    PIP_REQUIREMENTS: str = os.path.join(HOME, "pip-requirements.txt")
+    APT_REQUIREMENTS: str = os.path.join(HOME, "apt-requirements.txt")
+
     RL_RUN: str = os.path.join(HOME, "rl_run.py")
     RL_EMERGENCY: str = os.path.join(HOME, "rl_emergency.py")
 

@@ -70,11 +70,13 @@ class RlManager:
             was_running = True
             cls.stop()
         commands = [
-            f"git -C {Paths.HOME} pull",
-            "apt update",
-            'apt -y install $(grep -vE "^\\s*#" '
-            f'{Paths.HOME}/apt-requirements.txt  | tr "\\n" " ")',
-            f"python3 -m pip install -r {Paths.HOME}/pip-requirements.txt"
+            Command(cmd) for cmd in [
+                f"git -C {Paths.HOME} pull",
+                "apt update",
+                'apt -y install $(grep -vE "^\\s*#" '
+                f'{Paths.APT_REQUIREMENTS}  | tr "\\n" " ")',
+                f"python3 -m pip install -r {Paths.PIP_REQUIREMENTS}"
+            ]
         ]
         for command in commands:
             if command.get_returncode() != ExitCodes.SUCCESS:
