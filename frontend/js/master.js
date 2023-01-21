@@ -170,7 +170,7 @@ const master_template = /*html*/`
             :last_in_list="index==Object.keys(devices).length-1"
             :deregister_button_status="button_status['deregister_' + device_id]"
             @state-updated="device_state_updated"
-            @deregister-button-clicked="deregister_device"
+            @deregister-button-clicked="deregister_device(true)"
             @move-up="move_device_up"
             @move-down="move_device_down"
         ></device>
@@ -242,8 +242,8 @@ const master_component = {
             this._deregister_all()
         },
 
-        deregister_device(device_id) {
-            button_request("/deregister", 'POST', {device_id: device_id}, 'deregister_' + device_id, 'Deregister ' + device_id + "?", this.ask, this.button_status, this._error_callback)
+        deregister_device(device_id, dont_ask=false) {
+            button_request("/deregister", 'POST', {device_id: device_id}, 'deregister_' + device_id, 'Deregister ' + device_id + "?", this.ask && !dont_ask, this.button_status, this._error_callback)
             .then((data) => {
                 if (data !== null) {
                     const device_id = data.deregistered_device_id;
