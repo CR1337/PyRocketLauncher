@@ -4,3 +4,6 @@ loc.py
 .venv
 loc.py
 wifi-pw.txt
+config/config.json
+config/constants.json
+config/run_config.json
