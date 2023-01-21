@@ -113,4 +113,11 @@ if ! [ $ret_val -ne 0 ]; then
     fi
 fi
 
-success "Done"
+info "Starting rl setup..."
+rl setup
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+    unexpected_error $ret_val
+fi
+
+success "Installation done."
