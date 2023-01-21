@@ -58,16 +58,18 @@ class Status:
 
     @staticmethod
     def update() -> str:
-        command = Command("git remote update")
-        command.run(show_output=False)
+        command = Command(f"git -C {Paths.HOME} remote update")
+        status = command.get_returncode(show_output=False)
+        if status != 0:
+            return 'no_internet'
 
-        command = Command("git rev-parse @")
+        command = Command(f"git -C {Paths.HOME} rev-parse @")
         local = command.get_output()
 
-        command = Command(r"git rev-parse @{u}")
+        command = Command(f"git -C {Paths.HOME} rev-parse @{{u}}")
         remote = command.get_output()
 
-        command = Command(r"git merge-base @ @{u}")
+        command = Command(f"git -C {Paths.HOME} merge-base @ @{{u}}")
         base = command.get_output()
 
         if local == remote:
