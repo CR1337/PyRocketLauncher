@@ -188,6 +188,7 @@ const device_component = {
                 {},
                 'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
+            this._deregister();
         },
 
         reboot_button_clicked(event) {
@@ -200,10 +201,11 @@ const device_component = {
                 {},
                 'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
+            this._deregister();
         },
 
         deregister_button_clicked(event) {
-            this.$emit('deregister-button-clicked', this.device_id);
+            this._deregister();
         },
 
         testloop_button_clicked(event) {
@@ -260,6 +262,10 @@ const device_component = {
                 {},
                 'shutdown', confirm_prompt, this.ask, this.button_status, this._error_callback
             );
+        },
+
+        _deregister() {
+            this.$emit('deregister-button-clicked', this.device_id);
         }
     },
     computed: {
