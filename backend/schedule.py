@@ -9,6 +9,7 @@ from backend.logger import logger
 
 class Schedule:
 
+    _scheduled_time: str
     _callback: Callable
     _datetime: datetime
     _thread: Thread
@@ -63,5 +64,5 @@ class Schedule:
             'timestamp': self.timestamp,
             'seconds_left': self.seconds_left,
             'faulty': self._faulty,
-            'schduled_time': self._scheduled_time
+            'scheduled_time': self._scheduled_time
         }
