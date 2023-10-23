@@ -1,3 +1,4 @@
+Werkzeug==2.2.2
 requests==2.25.1
 flask==2.2.2
 Flask-API==3.0.post1
