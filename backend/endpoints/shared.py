@@ -180,32 +180,38 @@ def route_state():
 
 
 @shared_bp.route(
-    "/logs", methods=['GET'], endpoint='logs'
+    "/logs", methods=['GET', 'DELETE'], endpoint='logs'
 )
 @handle_exceptions
 @log_request
 def route_logs():
-    return make_response((
-        logger.get_log_files(),
-        status.HTTP_200_OK
-    ))
+    if request.method == 'GET':
+        return make_response((
+            logger.get_log_files(),
+            status.HTTP_200_OK
+        ))
+    elif request.method == 'DELETE':
+        logger.delete_all_logfiles()
 
 
 @shared_bp.route(
-    "/logs/<filename>", methods=['GET'], endpoint='logs_filename'
+    "/logs/<filename>", methods=['GET', 'DELETE'], endpoint='logs_filename'
 )
 @handle_exceptions
 @log_request
 def route_logs_filename(filename: str):
     if logger.logfile_exists(filename):
-        return make_response((
-            send_file(
-                path_or_file=f"logs/{filename}",
-                mimetype="text/plain",
-                as_attachment=True
-            ),
-            status.HTTP_200_OK
-        ))
+        if request.method == 'GET':
+            return make_response((
+                send_file(
+                    path_or_file=f"logs/{filename}",
+                    mimetype="text/plain",
+                    as_attachment=True
+                ),
+                status.HTTP_200_OK
+            ))
+        elif request.method == 'DELETE':
+            logger.delete_logfile(filename)
     else:
         return make_response((
             {}, status.HTTP_404_NOT_FOUND

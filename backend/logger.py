@@ -92,5 +92,14 @@ class Logger:
     def logfile_exists(name: str) -> bool:
         return os.path.exists(os.path.join("logs", name))
 
+    @classmethod
+    def delete_all_logfiles(cls):
+        for filename in cls.get_log_files():
+            cls.delete_logfile(filename)
+
+    @staticmethod
+    def delete_logfile(filename: str):
+        os.remove(os.path.join("logs", filename))
+
 
 logger = Logger()
