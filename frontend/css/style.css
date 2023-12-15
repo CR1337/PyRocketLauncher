@@ -221,7 +221,72 @@ a:active {
 
 /* #region TIME INPUT */
 
+/* General styling */
 input[type=time] {
+    position: relative;
+    border: 1px solid var(--white);
+    border-radius: var(--curvature);
+    background-color: var(--black);
+    text-align: center;
+    font-size: var(--textSize);
+    font-family: var(--font);
+    width: 256px;
+    height: calc(var(--size) * 0.92);
+    line-height: var(--size);
+    color: var(--white);
+    padding: 0 10px; /* Adjust padding as needed */
+}
+
+/* Styling for Firefox */
+@-moz-document url-prefix() {
+    input[type=time] {
+        /* Firefox specific styles */
+    }
+}
+
+/* Styling for Chrome, Safari, and other webkit-based browsers */
+input[type=time]::-webkit-datetime-edit-fields-wrapper {
+    display: flex;
+}
+
+input[type=time]::-webkit-datetime-edit-text {
+    background-color: var(--black);
+    color: var(--white);
+}
+
+input[type=time]::-webkit-datetime-edit-hour-field,
+input[type=time]::-webkit-datetime-edit-minute-field,
+input[type=time]::-webkit-datetime-edit-second-field,
+input[type=time]::-webkit-datetime-edit-ampm-field {
+    background-color: var(--black);
+    border-radius: var(--curvature);
+    color: var(--white);
+    width: var(--size);
+    height: var(--size);
+}
+
+input[type=time]::-webkit-clear-button,
+input[type=time]::-webkit-inner-spin-button {
+    display: none;
+}
+
+input[type=time]::-webkit-calendar-picker-indicator {
+    border-radius: var(--curvature);
+    color: var(--white);
+    width: var(--size);
+    height: var(--size);
+    border: 1px solid var(--white);
+    border-right: none;
+    background: url(../assets/down-arrow.png) no-repeat center;
+    background-color: var(--black);
+}
+
+/* Hover effect for calendar picker in Chrome and other webkit-based browsers */
+input[type=time]::-webkit-calendar-picker-indicator:hover {
+    border-color: var(--blue);
+}
+
+/* input[type=time] {
     position:absolute;
     border-color: var(--white);
     border-style: solid;
@@ -298,7 +363,7 @@ input[type=time]::-webkit-calendar-picker-indicator {
 
 input[type=time]::-webkit-calendar-picker-indicator:hover {
     border-color: var(--blue);
-}
+} */
 
 /* #endregion */
 
