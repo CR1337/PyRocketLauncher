@@ -32,7 +32,7 @@ async function request(url, method, body, error_callback, success_callback) {
         } else {
             response = await fetch_with_timeout(url, {
                 method: method,
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'text/plain'},
                 body: JSON.stringify(body)
             });
         }
