@@ -172,7 +172,7 @@
                 }
                 for (let i = 0; i < this.event_list.length; ++i) {
                     this.event_list[i].number = Number(this.event_list[i].number);
-                    this.event_list[i].timestamp = Number(this.event_list[i].timestamp).toFixed(1);
+                    this.event_list[i].timestamp = Number(this.event_list[i].timestamp.toFixed(1));
                 }
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.event_list));
                 const anchor = document.getElementById('download_anchor_element');
