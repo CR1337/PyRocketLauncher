@@ -19,7 +19,7 @@ class System:
     @classmethod
     def shutdown(cls):
         logger.info("Shutdown system")
-        process = subprocess.Popen("halt", shell=True)
+        process = subprocess.Popen("poweroff", shell=True)
         process.wait()
         if process.returncode != 0:
             raise cls.ShutdownError()
