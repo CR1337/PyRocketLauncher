@@ -4,6 +4,7 @@ import shutil
 import socket
 from datetime import datetime
 from typing import Any, Callable, Dict
+import subprocess
 
 from _rl.command import Command
 from _rl.constants import Paths, ExitCodes
@@ -60,6 +61,20 @@ class AutoConfig:
             if not os.path.exists(filename):
                 shutil.copy(default_filename, Paths.CONFIG_PATH)
 
+    @staticmethod
+    def _compile_audio_library():
+        process = subprocess.Popen(
+            ["make"],
+            cwd=Paths.AUDIOLIB,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        _, stderr = process.communicate()
+        if process.returncode != ExitCodes.SUCCESS:
+            Output.critical(
+                f"Error compiling audio library:\n{stderr.decode('utf-8')}"
+            )
+
     @classmethod
     def run(cls):
         Output.info("Creating config files...")
@@ -86,6 +101,9 @@ class AutoConfig:
         device = cls._determine_device()
         Output.info(f"Auto-setting device to '{device}'")
         Config.set_device(device)
+
+        Output.info("Compiling audio library.")
+        cls._compile_audio_library()
 
 
 class Config:
