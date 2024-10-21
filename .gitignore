@@ -7,3 +7,5 @@ wifi-pw.txt
 config/config.json
 config/constants.json
 config/run_config.json
+backend/audio/test.wav
+backend/audio/test_audio.py
