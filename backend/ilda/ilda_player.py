@@ -276,7 +276,7 @@ class IldaPlayer(AbstractPlayer):
         IldaInterface.CloseDevices()
 
     def _play_item(self):
-        frame = self._items[self._current_frame_index]
+        frame = self._items[self._current_item_index]
         
         n_points = len(frame.points)
         HeliosPointArray = HeliosPoint * n_points
