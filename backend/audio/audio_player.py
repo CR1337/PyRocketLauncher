@@ -1,6 +1,10 @@
 from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
 from functools import wraps
 import ctypes
+import tempfile
+import os
+
+from pydub import AudioSegment
 
 
 class AudioException(Exception):
@@ -49,8 +53,12 @@ class AudioPlayer:
     TIME_RESOLUTION: int = 10
 
     _audio_object: AudioObject = None
+    _temp_wav_filename: str = None
     
     def __init__(self, wav_filename: str):
+        if wav_filename.endswith('.mp3'):
+            wav_filename = self._convert_to_wav(wav_filename)
+
         with open(wav_filename, 'rb') as file:
             raw_data = file.read()
 
@@ -85,10 +93,22 @@ class AudioPlayer:
         error = AudioInterface.audioGetError(self._audio_object).contents
         if error.level == AudioErrorLevel.AUDIO_ERROR_LEVEL_ERROR.value:
             raise AudioErrorException(error)
+        
+    def _convert_to_wav(self, filename: str) -> str:
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        self._temp_wav_filename = temp_file.name
+        temp_file.close()
+
+        audio_segment = AudioSegment.from_mp3(filename)
+        audio_segment.export(self._temp_wav_filename, format='wav')
+
+        return self._temp_wav_filename
 
     def __del__(self):
         if self._audio_object is not None:
             AudioInterface.audioDestroy(self._audio_object)
+        if self._temp_wav_filename is not None:
+            os.remove(self._temp_wav_filename)
 
     @handle_error
     def play(self) -> bool:
