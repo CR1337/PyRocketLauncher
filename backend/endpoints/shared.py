@@ -54,8 +54,22 @@ def route_static(path):
 @log_request
 def route_program():
     if request.method == 'POST':
-        json_data = request.get_json(force=True)
-        Controller.load_program(json_data['name'], json_data['event_list'])
+        if request.content_type == 'application/json':
+            json_data = request.get_json(force=True)
+            Controller.load_program(json_data['name'], json_data['event_list'], is_zip=False)
+        elif request.content_type == 'application/zip':
+            if 'file' not in request.files:
+                return make_response((
+                    {}, status.HTTP_400_BAD_REQUEST
+                ))
+            file = request.files['file']
+            zip_data = file.read()
+            filename = file.filename
+            Controller.load_program(filename, zip_data, is_zip=True)
+        else:
+            return make_response((
+                {}, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+            ))
     elif request.method == 'DELETE':
         Controller.unload_program()
 

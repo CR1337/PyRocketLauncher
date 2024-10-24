@@ -73,7 +73,7 @@ class Device:
         return self._device_id == other.device_id
 
     def _request(
-        self, method: str, url: str, data: Dict[str, Any]
+        self, method: str, url: str, data: Dict[str, Any] | bytes
     ) -> Tuple[Dict[str, Any], int]:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
@@ -81,11 +81,18 @@ class Device:
         address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
             if method == 'post':
-                response = requests.post(
-                    address,
-                    json=data,
-                    timeout=self.REQUEST_TIMEOUT
-                )
+                if isinstance(data, dict):
+                    response = requests.post(
+                        address,
+                        json=data,
+                        timeout=self.REQUEST_TIMEOUT
+                    )
+                else:
+                    response = requests.post(
+                        address,
+                        data=data,
+                        timeout=self.REQUEST_TIMEOUT
+                    )
             elif method == 'get':
                 response = requests.get(
                     address,
@@ -112,7 +119,7 @@ class Device:
             return {'error': 'request'}, None
 
     def _post(
-        self, url: str, data: Dict[str, Any]
+        self, url: str, data: Dict[str, Any] | bytes
     ) -> Tuple[Dict[str, Any], int]:
         return self._request('post', url, data)
 
@@ -127,6 +134,10 @@ class Device:
     def load_program(self, name: str, event_list: List) -> Dict[str, Any]:
         logger.debug(f"{self._device_id}: load program {name}")
         return self._post("program", {'name': name, 'event_list': event_list})
+    
+    def load_zip_program(self, name: str, zip_data: bytes):
+        logger.debug(f"{self._device_id}: load zip program {name}")
+        return self._post("program", zip_data)
 
     def unload_program(self):
         logger.debug(f"{self._device_id}: unload program")

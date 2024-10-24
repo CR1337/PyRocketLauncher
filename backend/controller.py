@@ -111,9 +111,12 @@ class DeviceController:
     @classmethod
     @lock
     @raise_for_state_transition
-    def load_program(cls, name: str, json_data: List):
+    def load_program(cls, name: str, data: Any, is_zip: bool):
         logger.info(f"Load program {name}")
-        program = Program.from_json(name, json_data)
+        if is_zip:
+            program = Program.from_zip(name, data)
+        else:
+            program = Program.from_json(name, data)
         cls._state_machine.transition(cls.LOADED, program)
 
     @classmethod
@@ -337,10 +340,13 @@ class MasterController:
 
     @classmethod
     @lock
-    def load_program(cls, name: str, event_list: List):
+    def load_program(cls, name: str, data: Any, is_zip: bool):
         logger.info(f"Load program {name}")
-        Program.raise_on_json(event_list)
-        return cls._call_device_method("load_program", name, event_list)
+        if is_zip:
+            return cls._call_device_method("load_zip_program", name, data)
+        else:
+            Program.raise_on_json(data)
+            return cls._call_device_method("load_program", name, data)
 
     @classmethod
     @lock
