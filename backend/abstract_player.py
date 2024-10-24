@@ -31,7 +31,7 @@ class AbstractPlayer(ABC):
     def __init__(self):
         self._origin_timestamp = 0.0
         self._pause_started_timestamp = 0.0
-        self._current_frame_index = 0  
+        self._current_item_index = 0  
 
         self._paused = True
         self._playing = False
@@ -47,7 +47,6 @@ class AbstractPlayer(ABC):
         if self._thread.is_alive():
             self._destroy_event.set()
             self._thread.join()
-        super().__del__()
 
     def _next_item_index(self, timestamp: float) -> int:
         for i, item in enumerate(self._items):
@@ -75,10 +74,10 @@ class AbstractPlayer(ABC):
             tu.sleep(tu.TIME_RESOLUTION)
 
     def _tick(self):
-        if self._frames[self._current_item_index].timestamp < tu.timestamp_now() - self._origin_timestamp:
+        if self._items[self._current_item_index].timestamp < tu.timestamp_now() - self._origin_timestamp:
             self._play_item()
             self._current_item_index += 1
-            if self._current_item_index >= len(self._frames):
+            if self._current_item_index >= len(self._items):
                 self.stop()
 
     @abstractmethod

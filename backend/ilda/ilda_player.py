@@ -16,7 +16,7 @@ from backend.abstract_player import AbstractPlayer, AbstractPlayerItem
 
 @dataclass
 class IldaFrame(AbstractPlayerItem):
-    points: List[HeliosPoint]
+    points: List[HeliosPoint] = None
     last_frame: bool = False
     timestamp: float = None
     points_per_second: int = None
@@ -31,7 +31,7 @@ class IldaAnimation:
 
 ColorPalette = List[Tuple[int, int, int]]
 
-
+# FIXME: doesn't work anymore after adding superclass
 class IldaPlayer(AbstractPlayer):
     DAC_INDEX: int = 0
     HEADER_SIZE: int = ctypes.sizeof(IldxHeader)
@@ -261,6 +261,8 @@ class IldaPlayer(AbstractPlayer):
             start_timestamp = start_timestamp / 1000.0
             ms_per_frame = 1000.0 / animation.fps
             for i, frame in enumerate(animation.frames):
+                if frame.points is None:
+                    frame.points = []
                 frame.timestamp = start_timestamp + (i * ms_per_frame) / 1000.0
                 if i == len(animation.frames) - 1:
                     frame.last_frame = True
