@@ -1,5 +1,6 @@
 import ctypes
 import enum
+import os
 
 
 class AudioErrorType(enum.Enum):
@@ -70,7 +71,7 @@ class pthread_barrier_t(ctypes.Structure):
 
 AudioObject = ctypes.c_void_p
 
-audio_lib = ctypes.CDLL("backend/audio/audiolib.so")  # TODO
+audio_lib = ctypes.CDLL(os.path.join("backend", "audio", "audiolib.so"))
 
 audio_lib.audioInit.argtypes = [ctypes.POINTER(AudioConfiguration)]
 audio_lib.audioInit.restype = ctypes.POINTER(AudioObject)
