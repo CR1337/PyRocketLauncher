@@ -44,11 +44,10 @@ class FtdiDmxInterface:
     def _wait_ms(cls, milliseconds: int):
         cls._wait_us(milliseconds * cls.US_PER_MS)
 
-    _ftdi_device: Device
-    _dmx_channels: List[int]
-    _highest_updated_channel: int
+    _ftdi_device: Device 
+    _dmx_channels: List[int] = [0] * (CHANNEL_RANGE[-1] + 1)
+    _highest_updated_channel: int = CHANNEL_RANGE[-1]
 
-    _blackout_on_del: bool
     _stopped: bool
 
     _thread: Thread
@@ -57,115 +56,124 @@ class FtdiDmxInterface:
     _ready_event: Event
     _stop_event: Event
 
-    def __init__(
-        self,
-        blackout_on_init: bool = True,
-        blackout_on_del: bool = True
-    ):
-        self._ftdi_device = Device()
-        self._ftdi_device.ftdi_fn.ftdi_set_baudrate(self.BAUDRATE)
-        self._ftdi_device.ftdi_fn.ftdi_set_line_property(
-            self.BITS_8, self.STOP_BITS_2, self.PARITY_NONE
+    _initialized: bool = False
+
+    @classmethod
+    def initialize(cls):
+        if cls._initialized:
+            return
+        
+        cls._ftdi_device = Device()
+        cls._ftdi_device.ftdi_fn.ftdi_set_baudrate(cls.BAUDRATE)
+        cls._ftdi_device.ftdi_fn.ftdi_set_line_property(
+            cls.BITS_8, cls.STOP_BITS_2, cls.PARITY_NONE
         )
 
-        self._blackout_on_del = blackout_on_del
-        self._stopped = False
+        cls._dmx_channels = [0] * (cls.CHANNEL_RANGE[-1] + 1)
+        cls._highest_updated_channel = cls.CHANNEL_RANGE[-1]
 
-        self._thread = Thread(
-            target=self._thread_target,
+        cls._stopped = False
+
+        cls._thread: Thread = Thread(
+            target=cls._thread_target,
             name="ftdi_dmx_thread"
         )
-        self._lock = Lock()
-        self._render_event = Event()
-        self._ready_event = Event()
-        self._stop_event = Event()
-        self._thread.start()
+        
+        cls._lock = Lock()
+        cls._render_event = Event()
+        cls._ready_event = Event()
+        cls._stop_event = Event()
 
-        if blackout_on_init:
-            self.blackout()
+        cls._thread.start()
+        cls.blackout()
+        cls._ready_event.set()
 
-        self._ready_event.set()
+        cls._initialized = True
 
-    def __del__(self):
-        if not self._stopped:
-            self.stop()
+    @classmethod
+    def destroy(cls):
+        if not cls._initialized:
+            return
+        if not cls._stopped:
+            cls.stop()
+        cls._ftdi_device.close()
+        cls._initialized = False
 
-    def stop(self):
-        if self._blackout_on_del:
-            self.blackout()
-        self._stop_event.set()
-        self._thread.join()
-        self._ftdi_device.close()
-        self._stopped = True
+    @classmethod
+    def stop(cls):
+        cls.blackout()
+        cls._stop_event.set()
+        cls._thread.join()
+        cls._stopped = True
 
-    def set_channel(self, channel: int, value: int):
-        if not (self.CHANNEL_RANGE[0] <= channel <= self.CHANNEL_RANGE[-1]):
+    @classmethod
+    def set_channel(cls, channel: int, value: int):
+        if not (cls.CHANNEL_RANGE[0] <= channel <= cls.CHANNEL_RANGE[-1]):
             raise ValueError(f"Channel {channel} out of range.")
-        if not (self.VALUE_RANGE[0] <= value <= self.VALUE_RANGE[-1]):
+        if not (cls.VALUE_RANGE[0] <= value <= cls.VALUE_RANGE[-1]):
             raise ValueError(f"Value {value} out of range.")
 
-        with self._lock:
-            self._dmx_channels[channel] = value
-            self._highest_updated_channel = max(
-                self._highest_updated_channel, channel
+        with cls._lock:
+            cls._dmx_channels[channel] = value
+            cls._highest_updated_channel = max(
+                cls._highest_updated_channel, channel
             )
 
-    def get_channel(self, channel: int) -> int:
-        if not (self.CHANNEL_RANGE[0] <= channel <= self.CHANNEL_RANGE[-1]):
+    @classmethod
+    def get_channel(cls, channel: int) -> int:
+        if not (cls.CHANNEL_RANGE[0] <= channel <= cls.CHANNEL_RANGE[-1]):
             raise ValueError(f"Channel {channel} out of range.")
 
-        with self._lock:
-            return self._dmx_channels[channel]
+        with cls._lock:
+            return cls._dmx_channels[channel]
 
-    def __setitem__(self, key: int, value: int):
-        self.set_channel(key, value)
+    @classmethod
+    def blackout(cls):
+        with cls._lock:
+            cls._dmx_channels = [0] * (cls.CHANNEL_RANGE[-1] + 1)
+            cls._highest_updated_channel = cls.CHANNEL_RANGE[-1]
+        cls.render()
 
-    def __getitem__(self, key: int) -> int:
-        return self.get_channel(key)
+    @classmethod
+    def render(cls):
+        with cls._lock:
+            cls._render_event.set()
 
-    def blackout(self):
-        with self._lock:
-            self._dmx_channels = [0] * (self.CHANNEL_RANGE[-1] + 1)
-            self._highest_updated_channel = self.CHANNEL_RANGE[-1]
-        self.render()
+    @classmethod
+    def _write_to_bus(cls):
+        data = bytes(cls._dmx_channels[:cls._highest_updated_channel + 1])
 
-    def render(self):
-        with self._lock:
-            self._render_event.set()
-
-    def _write_to_bus(self):
-        data = bytes(self._dmx_channels[:self._highest_updated_channel + 1])
-
-        self._ftdi_device.ftdi_fn.ftdi_set_line_property2(
-            self.BITS_8, self.STOP_BITS_2, self.PARITY_NONE, self.BREAK_ON
+        cls._ftdi_device.ftdi_fn.ftdi_set_line_property2(
+            cls.BITS_8, cls.STOP_BITS_2, cls.PARITY_NONE, cls.BREAK_ON
         )
-        self._wait_us(self.BUS_TIMINGS[0])
-        self._ftdi_device.ftdi_fn.ftdi_set_line_property2(
-            self.BITS_8, self.STOP_BITS_2, self.PARITY_NONE, self.BREAK_OFF
+        cls._wait_us(cls.BUS_TIMINGS[0])
+        cls._ftdi_device.ftdi_fn.ftdi_set_line_property2(
+            cls.BITS_8, cls.STOP_BITS_2, cls.PARITY_NONE, cls.BREAK_OFF
         )
-        self._wait_us(self.BUS_TIMINGS[1])
-        self._ftdi_device.write(data)
-        self._wait_ms(self.BUS_TIMINGS[2])
+        cls._wait_us(cls.BUS_TIMINGS[1])
+        cls._ftdi_device.write(data)
+        cls._wait_ms(cls.BUS_TIMINGS[2])
 
-        self._highest_updated_channel = 0
+        cls._highest_updated_channel = 0
 
-    def _thread_target(self):
-        while not self._ready_event.is_set():
-            self._wait_ms(self.TIME_RESOLUTION)
+    @classmethod
+    def _thread_target(cls):
+        while not cls._ready_event.is_set():
+            cls._wait_ms(cls.TIME_RESOLUTION)
 
         while True:
-            if self._render_event.is_set():
-                with self._lock:
-                    self._write_to_bus()
-                    self._render_event.clear()
+            if cls._render_event.is_set():
+                with cls._lock:
+                    cls._write_to_bus()
+                    cls._render_event.clear()
 
-            elif self._stop_event.is_set():
+            elif cls._stop_event.is_set():
                 break
 
             else:
-                with self._lock:
-                    tmp_highest_updated_channel = self._highest_updated_channel
-                    self._highest_updated_channel = 0
-                    self._write_to_bus()
-                    self._highest_updated_channel = tmp_highest_updated_channel
-                self._wait_ms(self.TIME_RESOLUTION)
+                with cls._lock:
+                    tmp_highest_updated_channel = cls._highest_updated_channel
+                    cls._highest_updated_channel = 0
+                    cls._write_to_bus()
+                    cls._highest_updated_channel = tmp_highest_updated_channel
+                cls._wait_ms(cls.TIME_RESOLUTION)
