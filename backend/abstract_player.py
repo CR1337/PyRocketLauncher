@@ -12,6 +12,8 @@ class AbstractPlayerItem(ABC):
 
 class AbstractPlayer(ABC):
 
+    TIME_RESOLUTION: float = tu.TIME_RESOLUTION / 50.0
+
     _items: List[AbstractPlayerItem]
 
     _origin_timestamp: float
@@ -21,7 +23,7 @@ class AbstractPlayer(ABC):
     _paused: bool
     _playing: bool
 
-    _thread: Thread
+    _thread: Thread = None
 
     _play_event: Event
     _pause_event: Event
@@ -43,8 +45,8 @@ class AbstractPlayer(ABC):
 
         self._thread = Thread(target=self._mainloop, name="ilda_player")
 
-    def __del__(self):
-        if self._thread.is_alive():
+    def destroy(self):
+        if self._thread and self._thread.is_alive():
             self._destroy_event.set()
             self._thread.join()
 
@@ -56,14 +58,17 @@ class AbstractPlayer(ABC):
     def _mainloop(self):
         while not self._destroy_event.is_set():
             if self._play_event.is_set():
+                self._start_playing()
                 self._play_event.clear()
                 self._playing = True
                 self._paused = False
             if self._pause_event.is_set():
+                self._end_playing()
                 self._pause_event.clear()
                 self._playing = False
                 self._paused = True
             if self._stop_event.is_set():
+                self._end_playing()
                 self._stop_event.clear()
                 self._playing = False
                 self._paused = False
@@ -71,7 +76,7 @@ class AbstractPlayer(ABC):
             if self._playing:
                 self._tick()
 
-            tu.sleep(tu.TIME_RESOLUTION)
+            tu.sleep(self.TIME_RESOLUTION)
 
     def _tick(self):
         if self._items[self._current_item_index].timestamp < tu.timestamp_now() - self._origin_timestamp:
@@ -81,7 +86,15 @@ class AbstractPlayer(ABC):
                 self.stop()
 
     @abstractmethod
+    def _start_playing(self):
+        raise NotImplementedError("@abstractmethod")
+
+    @abstractmethod
     def _play_item(self):
+        raise NotImplementedError("@abstractmethod")
+    
+    @abstractmethod
+    def _end_playing(self):
         raise NotImplementedError("@abstractmethod")
     
     def run(self):
