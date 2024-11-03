@@ -1,8 +1,10 @@
-from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
+from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
 from functools import wraps
 import ctypes
 import tempfile
 import os
+# import subprocess
+# import sys
 
 from pydub import AudioSegment
 
@@ -89,6 +91,13 @@ class AudioPlayer:
         )
         if self._audio_object is None:
             raise RuntimeError("Failed to initialize audio")
+        
+        self._keep_alive = (
+            ctypes.cast(self._audio_object, ctypes.py_object),
+            ctypes.cast(configuration_pointer, ctypes.py_object),
+            ctypes.cast(raw_data_buffer_pointer, ctypes.py_object),
+            ctypes.cast(device_name_buffer_pointer, ctypes.py_object)
+        )
 
         error = AudioInterface.audioGetError(self._audio_object).contents
         if error.level == AudioErrorLevel.AUDIO_ERROR_LEVEL_ERROR.value:

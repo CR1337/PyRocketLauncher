@@ -479,9 +479,6 @@ bool _readFmtChunk(_AudioObject *_self, AudioFmtChunk *fmtChunk) {
         case WAVE_FORMAT_PCM:
             // PCM has no extension
             break;
-
-        default:
-            assert(false && "This should never happen.");
     }
 
     // Read the rest of the fmt chunk and check if all invariants hold true.
@@ -568,16 +565,19 @@ bool _readRiffFile(_AudioObject *_self, void *rawData, size_t rawDataSize) {
         return false;
     }
     _self->riffData.dataSize = dataChunk->dataSize;
-    if (
-        _self->riffData.dataSize 
-        != rawDataSize 
-            - dataChunkOffset
-            - sizeof(AudioDataChunk)
-        ) {
-        _self->error->type = AUDIO_ERROR_INVALID_DATA_SIZE;
-        _self->error->level = AUDIO_ERROR_LEVEL_ERROR;
-        return false;
-    }
+    
+    // This fails if the data chunk is not the last chunk in the file.
+
+    // if (
+    //     _self->riffData.dataSize 
+    //     != rawDataSize 
+    //         - dataChunkOffset
+    //         - sizeof(AudioDataChunk)
+    //     ) {
+    //     _self->error->type = AUDIO_ERROR_INVALID_DATA_SIZE;
+    //     _self->error->level = AUDIO_ERROR_LEVEL_ERROR;
+    //     return false;
+    // }
 
     // This is the pointer to the audio data itself.
     _self->riffData.data = (uint8_t*)rawData 
