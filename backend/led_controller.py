@@ -17,21 +17,27 @@ else:
         LOW: Any = 'low'
         HIGH: Any = 'high'
 
+        DEBUG_VERBOSE: bool = False
+
         @classmethod
         def setmode(cls, mode: Any):
-            print(f"Dummy GPIO: set mode to {mode}")
+            if cls.DEBUG_VERBOSE:
+                print(f"Dummy GPIO: set mode to {mode}")
 
         @classmethod
         def setup(cls, pin: int, mode: Any):
-            print(f"Dummy GPIO: set pin {pin} to mode {mode}")
+            if cls.DEBUG_VERBOSE:
+                print(f"Dummy GPIO: set pin {pin} to mode {mode}")
 
         @classmethod
         def output(cls, pin: int, value: Any):
-            print(f"Dummy GPIO: set pin {pin} to value {value}")
+            if cls.DEBUG_VERBOSE:
+                print(f"Dummy GPIO: set pin {pin} to value {value}")
 
         @classmethod
         def cleanup(cls):
-            print("Dummy GPIO: cleanup")
+            if cls.DEBUG_VERBOSE:
+                print("Dummy GPIO: cleanup")
 
 
 class LedController:
