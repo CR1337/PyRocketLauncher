@@ -19,6 +19,8 @@ from backend.audio.audio_player import AudioPlayer
 from backend.ilda.ilda_player import IldaPlayer
 from backend.dmx.dmx_player import DmxPlayer
 
+from backend.zipfile_handler import ZipfileHandler
+
 
 class Program:
 
@@ -37,7 +39,7 @@ class Program:
     _callback: Callable
     _seconds_paused: float
     _command_idx: int
-    _temp_directory: str | None
+    _zipfile_handler: ZipfileHandler
 
     _has_fuses: bool
     _has_music: bool
@@ -95,37 +97,34 @@ class Program:
             
     @classmethod
     def from_zip(cls, name: str, zip_data: bytes) -> 'Program':
-        temp_directory = tempfile.mkdtemp()
-        cls._temp_directories.append(temp_directory)
-        zipfile.ZipFile(io.BytesIO(zip_data)).extractall(temp_directory)
+        zipfile_handler = ZipfileHandler(zip_data)
 
-        metadata_filename = os.path.join(temp_directory, 'metadata.json')
-        with open(metadata_filename, 'r') as metadata_file:
-            metadata = json.load(metadata_file)
-        
-        if metadata['has_fuses']:
-            fuses_filename = os.path.join(temp_directory, 'fuses.json')
-            with open(fuses_filename, 'r') as fuses_file:
+        if zipfile_handler.has_fuses:
+            with open(zipfile_handler.fuses_filename, 'r') as fuses_file:
                 fuses = json.load(fuses_file)
-            program = cls.from_json(name, fuses, temp_directory)
+            program = cls.from_json(name, fuses, zipfile_handler)
         else:
-            program = cls(name, temp_directory)
+            program = cls(name, zipfile_handler)
 
-        if metadata['has_music']:
-            if metadata['music_device_id'] == Config.get_value('device_id'):
-                program.add_music(os.path.join(temp_directory, metadata['music_filename']))
+        if zipfile_handler.has_music:
+            program.add_music(zipfile_handler.music_filename)
 
-        if metadata['has_ilda']:
-            program.add_ilda(os.path.join(temp_directory, "ilda.ildx"))
+        if zipfile_handler.has_ilda:
+            program.add_ilda(zipfile_handler.ilda_filename)
 
-        if metadata['has_dmx']:
-            program.add_dmx(os.path.join(temp_directory, "dmx.bin"))
+        if zipfile_handler.has_dmx:
+            program.add_dmx(zipfile_handler.dmx_filename)
 
         return program
 
     @classmethod
-    def from_json(cls, name: str, json_data: List, temp_directory: str | None = None) -> 'Program':
-        program = cls(name, temp_directory)
+    def from_json(
+        cls, 
+        name: str, 
+        json_data: List, 
+        zipfile_handler: ZipfileHandler | None = None
+    ) -> 'Program':
+        program = cls(name, zipfile_handler)
         for event in json_data:
             address = Address(
                 event['device_id'],
@@ -150,7 +149,7 @@ class Program:
             testloop.add_command(command)
         return testloop
 
-    def __init__(self, name: str, temp_directory: str | None = None):
+    def __init__(self, name: str, zipfile_handler: ZipfileHandler | None = None):
         self._name = name
         self._command_list = []
         self._thread = Thread(target=self._thread_handler)
@@ -163,7 +162,7 @@ class Program:
         self._last_current_timestamp_before_pause = None
         self._callback = None
         self._seconds_paused = 0
-        self._temp_directory = temp_directory
+        self._zipfile_handler = zipfile_handler
 
         self._has_fuses = False
         self._has_music = False
@@ -173,10 +172,6 @@ class Program:
         self._audio_player = None
         self._ilda_player = None
         self._dmx_player = None
-
-    def __del__(self):
-        if self._temp_directory is not None:
-            shutil.rmtree(self._temp_directory)
 
     def add_command(self, command: Command):
         self._has_fuses = True

@@ -16,6 +16,7 @@ from backend.rl_exception import RlException
 from backend.schedule import Schedule
 from backend.state_machine import State, StateMachine
 from backend.system import System
+from backend.zipfile_handler import ZipfileHandler
 
 
 def lock(func):
@@ -343,7 +344,8 @@ class MasterController:
     def load_program(cls, name: str, data: Any, is_zip: bool):
         logger.info(f"Load program {name}")
         if is_zip:
-            return cls._call_device_method("load_zip_program", name, data)
+            zipfile_handler = ZipfileHandler(data)
+            return cls._call_device_method("load_zip_program", name, zipfile_handler)
         else:
             Program.raise_on_json(data)
             return cls._call_device_method("load_program", name, data)

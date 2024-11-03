@@ -97,7 +97,7 @@ const master_template = /*html*/`
             ><i
                 class="las la-upload"
             ></i></button>
-            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_button_clicked" @click="$event.target.value=''">
+            <input type="file" id="program_file_upload_button" style="display:none" accept=".json, .zip" @change="load_button_clicked" @click="$event.target.value=''">
             <button
                 :class="['base-button', 'red', button_status.unload]"
                 @click="unload_button_clicked"
@@ -300,13 +300,9 @@ const master_component = {
 
             button_request(
                 "/program", 'POST',
-                formData,
+                form_data,
                 'load', "Upload ZIP program?", this.ask, this.button_status, this._error_callback,
-                {
-                    headers: {
-                        'Content-Type': 'application/zip'
-                    }
-                }
+                true
             );
         },
 

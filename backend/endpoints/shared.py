@@ -54,10 +54,10 @@ def route_static(path):
 @log_request
 def route_program():
     if request.method == 'POST':
-        if request.content_type == 'application/json':
+        if request.content_type in ('application/json', 'text/plain'):
             json_data = request.get_json(force=True)
             Controller.load_program(json_data['name'], json_data['event_list'], is_zip=False)
-        elif request.content_type == 'application/zip':
+        elif request.content_type.startswith('multipart/form-data'):
             if 'file' not in request.files:
                 return make_response((
                     {}, status.HTTP_400_BAD_REQUEST

@@ -1,11 +1,13 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple
+import io
 
 import requests
 
 from backend.config import Config
 from backend.network import Network
 from backend.logger import logger
+from backend.zipfile_handler import ZipfileHandler
 
 
 class Device:
@@ -73,7 +75,7 @@ class Device:
         return self._device_id == other.device_id
 
     def _request(
-        self, method: str, url: str, data: Dict[str, Any] | bytes
+        self, method: str, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str | None = None
     ) -> Tuple[Dict[str, Any], int]:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
@@ -81,16 +83,17 @@ class Device:
         address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
             if method == 'post':
-                if isinstance(data, dict):
+                if has_zip_file:
                     response = requests.post(
                         address,
-                        json=data,
+                        files={'file': (zip_filename, data, 'application/zip')},
+                        data={},
                         timeout=self.REQUEST_TIMEOUT
                     )
                 else:
                     response = requests.post(
                         address,
-                        data=data,
+                        json=data,
                         timeout=self.REQUEST_TIMEOUT
                     )
             elif method == 'get':
@@ -119,9 +122,9 @@ class Device:
             return {'error': 'request'}, None
 
     def _post(
-        self, url: str, data: Dict[str, Any] | bytes
+        self, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str | None = None
     ) -> Tuple[Dict[str, Any], int]:
-        return self._request('post', url, data)
+        return self._request('post', url, data, has_zip_file, zip_filename)
 
     def _get(self, url: str) -> Tuple[Dict[str, Any], int]:
         return self._request('get', url, None)
@@ -135,9 +138,10 @@ class Device:
         logger.debug(f"{self._device_id}: load program {name}")
         return self._post("program", {'name': name, 'event_list': event_list})
     
-    def load_zip_program(self, name: str, zip_data: bytes):
+    def load_zip_program(self, name: str, zipfile_handler: ZipfileHandler):
         logger.debug(f"{self._device_id}: load zip program {name}")
-        return self._post("program", zip_data)
+        zip_data = zipfile_handler.pack_for(self._device_id)
+        return self._post("program", io.BytesIO(zip_data), True, name)
 
     def unload_program(self):
         logger.debug(f"{self._device_id}: unload program")
