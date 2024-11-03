@@ -52,6 +52,9 @@ class Paths:
 
     DHCPCD_CONF: str = "/etc/dhcpcd.conf"
 
+    HELIOS_RULE: str = "/etc/udev/rules.d/99-helios.rules"
+    FT232_RULE: str = "/etc/udev/rules.d/99-ft232.rules"
+
 
 class Ids:
 

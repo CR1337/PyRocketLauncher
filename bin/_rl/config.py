@@ -43,6 +43,64 @@ class AutoConfig:
     @staticmethod
     def _determine_device() -> bool:
         return True
+    
+    @staticmethod
+    def _create_udev_rule(filename: str, vendor_id: str, product_id: str):
+        with open(filename, 'w') as file:
+            file.write(
+                f'SUBSYSTEM=="usb", ATTRS{{idVendor}}=="{vendor_id}", '
+                f'ATTRS{{idProduct}}=="{product_id}", MODE="0666"'
+            )
+
+    @staticmethod
+    def _extract_vendor_and_product_id(device: str) -> tuple[str, str]:
+        chunks = device.split(' ')
+        vendor_id , product_id = chunks[5].split(':')
+        return vendor_id, product_id
+
+    @classmethod
+    def _create_udev_rules(cls):
+        process = subprocess.Popen(
+            "lsusb",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, _ = process.communicate()
+        if process.returncode != ExitCodes.SUCCESS:
+            Output.critical("Error reading usb devices!")
+            return
+        devices = stdout.decode('utf-8').split('\n')
+        devices_found = 0
+        for device in devices:
+            if "Helios Laser DAC" in device:
+                vendor_id, product_id = cls._extract_vendor_and_product_id(device)
+                cls._create_udev_rule(
+                    Paths.HELIOS_RULE,
+                    vendor_id,
+                    product_id
+                )
+                devices_found += 1
+            elif "FT232 Serial" in device:
+                vendor_id, product_id = cls._extract_vendor_and_product_id(device)
+                cls._create_udev_rule(
+                    Paths.FT232_RULE,
+                    vendor_id,
+                    product_id
+                )
+                devices_found += 1
+            if devices_found == 2:
+                break
+        os.system("udevadm control --reload-rules")
+        os.system("udevadm trigger")
+
+    @classmethod
+    def remove_udev_rules(cls):
+        if os.path.exists(Paths.HELIOS_RULE):
+            os.remove(Paths.HELIOS_RULE)
+        if os.path.exists(Paths.FT232_RULE):
+            os.remove(Paths.FT232_RULE)
+        os.system("udevadm control --reload-rules")
+        os.system("udevadm trigger")
 
     @staticmethod
     def _create_config_files():
@@ -77,6 +135,9 @@ class AutoConfig:
 
     @classmethod
     def run(cls):
+        Output.info("Creting udev rules for usb devices...")
+        cls._create_udev_rules()
+
         Output.info("Creating config files...")
         cls._create_config_files()
 
