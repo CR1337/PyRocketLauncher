@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Device",
+            "name": "Sudo Device",
             "type": "python",
             "request": "launch",
             "program": "rl_run.py",
@@ -15,7 +15,7 @@
             "sudo": true
         },
         {
-            "name": "Master",
+            "name": "Sudo Master",
             "type": "python",
             "request": "launch",
             "program": "rl_run.py",
@@ -23,6 +23,26 @@
             "justMyCode": true,
             "args": ["--master"],
             "sudo": true
+        },
+        {
+            "name": "Device",
+            "type": "python",
+            "request": "launch",
+            "program": "rl_run.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [],
+            "sudo": false
+        },
+        {
+            "name": "Master",
+            "type": "python",
+            "request": "launch",
+            "program": "rl_run.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--master"],
+            "sudo": false
         }
     ]
 }
