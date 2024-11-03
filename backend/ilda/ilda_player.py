@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
 import ctypes
-from threading import Thread, Event
 
 from backend.ilda.ilda import IldaInterface, HeliosPoint
 from backend.ilda.ildx import (
@@ -31,12 +30,13 @@ class IldaAnimation:
 
 ColorPalette = List[Tuple[int, int, int]]
 
-# FIXME: doesn't work anymore after adding superclass
 class IldaPlayer(AbstractPlayer):
     DAC_INDEX: int = 0
     HEADER_SIZE: int = ctypes.sizeof(IldxHeader)
     COLOR_SIZE: int = ctypes.sizeof(IldxColorPlatteRecord)
     MAX_ATTEMPS: int = 128
+    OUTPUT_IMMEADIATELY: int = 0b01
+    PLAY_ONLY_ONCE: int = 0b10
 
     DEFAULT_FPS: int = 30
     DEFAULT_COLOR_PALETTE: ColorPalette = [
@@ -110,24 +110,12 @@ class IldaPlayer(AbstractPlayer):
     _animations: Dict[float, IldaAnimation]
     _color_palette: ColorPalette
 
-    _origin_timestamp: float
-    _pause_started_timestamp: float
-    _current_frame_index: int
-
-    _paused: bool
-    _playing: bool
-
-    _thread: Thread
-
-    _play_event: Event
-    _pause_event: Event
-    _stop_event: Event
-    _destroy_event: Event
-
     def __init__(self, ildx_filename: str):
         device_amount = IldaInterface.OpenDevices()
         if device_amount < 1:
             raise RuntimeError("No ILDA devices found")
+        
+        IldaInterface.SetShutter(self.DAC_INDEX, 1)
         
         with open(ildx_filename, 'rb') as file:
             ildx_data = file.read()
@@ -147,6 +135,10 @@ class IldaPlayer(AbstractPlayer):
         self._extract_items()
 
         super().__init__()
+
+    def destroy(self):
+        super().destroy()
+        IldaInterface.CloseDevices()
                 
     def _read_animation(
         self, data: bytes, offset: int
@@ -156,7 +148,7 @@ class IldaPlayer(AbstractPlayer):
         except ValueError:
             return None, offset, False
 
-        fps = header.framesPerSecondOrFrameAmount // 10
+        fps = header.framesPerSecondOrFrameAmount
         if fps == 0:
             fps = self.DEFAULT_FPS
         start_timestamp = decode_start_timestamp(header)
@@ -231,15 +223,13 @@ class IldaPlayer(AbstractPlayer):
         )
         points = [converter_func(point) for point in raw_points]
 
-        return [IldaFrame(points) for _ in range(repetitions)], offset + self.HEADER_SIZE + number_of_points * point_size
+        return [IldaFrame(None, points) for _ in range(repetitions)], offset + self.HEADER_SIZE + number_of_points * point_size
     
     def _rescale_point(self, x: int, y: int) -> Tuple[int, int]:
         return (x + 0xFFFF // 2) * 0xFFF // 0xFFFF, (y + 0xFFFF // 2) * 0xFFF // 0xFFFF
 
     def _convert_indexed_point(self, point: Ildx2dIndexedRecord | Ildx3dIndexedRecord) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
-        with open("test.txt", "a") as file:
-            print(f"({point.x + (0xffff // 2)}, {point.y + (0xffff // 2)}),", file=file)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),
             *self._color_palette[point.colorIndex],
@@ -248,8 +238,6 @@ class IldaPlayer(AbstractPlayer):
 
     def _convert_true_color_point(self, point: Ildx3dTrueColorRecord | Ildx2dTrueColorRecord) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
-        with open("test.txt", "a") as file:
-            print(f"({point.x + (0xffff // 2)}, {point.y + (0xffff // 2)}),", file=file)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),
             point.r, point.g, point.b,
@@ -273,8 +261,8 @@ class IldaPlayer(AbstractPlayer):
         for animation in self._animations.values():
             self._items.extend(animation.frames)
             
-    def __del__(self):
-        super().__del__()
+    def destroy(self):
+        super().destroy()
         IldaInterface.CloseDevices()
 
     def _play_item(self):
@@ -287,4 +275,17 @@ class IldaPlayer(AbstractPlayer):
         n_attemps = 0
         while(n_attemps < self.MAX_ATTEMPS and IldaInterface.GetStatus(self.DAC_INDEX) != 1):
             n_attemps += 1
-        IldaInterface.WriteFrame(self.DAC_INDEX, frame.points_per_second, 0b11, points_array, len(frame.points))
+        IldaInterface.WriteFrame(
+            self.DAC_INDEX, 
+            frame.points_per_second, 
+            self.OUTPUT_IMMEADIATELY | self.PLAY_ONLY_ONCE,
+            points_array, 
+            len(frame.points)
+        )
+
+    def _start_playing(self):
+        IldaInterface.SetShutter(self.DAC_INDEX, 0)
+
+    def _end_playing(self):
+        IldaInterface.Stop(self.DAC_INDEX)
+        IldaInterface.SetShutter(self.DAC_INDEX, 1)
