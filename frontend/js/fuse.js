@@ -83,10 +83,8 @@ const fuse_component = {
             return this.state.program.current_timestamp;
         },
 
-        command() {
-            if (!this.program_loaded) {
-                return null;
-            }
+        commands() {
+            let commands = [];
             const command_list = this.state.program.command_list;
             for (let command of command_list) {
                 if (
@@ -94,10 +92,30 @@ const fuse_component = {
                     && command.address.letter == this.letter
                     && command.address.number == this.number
                 ) {
+                    commands.push(command);
+                }
+            }
+            return commands;
+        },
+
+        command() {
+            if (!this.program_loaded) {
+                return null;
+            }
+            let commands = this.commands();
+            if (commands.length == 0) {
+                return null;
+            }
+            /*
+            Return the first command that is not fired yet.
+            If there is no such command, return the last command.
+            */
+            for (let command of commands) {
+                if (!command.fired) {
                     return command;
                 }
             }
-            return null;
+            return commands[commands.length - 1];
         },
 
         timestamp() {
