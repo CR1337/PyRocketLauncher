@@ -67,6 +67,8 @@ class DeviceController:
 
     @classmethod
     def _unload_program(cls):
+        if cls._schedule is not None:
+            cls._unschedule_program()
         cls._program = None
         LedController.instance().load_preset('idle')
         logger.debug("Program unloaded")
@@ -240,6 +242,11 @@ DeviceController._state_machine.add_transition(
 )
 DeviceController._state_machine.add_transition(
     DeviceController.LOADED,
+    DeviceController.NOT_LOADED,
+    DeviceController._unload_program
+)
+DeviceController._state_machine.add_transition(
+    DeviceController.SCHEDULED,
     DeviceController.NOT_LOADED,
     DeviceController._unload_program
 )
