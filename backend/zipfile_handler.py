@@ -108,6 +108,10 @@ class ZipfileHandler:
     def dmx_filename(self) -> str:
         return os.path.join(self._temp_directory, 'dmx.bin')
 
+    @property
+    def fuses_data(self) -> List[Dict[str, Any]] | None:
+        return self._fuses_data
+
     def __del__(self):
         shutil.rmtree(self._temp_directory)
 
