@@ -4,6 +4,10 @@ from typing import List
 
 class Network:
 
+    HARDCODED_URLS: List[str] = [
+        "192.168.1.181"  # TODO
+    ]
+
     @classmethod
     def gateway_ip(cls) -> str:
         output = subprocess.check_output(
@@ -33,7 +37,7 @@ class Network:
             if line.endswith(")")
             else line.split(" ")[-1]
             for line in ip_lines
-        ]
+        ] + cls.HARDCODED_URLS
         gateway_ip = cls.gateway_ip()
         return [
             ip for ip in ips
