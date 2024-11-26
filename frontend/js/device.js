@@ -420,11 +420,10 @@ const device_component = {
 
         display_system_time_color_class() {
             if (this.state === null) return "";
-            const red_interval = this.event_stream_red_threshold;
-            const yellow_interval = this.event_stream_yellow_threshold;
-            if (this.event_stream_pending_seconds > red_interval) {
+            if (this.state.is_remote) return "blue";
+            if (this.event_stream_pending_seconds > this.event_stream_red_threshold) {
                 return "red";
-            } else if (this.event_stream_pending_seconds > yellow_interval) {
+            } else if (this.event_stream_pending_seconds > this.event_stream_yellow_threshold) {
                 return "yellow";
             } else {
                 return "";
