@@ -13,10 +13,10 @@ class ZipfileHandler:
 
     _metadata: Dict[str, Any]
 
-    _fuses_data: List[Dict[str, Any]] | None
-    _music_data: bytes | None
-    _ilda_data: bytes | None
-    _dmx_data: bytes | None
+    _fuses_data: List[Dict[str, Any]]
+    _music_data: bytes
+    _ilda_data: bytes
+    _dmx_data: bytes
     
     def __init__(self, zip_data: bytes):
         self._temp_directory = tempfile.mkdtemp()
@@ -109,7 +109,7 @@ class ZipfileHandler:
         return os.path.join(self._temp_directory, 'dmx.bin')
 
     @property
-    def fuses_data(self) -> List[Dict[str, Any]] | None:
+    def fuses_data(self) -> List[Dict[str, Any]]:
         return self._fuses_data
 
     def __del__(self):

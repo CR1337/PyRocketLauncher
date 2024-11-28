@@ -46,9 +46,9 @@ class Program:
     _has_ilda: bool
     _has_dmx: bool
 
-    _audio_player: AudioPlayer | None
-    _ilda_player: IldaPlayer | None
-    _dmx_player: DmxPlayer | None
+    _audio_player: AudioPlayer
+    _ilda_player: IldaPlayer
+    _dmx_player: DmxPlayer
 
     @classmethod
     def raise_on_json(cls, json_data: List):
@@ -122,7 +122,7 @@ class Program:
         cls, 
         name: str, 
         json_data: List, 
-        zipfile_handler: ZipfileHandler | None = None
+        zipfile_handler: ZipfileHandler = None
     ) -> 'Program':
         program = cls(name, zipfile_handler)
         for event in json_data:
@@ -149,7 +149,7 @@ class Program:
             testloop.add_command(command)
         return testloop
 
-    def __init__(self, name: str, zipfile_handler: ZipfileHandler | None = None):
+    def __init__(self, name: str, zipfile_handler: ZipfileHandler = None):
         self._name = name
         self._command_list = []
         self._thread = Thread(target=self._thread_handler)

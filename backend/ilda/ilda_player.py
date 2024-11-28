@@ -142,7 +142,7 @@ class IldaPlayer(AbstractPlayer):
                 
     def _read_animation(
         self, data: bytes, offset: int
-    ) -> Tuple[IldaAnimation | None, int, bool]:
+    ) -> Tuple[IldaAnimation, int, bool]:
         try:
             header = IldxHeader.from_buffer_copy(data[offset:offset + self.HEADER_SIZE])
         except ValueError:
@@ -185,7 +185,7 @@ class IldaPlayer(AbstractPlayer):
         
         return palette, offset + self.HEADER_SIZE + number_of_colors * self.COLOR_SIZE
 
-    def _read_frame(self, data: bytes, offset: int, is_first_frame: bool = False) -> Tuple[List[IldaFrame] | None, int]:
+    def _read_frame(self, data: bytes, offset: int, is_first_frame: bool = False) -> Tuple[List[IldaFrame], int]:
         try:
             header = IldxHeader.from_buffer_copy(data[offset:offset + self.HEADER_SIZE])
         except ValueError:
