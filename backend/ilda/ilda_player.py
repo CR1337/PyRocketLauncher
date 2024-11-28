@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 import ctypes
 
 from backend.ilda.ilda import IldaInterface, HeliosPoint
@@ -228,7 +228,7 @@ class IldaPlayer(AbstractPlayer):
     def _rescale_point(self, x: int, y: int) -> Tuple[int, int]:
         return (x + 0xFFFF // 2) * 0xFFF // 0xFFFF, (y + 0xFFFF // 2) * 0xFFF // 0xFFFF
 
-    def _convert_indexed_point(self, point: Ildx2dIndexedRecord | Ildx3dIndexedRecord) -> HeliosPoint:
+    def _convert_indexed_point(self, point: Union[Ildx2dIndexedRecord, Ildx3dIndexedRecord]) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),
@@ -236,7 +236,7 @@ class IldaPlayer(AbstractPlayer):
             0 if blanked else 255
         )
 
-    def _convert_true_color_point(self, point: Ildx3dTrueColorRecord | Ildx2dTrueColorRecord) -> HeliosPoint:
+    def _convert_true_color_point(self, point: Union[Ildx3dTrueColorRecord, Ildx2dTrueColorRecord]) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),

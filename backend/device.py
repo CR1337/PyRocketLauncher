@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 import io
 
 import requests
@@ -75,7 +75,7 @@ class Device:
         return self._device_id == other.device_id
 
     def _request(
-        self, method: str, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str = None
+        self, method: str, url: str, data: Union[Dict[str, Any], io.BytesIO], has_zip_file: bool = False, zip_filename: str = None
     ) -> Tuple[Dict[str, Any], int]:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
@@ -122,7 +122,7 @@ class Device:
             return {'error': 'request'}, None
 
     def _post(
-        self, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str = None
+        self, url: str, data: Union[Dict[str, Any], io.BytesIO], has_zip_file: bool = False, zip_filename: str = None
     ) -> Tuple[Dict[str, Any], int]:
         return self._request('post', url, data, has_zip_file, zip_filename)
 
