@@ -23,6 +23,7 @@ class RlManager:
         ConfigWizard.run()
         if not Status.is_cronjob_registered():
             Cronjob.register()
+        cls._change_directory_permissions()
         cls.run()
         Output.info("This system should now be fully functional.")
         Output.info("For further options run: 'sudo rl help'")
@@ -100,6 +101,13 @@ class RlManager:
         ]
         with open(Paths.CONFIG_TXT, 'w', encoding='ascii') as file:
             file.writelines(lines)
+
+    @staticmethod
+    def _change_directory_permissions():
+        Output.info("Changing directory permissions...")
+        command = Command(f"chmod -R 777 {Paths.PARENT}")
+        if command.get_returncode() != ExitCodes.SUCCESS:
+            Output.unexpected_error()
 
     @classmethod
     def uninstall(cls):
