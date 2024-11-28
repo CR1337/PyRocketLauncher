@@ -457,6 +457,7 @@ bool _readFmtChunk(_AudioObject *_self, AudioFmtChunk *fmtChunk) {
         case WAVE_FORMAT_IEEE_FLOAT:
         case WAVE_FORMAT_ALAW:
         case WAVE_FORMAT_MULAW:
+
             AudioNonPcmFmtChunkExtension *nonPcmExtension = 
             (AudioNonPcmFmtChunkExtension*)(
                 (uint8_t*)fmtChunk + sizeof(AudioFmtChunk)
@@ -467,6 +468,7 @@ bool _readFmtChunk(_AudioObject *_self, AudioFmtChunk *fmtChunk) {
             break;
 
         case WAVE_FORMAT_EXTENSIBLE:
+        
             AudioExtensibleFmtChunkExtension *extensibleExtension = 
             (AudioExtensibleFmtChunkExtension*)(
                 (uint8_t*)fmtChunk + sizeof(AudioFmtChunk)
