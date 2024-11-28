@@ -3,7 +3,7 @@ import os
 import shutil
 import socket
 from datetime import datetime
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Tuple
 import subprocess
 
 from _rl.command import Command
@@ -53,7 +53,7 @@ class AutoConfig:
             )
 
     @staticmethod
-    def _extract_vendor_and_product_id(device: str) -> tuple[str, str]:
+    def _extract_vendor_and_product_id(device: str) -> Tuple[str, str]:
         chunks = device.split(' ')
         vendor_id , product_id = chunks[5].split(':')
         return vendor_id, product_id
