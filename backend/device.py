@@ -1,11 +1,13 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple
+import io
 
 import requests
 
 from backend.config import Config
 from backend.network import Network
 from backend.logger import logger
+from backend.zipfile_handler import ZipfileHandler
 
 
 class Device:
@@ -73,7 +75,7 @@ class Device:
         return self._device_id == other.device_id
 
     def _request(
-        self, method: str, url: str, data: Dict[str, Any]
+        self, method: str, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str | None = None
     ) -> Tuple[Dict[str, Any], int]:
         logger.debug(
             f"{method.capitalize()} request to {self._device_id}/{url}"
@@ -81,11 +83,19 @@ class Device:
         address = f"http://{self._ip_address}:{self.DEVICE_PORT}/{url}"
         try:
             if method == 'post':
-                response = requests.post(
-                    address,
-                    json=data,
-                    timeout=self.REQUEST_TIMEOUT
-                )
+                if has_zip_file:
+                    response = requests.post(
+                        address,
+                        files={'file': (zip_filename, data, 'application/zip')},
+                        data={},
+                        timeout=self.REQUEST_TIMEOUT
+                    )
+                else:
+                    response = requests.post(
+                        address,
+                        json=data,
+                        timeout=self.REQUEST_TIMEOUT
+                    )
             elif method == 'get':
                 response = requests.get(
                     address,
@@ -112,9 +122,9 @@ class Device:
             return {'error': 'request'}, None
 
     def _post(
-        self, url: str, data: Dict[str, Any]
+        self, url: str, data: Dict[str, Any] | io.BytesIO, has_zip_file: bool = False, zip_filename: str | None = None
     ) -> Tuple[Dict[str, Any], int]:
-        return self._request('post', url, data)
+        return self._request('post', url, data, has_zip_file, zip_filename)
 
     def _get(self, url: str) -> Tuple[Dict[str, Any], int]:
         return self._request('get', url, None)
@@ -127,6 +137,15 @@ class Device:
     def load_program(self, name: str, event_list: List) -> Dict[str, Any]:
         logger.debug(f"{self._device_id}: load program {name}")
         return self._post("program", {'name': name, 'event_list': event_list})
+    
+    def load_zip_program(self, name: str, zipfile_handler: ZipfileHandler):
+        logger.debug(f"{self._device_id}: load zip program {name}")
+        zip_data = zipfile_handler.pack_for(self._device_id)
+        if self.is_remote:
+            # Remotes cannot handle zip files. Only send the fuses data
+            return self.load_program(name, zip_data.fuses_data)
+        else:
+            return self._post("program", io.BytesIO(zip_data), True, name)
 
     def unload_program(self):
         logger.debug(f"{self._device_id}: unload program")
@@ -189,3 +208,7 @@ class Device:
     @property
     def device_id(self) -> str:
         return self._device_id
+
+    @property
+    def is_remote(self) -> bool:
+        return self._initial_state.get('is_remote', False)

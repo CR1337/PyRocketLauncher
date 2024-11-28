@@ -41,7 +41,7 @@ class Instance:
 
     @classmethod
     def get_server_port(cls) -> int:
-        return 80 if cls._is_master else 5000
+        return 8080 if cls._is_master else 5000
 
     @classmethod
     def get_prefix(cls) -> str:

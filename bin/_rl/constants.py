@@ -14,6 +14,7 @@ class Paths:
     BIN: str = os.path.join(HOME, "bin")
     LOGS: str = os.path.join(HOME, "logs")
     HELP: str = os.path.join(HOME, "doc/rl_help")
+    AUDIOLIB: str = os.path.join(HOME, "backend/audio")
 
     PIP_REQUIREMENTS: str = os.path.join(HOME, "pip-requirements.txt")
     APT_REQUIREMENTS: str = os.path.join(HOME, "apt-requirements.txt")
@@ -50,6 +51,9 @@ class Paths:
     RESOLV_CONF: str = "/etc/resolv.conf"
 
     DHCPCD_CONF: str = "/etc/dhcpcd.conf"
+
+    HELIOS_RULE: str = "/etc/udev/rules.d/99-helios.rules"
+    FT232_RULE: str = "/etc/udev/rules.d/99-ft232.rules"
 
 
 class Ids:

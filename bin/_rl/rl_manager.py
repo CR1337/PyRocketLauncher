@@ -118,6 +118,8 @@ class RlManager:
         Output.info("Removing bin directory from SECURE_PATH...")
         os.remove(Paths.SUDOERS_RL)
         cls._reenable_wifi_on_pi_zero_w()
+        Output.info("Removing udev rules...")
+        Config.remove_udev_rules()
         Output.info("Copying install script to parent directory...")
         shutil.copy(Paths.RL_INSTALL, Paths.PARENT)
         Output.info("Removing all files...")

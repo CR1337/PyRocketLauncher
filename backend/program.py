@@ -1,5 +1,11 @@
 from threading import Event, Thread
 from typing import Any, Callable, Dict, List
+import zipfile
+import tempfile
+import shutil
+import json
+import os
+import io
 
 import backend.time_util as tu
 from backend.address import Address
@@ -8,6 +14,12 @@ from backend.config import Config
 from backend.hardware import Hardware
 from backend.led_controller import LedController
 from backend.logger import logger
+
+from backend.audio.audio_player import AudioPlayer
+from backend.ilda.ilda_player import IldaPlayer
+from backend.dmx.dmx_player import DmxPlayer
+
+from backend.zipfile_handler import ZipfileHandler
 
 
 class Program:
@@ -27,6 +39,16 @@ class Program:
     _callback: Callable
     _seconds_paused: float
     _command_idx: int
+    _zipfile_handler: ZipfileHandler
+
+    _has_fuses: bool
+    _has_music: bool
+    _has_ilda: bool
+    _has_dmx: bool
+
+    _audio_player: AudioPlayer | None
+    _ilda_player: IldaPlayer | None
+    _dmx_player: DmxPlayer | None
 
     @classmethod
     def raise_on_json(cls, json_data: List):
@@ -72,10 +94,37 @@ class Program:
                 raise cls.InvalidProgram(
                     f"Element {idx}: 'timestamp' has to be a float!"
                 )
+            
+    @classmethod
+    def from_zip(cls, name: str, zip_data: bytes) -> 'Program':
+        zipfile_handler = ZipfileHandler(zip_data)
+
+        if zipfile_handler.has_fuses:
+            with open(zipfile_handler.fuses_filename, 'r') as fuses_file:
+                fuses = json.load(fuses_file)
+            program = cls.from_json(name, fuses, zipfile_handler)
+        else:
+            program = cls(name, zipfile_handler)
+
+        if zipfile_handler.has_music:
+            program.add_music(zipfile_handler.music_filename)
+
+        if zipfile_handler.has_ilda:
+            program.add_ilda(zipfile_handler.ilda_filename)
+
+        if zipfile_handler.has_dmx:
+            program.add_dmx(zipfile_handler.dmx_filename)
+
+        return program
 
     @classmethod
-    def from_json(cls, name: str, json_data: List) -> 'Program':
-        program = cls(name)
+    def from_json(
+        cls, 
+        name: str, 
+        json_data: List, 
+        zipfile_handler: ZipfileHandler | None = None
+    ) -> 'Program':
+        program = cls(name, zipfile_handler)
         for event in json_data:
             address = Address(
                 event['device_id'],
@@ -100,7 +149,7 @@ class Program:
             testloop.add_command(command)
         return testloop
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, zipfile_handler: ZipfileHandler | None = None):
         self._name = name
         self._command_list = []
         self._thread = Thread(target=self._thread_handler)
@@ -113,24 +162,73 @@ class Program:
         self._last_current_timestamp_before_pause = None
         self._callback = None
         self._seconds_paused = 0
+        self._zipfile_handler = zipfile_handler
+
+        self._has_fuses = False
+        self._has_music = False
+        self._has_ilda = False
+        self._has_dmx = False
+
+        self._audio_player = None
+        self._ilda_player = None
+        self._dmx_player = None
 
     def add_command(self, command: Command):
+        self._has_fuses = True
         self._command_list.append(command)
+
+    def add_music(self, filename: str):
+        self._has_music = True
+        self._audio_player = AudioPlayer(filename)
+
+    def add_ilda(self, filename: str):
+        self._has_ilda = True
+        self._ilda_player = IldaPlayer(filename)
+        self._ilda_player.run()
+
+    def add_dmx(self, filename: str):
+        self._has_dmx = True
+        self._dmx_player = DmxPlayer(filename)
+        self._dmx_player.run()
 
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
         self._thread.start()
+        if self._audio_player:
+            self._audio_player.play()
+        if self._ilda_player:
+            self._ilda_player.play()
+        if self._dmx_player:
+            self._dmx_player.play()
         LedController.instance().load_preset('running')
 
     def pause(self):
         self._pause_event.set()
+        if self._audio_player:
+            self._audio_player.pause()
+        if self._ilda_player:
+            self._ilda_player.pause()
+        if self._dmx_player:
+            self._dmx_player.pause()
 
     def continue_(self):
         self._continue_event.set()
+        if self._audio_player:
+            self._audio_player.play()
+        if self._ilda_player:
+            self._ilda_player.play()
+        if self._dmx_player:
+            self._dmx_player.play()
 
     def stop(self):
         self._stop_event.set()
+        if self._audio_player:
+            self._audio_player.stop()
+        if self._ilda_player:
+            self._ilda_player.stop()
+        if self._dmx_player:
+            self._dmx_player.stop()
         self.join()
 
     def join(self):

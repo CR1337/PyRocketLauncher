@@ -97,7 +97,7 @@ const master_template = /*html*/`
             ><i
                 class="las la-upload"
             ></i></button>
-            <input type="file" id="program_file_upload_button" style="display:none" accept=".json" @change="load_button_clicked" @click="$event.target.value=''">
+            <input type="file" id="program_file_upload_button" style="display:none" accept=".json, .zip" @change="load_button_clicked" @click="$event.target.value=''">
             <button
                 :class="['base-button', 'red', button_status.unload]"
                 @click="unload_button_clicked"
@@ -255,13 +255,24 @@ const master_component = {
         },
 
         load_button_clicked(event) {
-            const reader = new FileReader();
-            reader.onload = this._on_reader_loaded;
-            this.last_loaded_program_name = event.target.files[0].name;
-            reader.readAsText(event.target.files[0]);
+            const file = event.target.files[0];
+            
+            this.last_loaded_program_name = file.name;
+            
+            const file_extension = file.name.split('.').pop().toLowerCase();
+            
+            if (file_extension === 'json') {
+                const reader = new FileReader();
+                reader.onload = this._on_reader_loaded_json.bind(this);
+                reader.readAsText(file);
+            } else if (file_extension === 'zip') {
+                this._send_zip(file);
+            } else {
+                alert("Unsupported file type: " + file_extension);
+            }
         },
 
-        _on_reader_loaded(event) {
+        _on_reader_loaded_json(event) {
             let loaded_program = [];
             try {
                 loaded_program = JSON.parse(event.target.result);
@@ -280,6 +291,18 @@ const master_component = {
                     event_list: loaded_program
                 },
                 'load', "Upload program?", this.ask, this.button_status, this._error_callback
+            );
+        },
+
+        _send_zip(file) {
+            const form_data = new FormData();
+            form_data.append('file', file, this.last_loaded_program_name);
+
+            button_request(
+                "/program", 'POST',
+                form_data,
+                'load', "Upload ZIP program?", this.ask, this.button_status, this._error_callback,
+                true
             );
         },
 

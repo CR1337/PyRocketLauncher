@@ -157,10 +157,16 @@ const device_component = {
     },
     data() {
         return {
+            event_stream_interval: 1000,
+            polling_interval: 50000,
+            event_stream_yellow_threshold: 1,
+            event_stream_red_threshold: 5,
+
             ip_address: "",
             error_occured: false,
             state: null,
             event_source: null,
+            interval_id: null,
             event_stream_pending_seconds: 0,
             event_stream_timeout_id: null,
             button_status: {
@@ -266,6 +272,21 @@ const device_component = {
 
         _deregister() {
             this.$emit('deregister-button-clicked', this.device_id);
+        },
+
+        current_time() {
+            const now = new Date();
+
+            // Extract components
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            // Format the string
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000`;
         }
     },
     computed: {
@@ -398,9 +419,11 @@ const device_component = {
         },
 
         display_system_time_color_class() {
-            if (this.event_stream_pending_seconds > 5) {
+            if (this.state === null) return "";
+            if (this.state.is_remote) return "blue";
+            if (this.event_stream_pending_seconds > this.event_stream_red_threshold) {
                 return "red";
-            } else if (this.event_stream_pending_seconds > 1) {
+            } else if (this.event_stream_pending_seconds > this.event_stream_yellow_threshold) {
                 return "yellow";
             } else {
                 return "";
@@ -414,24 +437,51 @@ const device_component = {
     },
     created() {
         this.ip_address = this.initial_ip_address;
-        this.event_source = new EventSource(this.host + "/event-stream");
-        this.event_source.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+        fetch(this.host + "/state")
+        .then(response => response.json())
+        .then(data => {
             this.state = data;
-            const device_id = this.device_id;
-            this.$emit('state-updated', {
-                "device_id": device_id,
-                "state": data
-            });
-            this.event_stream_pending_seconds = 0;
-        }
-        this.event_stream_pending_seconds = 0;
-        this.event_stream_timeout_id = setInterval(() => {
-            this.event_stream_pending_seconds++;
-        }, 1000);
+            if (this.state.is_remote) {
+                fetch(this.host + "/system-time", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "system-time": this.current_time()
+                    })
+                })
+                .catch(error => {
+                    this.error_occured = true;
+                    console.error(error);
+                });
+            } else {
+                this.event_source = new EventSource(this.host + "/event-stream");
+                this.event_source.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.state = data;
+                    const device_id = this.device_id;
+                    this.$emit('state-updated', {
+                        "device_id": device_id,
+                        "state": data
+                    });
+                    this.event_stream_pending_seconds = 0;
+                }
+                this.event_stream_pending_seconds = 0;
+                this.event_stream_timeout_id = setInterval(() => {
+                    this.event_stream_pending_seconds++;
+                }, this.event_stream_interval);
+                    }
+                })
+        .catch(error => {
+            this.error_occured = true;
+            console.error(error);
+        });
     },
     beforeUnmount() {
-        this.event_source.close();
+        if (this.event_source !== null) {
+            this.event_source.close();
+        }
         clearInterval(this.event_stream_timeout_id);
     }
 };

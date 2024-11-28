@@ -1,8 +1,14 @@
 import subprocess
+import json
 from typing import List
 
 
 class Network:
+
+    hardcoded_ips: List[str] 
+    HARDCODED_IPS_FILENAME: str = "config/hard_ips.json"
+    with open(HARDCODED_IPS_FILENAME, 'r', encoding='utf-8') as file:
+        hardcoded_ips = json.load(file)
 
     @classmethod
     def gateway_ip(cls) -> str:
@@ -33,7 +39,7 @@ class Network:
             if line.endswith(")")
             else line.split(" ")[-1]
             for line in ip_lines
-        ]
+        ] + cls.hardcoded_ips
         gateway_ip = cls.gateway_ip()
         return [
             ip for ip in ips

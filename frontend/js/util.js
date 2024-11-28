@@ -24,17 +24,29 @@ async function fetch_with_timeout(resource, options={}) {
     return response;
 }
 
-async function request(url, method, body, error_callback, success_callback) {
+async function request(url, method, body, error_callback, success_callback, has_form_data=false) {
     let response;
+    let options;
+
+    if (has_form_data) {
+        options = {
+            method: method,
+            body: body
+        };
+    } else {
+        options = {
+            method: method,
+            headers: {'Content-Type': 'text/plain'},
+            body: JSON.stringify(body)
+        };
+    }
+    
+
     try {
         if (method == 'GET') {
             response = await fetch_with_timeout(url);
         } else {
-            response = await fetch_with_timeout(url, {
-                method: method,
-                headers: {'Content-Type': 'text/plain'},
-                body: JSON.stringify(body)
-            });
+            response = await fetch_with_timeout(url, options);
         }
     } catch (error) {
         console.log(error);
@@ -56,7 +68,8 @@ async function request(url, method, body, error_callback, success_callback) {
 }
 
 async function button_request(
-    url, method, body, button_key, confirm_prompt, ask, button_status, error_callback
+    url, method, body, button_key, confirm_prompt, ask, button_status, error_callback,
+    has_form_data=false
 ) {
     if (ask) {
         if (!confirm(confirm_prompt)) return null;
@@ -72,7 +85,8 @@ async function button_request(
         },
         () => {
             button_status[button_key] = 'status-success';
-        }
+        },
+        has_form_data
     );
 
     // let response;
