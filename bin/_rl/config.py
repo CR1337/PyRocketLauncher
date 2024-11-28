@@ -135,7 +135,7 @@ class AutoConfig:
 
     @classmethod
     def run(cls):
-        Output.info("Creting udev rules for usb devices...")
+        Output.info("Creating udev rules for usb devices...")
         cls._create_udev_rules()
 
         Output.info("Creating config files...")
