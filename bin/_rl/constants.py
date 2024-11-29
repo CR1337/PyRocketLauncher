@@ -13,8 +13,10 @@ class Paths:
     DEFAULT_CONFIG_PATH: str = os.path.join(CONFIG_PATH, "defaults")
     BIN: str = os.path.join(HOME, "bin")
     LOGS: str = os.path.join(HOME, "logs")
-    HELP: str = os.path.join(HOME, "doc/rl_help")
-    AUDIOLIB: str = os.path.join(HOME, "backend/audio")
+    HELP: str = os.path.join(HOME, "doc", "rl_help")
+    AUDIOLIB: str = os.path.join(HOME, "backend", "audio")
+    HELIOS_SDK: str = os.path.join(HOME, "backend", "ilda", "sdk")
+    HELIOS_SHARED_LIB: str = os.path.join(HELIOS_SDK, "shared_library")
 
     PIP_REQUIREMENTS: str = os.path.join(HOME, "pip-requirements.txt")
     APT_REQUIREMENTS: str = os.path.join(HOME, "apt-requirements.txt")
@@ -54,6 +56,8 @@ class Paths:
 
     HELIOS_RULE: str = "/etc/udev/rules.d/99-helios.rules"
     FT232_RULE: str = "/etc/udev/rules.d/99-ft232.rules"
+
+    LIBUSB_SO: str = "/usr/lib/arm-linux-gnueabihf/libusb-1.0.so"
 
 
 class Ids:

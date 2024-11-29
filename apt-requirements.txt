@@ -7,3 +7,4 @@ nmap=7.70+dfsg1-6+deb10u2
 libasound2-dev
 make
 ffmpeg
+libusb-1.0-0-dev

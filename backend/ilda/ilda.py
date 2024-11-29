@@ -1,4 +1,5 @@
 import ctypes
+from backend.instance import Instance
 
 
 class HeliosPoint(ctypes.Structure):
@@ -11,7 +12,10 @@ class HeliosPoint(ctypes.Structure):
         ('i', ctypes.c_uint8)
     ]
 
-helios_lib = ctypes.CDLL("backend/ilda/libHeliosDacAPI.so")
+if Instance.on_pi():
+    helios_lib = ctypes.CDLL("backend/ilda/libHeliosDacAPI_arm.so")
+else:
+    helios_lib = ctypes.CDLL("backend/ilda/libHeliosDacAPI.so")
 
 helios_lib.OpenDevices.argtypes = []
 helios_lib.OpenDevices.restype = ctypes.c_int
