@@ -62,7 +62,7 @@ class System:
         if not Instance.on_pi():
             return False
         output = subprocess.check_output(
-            ["rl", "status", "get", "update"]
+            ["bin/rl", "status", "get", "update"]
         ).decode(encoding='ascii')
         status = output.split()[-1]
         if status == 'ahead':
