@@ -4,7 +4,7 @@ const chip_template = /*html*/`
 
     <fuse
         v-for="(_, number) in number_of_fuses"
-        :enabled="enabled && !disable_fuses"
+        :enabled="enabled && !state.is_remote"
         :ask="ask"
         :state="state"
         :letter="letter"
@@ -33,9 +33,6 @@ const chip_component = {
     computed: {
         upper_letter() {
             return this.letter.toUpperCase();
-        },
-        disable_fuses() {
-            return this.state.is_remote;
         }
     },
     mounted() {
