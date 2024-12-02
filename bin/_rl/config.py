@@ -122,7 +122,7 @@ class AutoConfig:
     @staticmethod
     def _compile_audio_library():
         process = subprocess.Popen(
-            ["make"],
+            ["make", "-f", "Makefile_arm"],
             cwd=Paths.AUDIOLIB,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
