@@ -133,20 +133,6 @@ class AutoConfig:
                 f"Error compiling audio library:\n{stderr.decode('utf-8')}"
             )
 
-    @staticmethod
-    def _compile_helios_dac_library():
-        process = subprocess.Popen(
-            ["sh", "compile.sh"],
-            cwd=Paths.HELIOS_SDK,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        _, stderr = process.communicate()
-        if process.returncode != ExitCodes.SUCCESS:
-            Output.critical(
-                f"Error compiling helios dac library:\n{stderr.decode('utf-8')}"
-            )
-
     @classmethod
     def run(cls):
         Output.info("Creating udev rules for usb devices...")
@@ -179,9 +165,6 @@ class AutoConfig:
 
         Output.info("Compiling audio library.")
         cls._compile_audio_library()
-
-        Output.info("Compiling Helios DAC library.")
-        cls._compile_helios_dac_library()
 
 
 class Config:
