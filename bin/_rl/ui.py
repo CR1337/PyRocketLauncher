@@ -42,7 +42,7 @@ class UserInterface:
 
     @classmethod
     def run(cls, args: List[str]):
-        cls._require_root()
+        # cls._require_root()
 
         if len(args) < 1:
             Output.critical(
