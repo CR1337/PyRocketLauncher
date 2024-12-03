@@ -1,8 +1,9 @@
 try:
     from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
+    from backend.audio.emergency_audio_player import AudioPlayer as EmergencyAudioPlayer
 except ModuleNotFoundError:
     from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
-from backend.audio.emergency_audio_player import AudioPlayer as EmergencyAudioPlayer
+    from emergency_audio_player import AudioPlayer as EmergencyAudioPlayer
 from functools import wraps
 import ctypes
 import tempfile
@@ -172,7 +173,7 @@ class AudioPlayer_OLD:
     
 
 class AudioPlayer:
-    
+
     _emergency_audio_player: EmergencyAudioPlayer
     _paused: bool
     _playing: bool
