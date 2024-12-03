@@ -24,6 +24,8 @@ from backend.zipfile_handler import ZipfileHandler
 
 class Program:
 
+    LOCAL_PROGRAM_PATH: str = "programs/local_program.zip"
+
     class InvalidProgram(Exception):
         pass
 
@@ -49,6 +51,8 @@ class Program:
     _audio_player: AudioPlayer
     _ilda_player: IldaPlayer
     _dmx_player: DmxPlayer
+
+    local_program: 'Program' = None
 
     @classmethod
     def raise_on_json(cls, json_data: List):
@@ -96,23 +100,34 @@ class Program:
                 )
             
     @classmethod
+    def build_local_program(cls):
+        def thread_target():
+            with open(cls.LOCAL_PROGRAM_PATH, 'rb') as local_program_file:
+                local_program_data = local_program_file.read()
+            cls.local_program = cls.from_zip("Local-Program", local_program_data)
+            logger.info("Local program ready")
+        thread = Thread(target=thread_target, name="local_program_builder")
+        thread.start()
+            
+    @classmethod
     def from_zip(cls, name: str, zip_data: bytes) -> 'Program':
         zipfile_handler = ZipfileHandler(zip_data)
+        device_id = Config.get_value('device_id')
 
-        if zipfile_handler.has_fuses:
+        if zipfile_handler.has_fuses and device_id in zipfile_handler.fuses_device_ids:
             with open(zipfile_handler.fuses_filename, 'r') as fuses_file:
                 fuses = json.load(fuses_file)
             program = cls.from_json(name, fuses, zipfile_handler)
         else:
             program = cls(name, zipfile_handler)
 
-        if zipfile_handler.has_music:
+        if zipfile_handler.has_music and device_id == zipfile_handler.music_device_id:
             program.add_music(zipfile_handler.music_filename)
 
-        if zipfile_handler.has_ilda:
+        if zipfile_handler.has_ilda and device_id == zipfile_handler.ilda_device_id:
             program.add_ilda(zipfile_handler.ilda_filename)
 
-        if zipfile_handler.has_dmx:
+        if zipfile_handler.has_dmx and device_id in zipfile_handler.dmx_device_ids:
             program.add_dmx(zipfile_handler.dmx_filename)
 
         return program
@@ -333,3 +348,6 @@ class Program:
                 f"\n{command.timestamp} - {command.name} - {command.address}"
             )
         return string
+
+
+Program.build_local_program()

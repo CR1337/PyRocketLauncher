@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
+import time
 from typing import Any, Dict, List
 
 import backend.time_util as tu
@@ -54,8 +55,6 @@ class DeviceController:
     SCHEDULED: State = _state_machine.add_state('scheduled')
     RUNNING: State = _state_machine.add_state('running')
     PAUSED: State = _state_machine.add_state('paused')
-
-    LOCAL_PROGRAM_PATH: str = "programs/local_program.zip"
 
     _program: Program = None
     _schedule: Schedule = None
@@ -114,11 +113,14 @@ class DeviceController:
         logger.info("Program finished")
 
     @classmethod
+    @lock
+    @raise_for_state_transition
     def load_local_program(cls):
-        name = "Local Program"
-        with open(cls.LOCAL_PROGRAM_PATH, 'rb') as file:
-            data = file.read()
-        cls.load_program(name, data, is_zip=True)
+        logger.info("Load local program")
+        while Program.local_program is None:
+            time.sleep(1)  # wait if local program is not fully built yet
+        program = Program.local_program
+        cls._state_machine.transition(cls.LOADED, program)
 
     @classmethod
     @lock
@@ -360,7 +362,7 @@ class MasterController:
     @lock
     def load_local_program(cls):
         name = "Local Program"
-        with open(DeviceController.LOCAL_PROGRAM_PATH, 'rb') as file:
+        with open(Program.LOCAL_PROGRAM_PATH, 'rb') as file:
             data = file.read()
         zipfile_handler = ZipfileHandler(data)
         return cls._call_device_method("load_local_program", name, zipfile_handler)
