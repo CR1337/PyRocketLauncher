@@ -178,15 +178,18 @@ class Program:
         self._command_list.append(command)
 
     def add_music(self, filename: str):
+        print("Adding music")
         self._has_music = True
         self._audio_player = AudioPlayer(filename)
 
     def add_ilda(self, filename: str):
+        print("Adding ilda")
         self._has_ilda = True
         self._ilda_player = IldaPlayer(filename)
         self._ilda_player.run()
 
     def add_dmx(self, filename: str):
+        print("Adding dmx")
         self._has_dmx = True
         self._dmx_player = DmxPlayer(filename)
         self._dmx_player.run()
