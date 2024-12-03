@@ -496,7 +496,12 @@ const master_component = {
         },
 
         load_local_button_enabled() {
-            return this.load_button_enabled();
+            for (device_id in this.devices) {
+                if (this.devices[device_id].controller.state == 'not_loaded') {
+                    return this.enabled;
+                }
+            }
+            return false;
         },
 
         unload_button_enabled() {
