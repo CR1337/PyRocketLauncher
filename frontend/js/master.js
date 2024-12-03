@@ -497,7 +497,7 @@ const master_component = {
 
         load_local_button_enabled() {
             for (device_id in this.devices) {
-                const state = this.devices[device_id].controller.state;
+                const state = this.devices[device_id];
                 if (!state.is_remote) {
                     if (!state.local_program_built) {
                         return false;
