@@ -42,8 +42,6 @@ class UserInterface:
 
     @classmethod
     def run(cls, args: List[str]):
-        # cls._require_root()
-
         if len(args) < 1:
             Output.critical(
                 "Invalid number of arguments!\nRun 'sudo rl help'."
@@ -55,6 +53,7 @@ class UserInterface:
         ]:
             cls._check_for_no_further_arguments(args, "")
             if args[0] == 'setup':
+                cls._require_root()
                 RlManager.setup()
                 Output.success("Setup done.")
             elif args[0] == 'run':
@@ -85,6 +84,7 @@ class UserInterface:
         elif args[0] == 'status':
             cls._status(args[1:])
         elif args[0] == 'cronjob':
+            cls._require_root()
             cls._cronjob(args[1:])
         elif args[0] == 'logs':
             cls._logs(args[1:])
