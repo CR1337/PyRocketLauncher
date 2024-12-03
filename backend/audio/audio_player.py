@@ -62,11 +62,14 @@ class AudioPlayer:
     
     def __init__(self, wav_filename: str):
         if wav_filename.endswith('.mp3'):
+            print("Converting to wav")
             wav_filename = self._convert_to_wav(wav_filename)
 
+        print("Opening wav file")
         with open(wav_filename, 'rb') as file:
             raw_data = file.read()
 
+        print("Creating configuration")
         raw_data_buffer = ctypes.create_string_buffer(raw_data)
         raw_data_buffer_pointer = ctypes.cast(
             raw_data_buffer, ctypes.c_char_p
@@ -89,6 +92,7 @@ class AudioPlayer:
         ConfigurationPointer = ctypes.POINTER(AudioConfiguration)
         configuration_pointer = ConfigurationPointer(configuration)
 
+        print("Initializing audio")
         self._audio_object = AudioInterface.audioInit(
             configuration_pointer
         )
@@ -102,6 +106,7 @@ class AudioPlayer:
             ctypes.cast(device_name_buffer_pointer, ctypes.py_object)
         )
 
+        print("Checking for errors")
         error = AudioInterface.audioGetError(self._audio_object).contents
         if error.level == AudioErrorLevel.AUDIO_ERROR_LEVEL_ERROR.value:
             raise AudioErrorException(error)
