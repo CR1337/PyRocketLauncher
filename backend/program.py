@@ -14,6 +14,7 @@ from backend.config import Config
 from backend.hardware import Hardware
 from backend.led_controller import LedController
 from backend.logger import logger
+from backend.instance import Instance
 
 from backend.audio.audio_player import AudioPlayer
 from backend.ilda.ilda_player import IldaPlayer
@@ -350,4 +351,5 @@ class Program:
         return string
 
 
-Program.build_local_program()
+if not Instance.is_master():
+    Program.build_local_program()
