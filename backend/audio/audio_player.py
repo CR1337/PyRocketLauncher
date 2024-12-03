@@ -2,6 +2,7 @@ try:
     from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
 except ModuleNotFoundError:
     from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
+from backend.audio.emergency_audio_player import AudioPlayer as EmergencyAudioPlayer
 from functools import wraps
 import ctypes
 import tempfile
@@ -53,7 +54,7 @@ def handle_error(func):
     return wrapper
 
 
-class AudioPlayer:
+class AudioPlayer_OLD:
     SOUND_DEVICE_NAME: str = "default"
     TIME_RESOLUTION: int = 10
 
@@ -168,6 +169,87 @@ class AudioPlayer:
     @handle_error
     def set_volume(self, value: int) -> bool:
         return AudioInterface.audioSetVolume(self._audio_object, value)
+    
+
+class AudioPlayer:
+    
+    _emergency_audio_player: EmergencyAudioPlayer
+    _paused: bool
+    _playing: bool
+    
+    def __init__(self, wav_filename: str):
+        if wav_filename.endswith('.mp3'):
+            print("Converting to wav")
+            wav_filename = self._convert_to_wav(wav_filename)
+
+        self._paused = False
+        self._playing = False
+        self._emergency_audio_player = EmergencyAudioPlayer(wav_filename)
+
+    def _convert_to_wav(self, filename: str) -> str:
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        self._temp_wav_filename = temp_file.name
+        temp_file.close()
+
+        audio_segment = AudioSegment.from_mp3(filename)
+        audio_segment.export(self._temp_wav_filename, format='wav')
+
+        return self._temp_wav_filename
+
+    @handle_error
+    def play(self) -> bool:
+        if self._paused:
+            self._emergency_audio_player.continue_()
+            self._paused = False
+        else:
+            self._emergency_audio_player.play()
+        self._playing = True
+        return True
+
+    @handle_error
+    def pause(self) -> bool:
+        self._emergency_audio_player.pause()
+        self._paused = True
+        return True
+
+    @handle_error
+    def stop(self):
+        self._emergency_audio_player.stop()
+        self._playing = False
+        self._paused = False
+
+    @handle_error
+    def jump(self, timestamp: int) -> bool:
+        print("jump NOT IMPLEMENTED")
+        return True
+
+    @handle_error
+    def is_playing(self) -> bool:
+        return self._playing
+
+    @handle_error
+    def is_paused(self) -> bool:
+        return self._paused
+
+    @handle_error
+    def current_time(self) -> int:
+        print("current_time NOT IMPLEMENTED")
+        return 0
+
+    @handle_error
+    def total_duration(self) -> int:
+        print("total_duration NOT IMPLEMENTED")
+        return 0
+    
+    @handle_error
+    def get_volume(self) -> int:
+        print("get_volume NOT IMPLEMENTED")
+        return 0
+
+    @handle_error
+    def set_volume(self, value: int) -> bool:
+        print("set_volume NOT IMPLEMENTED")
+        return True
 
 
 if __name__ == '__main__':
