@@ -197,7 +197,6 @@ class AudioPlayer:
 
         return self._temp_wav_filename
 
-    @handle_error
     def play(self) -> bool:
         if self._paused:
             self._emergency_audio_player.continue_()
@@ -207,47 +206,38 @@ class AudioPlayer:
         self._playing = True
         return True
 
-    @handle_error
     def pause(self) -> bool:
         self._emergency_audio_player.pause()
         self._paused = True
         return True
 
-    @handle_error
     def stop(self):
         self._emergency_audio_player.stop()
         self._playing = False
         self._paused = False
 
-    @handle_error
     def jump(self, timestamp: int) -> bool:
         print("jump NOT IMPLEMENTED")
         return True
 
-    @handle_error
     def is_playing(self) -> bool:
         return self._playing
 
-    @handle_error
     def is_paused(self) -> bool:
         return self._paused
 
-    @handle_error
     def current_time(self) -> int:
         print("current_time NOT IMPLEMENTED")
         return 0
 
-    @handle_error
     def total_duration(self) -> int:
         print("total_duration NOT IMPLEMENTED")
         return 0
-    
-    @handle_error
+
     def get_volume(self) -> int:
         print("get_volume NOT IMPLEMENTED")
         return 0
 
-    @handle_error
     def set_volume(self, value: int) -> bool:
         print("set_volume NOT IMPLEMENTED")
         return True
