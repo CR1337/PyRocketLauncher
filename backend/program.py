@@ -106,7 +106,7 @@ class Program:
             with open(cls.LOCAL_PROGRAM_PATH, 'rb') as local_program_file:
                 local_program_data = local_program_file.read()
             cls.local_program = cls.from_zip("Local-Program", local_program_data)
-            logger.info("Local program ready")
+            print("Local program ready")
         thread = Thread(target=thread_target, name="local_program_builder")
         thread.start()
             
