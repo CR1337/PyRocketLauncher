@@ -158,3 +158,13 @@ class AudioPlayer:
     @handle_error
     def set_volume(self, value: int) -> bool:
         return AudioInterface.audioSetVolume(self._audio_object, value)
+
+
+if __name__ == '__main__':
+    import sys
+    import time
+    player = AudioPlayer(sys.argv[1])
+    player.play()
+    while player.is_playing():
+        time.sleep(1)
+        
