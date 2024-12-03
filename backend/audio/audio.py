@@ -82,7 +82,7 @@ class pthread_barrier_t(ctypes.Structure):
 AudioObject = ctypes.c_void_p
 
 if standalone:
-    audio_lib = ctypes.CDLL(os.path.join("audiolib_arm.so"))
+    audio_lib = ctypes.CDLL("./audiolib_arm.so")
 else:
     if Instance.on_pi():
         audio_lib = ctypes.CDLL(os.path.join("backend", "audio", "audiolib_arm.so"))
