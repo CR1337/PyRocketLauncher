@@ -2,7 +2,7 @@
 Usage: rl COMMAND [SUBCOMMAND [ARGS]]
 
 CLI based manager for PyRocketLauncher.
-Most of the commands require root previleges!
+Some of the commands require root previleges!
 
 Commands
 
