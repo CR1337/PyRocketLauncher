@@ -67,9 +67,7 @@ class RlManager:
     @classmethod
     def update(cls):
         Output.info("Updating System...")
-        was_running = False
         if Status.is_running():
-            was_running = True
             cls.stop()
         commands = [
             Command(cmd) for cmd in [
@@ -83,8 +81,6 @@ class RlManager:
         for command in commands:
             if command.get_returncode() != ExitCodes.SUCCESS:
                 Output.unexpected_error()
-        if was_running:
-            cls.run()
 
     @staticmethod
     def _reenable_wifi_on_pi_zero_w():
