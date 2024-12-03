@@ -111,17 +111,20 @@ class IldaPlayer(AbstractPlayer):
     _color_palette: ColorPalette
 
     def __init__(self, ildx_filename: str):
+        print("Reading devices")
         device_amount = IldaInterface.OpenDevices()
         if device_amount < 1:
             raise RuntimeError("No ILDA devices found")
         
         IldaInterface.SetShutter(self.DAC_INDEX, 1)
         
+        print("Reading ILDA file")
         with open(ildx_filename, 'rb') as file:
             ildx_data = file.read()
 
         self._color_palette = self.DEFAULT_COLOR_PALETTE
 
+        print("Reading animations")
         self._animations = {}
         current_animation, offset, was_palette = self._read_animation(ildx_data, 0)
         while current_animation is not None:
@@ -131,7 +134,9 @@ class IldaPlayer(AbstractPlayer):
                 ildx_data, offset
             )
 
+        print("Attaching timestamps")
         self._attach_timestamps()
+        print("Extracting items")
         self._extract_items()
 
         super().__init__()
