@@ -1,4 +1,7 @@
-from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
+try:
+    from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
+except ImportError:
+    from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
 from functools import wraps
 import ctypes
 import tempfile
@@ -167,4 +170,3 @@ if __name__ == '__main__':
     player.play()
     while player.is_playing():
         time.sleep(1)
-        
