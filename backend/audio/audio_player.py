@@ -65,6 +65,8 @@ class AudioPlayer:
             print("Converting to wav")
             wav_filename = self._convert_to_wav(wav_filename)
 
+        os.chmod(wav_filename, 0o777)
+
         print("Opening wav file")
         with open(wav_filename, 'rb') as file:
             raw_data = file.read()
