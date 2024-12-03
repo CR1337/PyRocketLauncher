@@ -28,7 +28,7 @@ class Status:
         if Paths.RL_RUN not in running_py_scripts:
             return False
         if Config.get_master():
-            if not cls._check_localhost(80):
+            if not cls._check_localhost(8080):
                 return False
         if Config.get_device():
             if not cls._check_localhost(5000):
