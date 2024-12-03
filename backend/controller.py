@@ -55,6 +55,8 @@ class DeviceController:
     RUNNING: State = _state_machine.add_state('running')
     PAUSED: State = _state_machine.add_state('paused')
 
+    LOCAL_PROGRAM_PATH: str = "programs/local_program.zip"
+
     _program: Program = None
     _schedule: Schedule = None
     controller_lock: Lock = Lock()
@@ -110,6 +112,13 @@ class DeviceController:
         cls._unload_program()
         cls._state_machine.reset()
         logger.info("Program finished")
+
+    @classmethod
+    def load_local_program(cls):
+        name = "Local Program"
+        with open(cls.LOCAL_PROGRAM_PATH, 'rb') as file:
+            data = file.read()
+        cls.load_program(name, data, is_zip=True)
 
     @classmethod
     @lock
@@ -346,6 +355,15 @@ class MasterController:
                 device_id: f.result()
                 for device_id, f in futures.items()
             }
+        
+    @classmethod
+    @lock
+    def load_local_program(cls):
+        name = "Local Program"
+        with open(DeviceController.LOCAL_PROGRAM_PATH, 'rb') as file:
+            data = file.read()
+        zipfile_handler = ZipfileHandler(data)
+        return cls._call_device_method("load_local_program", name, zipfile_handler)
 
     @classmethod
     @lock

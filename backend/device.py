@@ -133,6 +133,15 @@ class Device:
         self, url: str, data: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], int]:
         return self._request('delete', url, data)
+    
+    def load_local_program(self, name: str, zipfile_handler: ZipfileHandler):
+        logger.debug(f"{self._device_id}: load local program")
+        if self.is_remote:
+            # Remotes don't have a local program. Send the fuses data
+            zip_data = zipfile_handler.pack_for(self._device_id)
+            return self.load_program(name, zip_data.fuses_data)
+        else:
+            return self._post("program/local", {})
 
     def load_program(self, name: str, event_list: List) -> Dict[str, Any]:
         logger.debug(f"{self._device_id}: load program {name}")

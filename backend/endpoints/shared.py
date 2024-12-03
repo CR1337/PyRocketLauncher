@@ -77,6 +77,16 @@ def route_program():
         {}, status.HTTP_200_OK
     ))
 
+@shared_bp.route(
+    "/program/local", methods=['POST'], endpoint='program_local'
+)
+@handle_exceptions
+@log_request
+def route_program_local():
+    Controller.load_local_program()
+    return make_response((
+        {}, status.HTTP_200_OK
+    ))
 
 @shared_bp.route(
     "/program/control", methods=['POST'], endpoint='program_control'

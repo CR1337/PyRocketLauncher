@@ -86,6 +86,15 @@ const master_template = /*html*/`
             ><i
                 class="las la-sync"
             ></i></button>
+
+            <button
+                :class="['base-button', 'blue', button_status.load_local]"
+                @click="load_local_button_clicked"
+                :disabled="!load_local_button_enabled"
+                title="Load Local Program"
+            ><i
+                class="las la-upload"
+            ></i></button>
         </div>
 
         <div>
@@ -199,6 +208,7 @@ const master_component = {
                 search: '',
                 deregister_all: '',
                 load: '',
+                load_local: '',
                 unload: '',
                 play: '',
                 pause: '',
@@ -252,6 +262,10 @@ const master_component = {
                     delete this.button_status["deregister_" + device_id];
                 }
             });
+        },
+
+        load_local_button_clicked(event) {
+            button_request("/program/local", 'POST', {}, 'load_local', "Load local program?", this.ask, this.button_status, this._error_callback)
         },
 
         load_button_clicked(event) {
@@ -479,6 +493,10 @@ const master_component = {
                 }
             }
             return false;
+        },
+
+        load_local_button_enabled() {
+            return this.load_button_enabled();
         },
 
         unload_button_enabled() {
