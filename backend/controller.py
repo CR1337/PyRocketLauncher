@@ -243,7 +243,8 @@ class DeviceController:
                 else cls._program.get_state()
             ),
             'update_needed': System.update_needed,
-            'is_remote': False
+            'is_remote': False,
+            'local_program_built': Program.local_program is not None
         }
 
 

@@ -496,8 +496,16 @@ const master_component = {
         },
 
         load_local_button_enabled() {
+            const state = this.devices[device_id].controller.state;
             for (device_id in this.devices) {
-                if (this.devices[device_id].controller.state == 'not_loaded') {
+                if (!state.is_remote) {
+                    if (!state.local_program_built) {
+                        return false;
+                    }
+                }
+            }
+            for (device_id in this.devices) {
+                if (state == 'not_loaded') {
                     return this.enabled;
                 }
             }
