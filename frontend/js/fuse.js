@@ -65,6 +65,21 @@ const fuse_component = {
                 'fire', "Fire " + this.device_id + ":" + this.letter.toUpperCase() + this.number.toString() + "?",
                 this.ask, this.button_status, this._error_callback
             );
+        },
+
+        commands() {
+            let commands = [];
+            const command_list = this.state.program.command_list;
+            for (let command of command_list) {
+                if (
+                    command.address.device_id == this.device_id
+                    && command.address.letter == this.letter
+                    && command.address.number == this.number
+                ) {
+                    commands.push(command);
+                }
+            }
+            return commands;
         }
     },
     computed: {
@@ -81,21 +96,6 @@ const fuse_component = {
                 return -1;
             }
             return this.state.program.current_timestamp;
-        },
-
-        commands() {
-            let commands = [];
-            const command_list = this.state.program.command_list;
-            for (let command of command_list) {
-                if (
-                    command.address.device_id == this.device_id
-                    && command.address.letter == this.letter
-                    && command.address.number == this.number
-                ) {
-                    commands.push(command);
-                }
-            }
-            return commands;
         },
 
         command() {
