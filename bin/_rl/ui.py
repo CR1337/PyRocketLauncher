@@ -68,9 +68,11 @@ class UserInterface:
                 RlManager.restart()
                 Output.success("System was restarted.")
             elif args[0] == 'update':
+                cls._require_root()
                 RlManager.update()
                 Output.success("Update done.")
             elif args[0] == 'uninstall':
+                cls._require_root()
                 RlManager.uninstall()
                 Output.success("Deinstallation done.")
             elif args[0] == 'emergency':
