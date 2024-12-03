@@ -2,7 +2,13 @@ import ctypes
 import enum
 import os
 
-from backend.instance import Instance
+try:
+    from backend.instance import Instance
+except ModuleNotFoundError:
+    class Instance:
+        @staticmethod
+        def on_pi():
+            return True
 
 
 class AudioErrorType(enum.Enum):
