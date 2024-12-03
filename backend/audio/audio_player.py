@@ -166,7 +166,9 @@ class AudioPlayer:
 if __name__ == '__main__':
     import sys
     import time
+    print("Instantiating AudioPlayer")
     player = AudioPlayer(sys.argv[1])
+    print("Playing audio")
     player.play()
     while player.is_playing():
         time.sleep(1)
