@@ -81,7 +81,7 @@ check_success $?
 
 info "Adding bin directory to PATH..."
 PATH=$PATH:$BASE_DIR/$APP_NAME/bin
-echo "export PATH=\"\$PATH:$BASE_DIR/$APP_NAME/bin\"" >> /home/me/.bashrc
+echo "export PATH=\"\$PATH:$BASE_DIR/$APP_NAME/bin\"" >> /home/rl/.bashrc
 check_success $?
 
 python3 ./bin/on_zero_w.py
