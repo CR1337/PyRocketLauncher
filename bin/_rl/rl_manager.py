@@ -24,7 +24,6 @@ class RlManager:
         if not Status.is_cronjob_registered():
             Cronjob.register()
         cls._change_directory_permissions()
-        cls.run()
         Output.info("This system should now be fully functional.")
         Output.info("For further options run: 'sudo rl help'")
 
