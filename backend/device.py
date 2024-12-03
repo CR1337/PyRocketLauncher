@@ -138,8 +138,7 @@ class Device:
         logger.debug(f"{self._device_id}: load local program")
         if self.is_remote:
             # Remotes don't have a local program. Send the fuses data
-            zip_data = zipfile_handler.pack_for(self._device_id)
-            return self.load_program(name, zip_data.fuses_data)
+            return self.load_program(name, zipfile_handler.fuses_data)
         else:
             return self._post("program/local", {})
 
@@ -152,7 +151,7 @@ class Device:
         zip_data = zipfile_handler.pack_for(self._device_id)
         if self.is_remote:
             # Remotes cannot handle zip files. Only send the fuses data
-            return self.load_program(name, zip_data.fuses_data)
+            return self.load_program(name, zipfile_handler.fuses_data)
         else:
             return self._post("program", io.BytesIO(zip_data), True, name)
 
