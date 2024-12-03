@@ -82,7 +82,10 @@ class pthread_barrier_t(ctypes.Structure):
 AudioObject = ctypes.c_void_p
 
 if standalone:
-    audio_lib = ctypes.CDLL("./audiolib_arm.so")
+    if Instance.on_pi():
+        audio_lib = ctypes.CDLL("./audiolib_arm.so")
+    else:
+        audio_lib = ctypes.CDLL("./audiolib.so")
 else:
     if Instance.on_pi():
         audio_lib = ctypes.CDLL(os.path.join("backend", "audio", "audiolib_arm.so"))
@@ -107,8 +110,8 @@ audio_lib.audioStop.restype = None
 audio_lib.audioJump.argtypes = [AudioObject, ctypes.POINTER(pthread_barrier_t), ctypes.c_uint32]
 audio_lib.audioJump.restype = ctypes.c_bool
 
-audio_lib.audioGetIsPlaying = [AudioObject]
-audio_lib.aduiGetIsPlaying = ctypes.c_bool
+audio_lib.audioGetIsPlaying.argtypes = [AudioObject]
+audio_lib.audioGetIsPlaying.restype = ctypes.c_bool
 
 audio_lib.audioGetIsPaused.argtypes = [AudioObject]
 audio_lib.audioGetIsPaused.restype = ctypes.c_bool
