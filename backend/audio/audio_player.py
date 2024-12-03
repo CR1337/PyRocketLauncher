@@ -1,6 +1,6 @@
 try:
     from backend.audio.audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
-except ImportError:
+except ModuleNotFoundError:
     from audio import AudioInterface, AudioConfiguration, AudioObject, AudioError, AudioErrorLevel, AudioErrorType
 from functools import wraps
 import ctypes
