@@ -40,6 +40,7 @@ class Network:
             else line.split(" ")[-1]
             for line in ip_lines
         ] + cls.hardcoded_ips
+        ips = list(set(ips))
         gateway_ip = cls.gateway_ip()
         return [
             ip for ip in ips
