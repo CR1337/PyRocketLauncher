@@ -75,9 +75,11 @@ class RlManager:
         config_filenames = [Paths.CONFIG, Paths.RUN_CONFIG]
         saved_config_data = []
         for filename in config_filenames:
+            Output.info(f"Saving {filename}...")
             with open(filename, 'r', encoding='utf-8') as file:
                 saved_config_data.append(json.load(file))
 
+        Output.info("Fetching latest version and updating dependencies...")
         commands = [
             Command(cmd) for cmd in [
                 f"git stash"
@@ -94,6 +96,7 @@ class RlManager:
 
         # restore config files
         for filename, data in zip(config_filenames, saved_config_data):
+            Output.info(f"Restoring {filename}...")
             with open(filename, 'w', encoding='utf-8') as file:
                 json.dump(data, file, indent=4)
 
