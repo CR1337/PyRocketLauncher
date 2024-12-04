@@ -3,6 +3,7 @@ import shutil
 import signal
 import sys
 import time
+import json
 
 from _rl.command import Command
 from _rl.config import AutoConfig, Config, ConfigWizard
@@ -69,7 +70,14 @@ class RlManager:
         Output.info("Updating System...")
         if Status.is_running():
             cls.stop()
-        # TODO: save and restore config files
+
+        # save config files
+        config_filenames = [Paths.CONFIG, Paths.RUN_CONFIG]
+        saved_config_data = []
+        for filename in config_filenames:
+            with open(filename, 'r', encoding='utf-8') as file:
+                saved_config_data.append(json.load(file))
+
         commands = [
             Command(cmd) for cmd in [
                 f"git -C {Paths.HOME} pull",
@@ -82,6 +90,11 @@ class RlManager:
         for command in commands:
             if command.get_returncode() != ExitCodes.SUCCESS:
                 Output.unexpected_error()
+
+        # restore config files
+        for filename, data in zip(config_filenames, saved_config_data):
+            with open(filename, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4)
 
     @staticmethod
     def _reenable_wifi_on_pi_zero_w():
