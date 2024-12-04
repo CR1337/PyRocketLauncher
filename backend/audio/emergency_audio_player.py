@@ -29,12 +29,13 @@ class AudioPlayer:
         audio_segment = pydub.AudioSegment.from_file(filename)
         audio_segment.export(self._wav_file.name, format=self.FILE_FORMAT)
         self._state = self.STATE_READY
-        self._thread = Thread(target=self._wait_for_process_termination)
+        self._thread = None
 
     def __del__(self):
         self.stop()
-        if self._thread.is_alive():
+        if self._thread and self._thread.is_alive():
             self._thread.join()
+        self._thread = None
 
     def play(self):
         if self._state != self.STATE_READY:
@@ -44,6 +45,7 @@ class AudioPlayer:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
+        self._thread = Thread(target=self._wait_for_process_termination)
         self._thread.start()
         self._state = self.STATE_PLAYING
 
@@ -63,7 +65,8 @@ class AudioPlayer:
         if self._state not in (self.STATE_PLAYING, self.STATE_PAUSED):
             return
         self._process.terminate()
-        self._thread.join()
+        if self._thread and self._thread.is_alive():
+            self._thread.join()
 
     def _wait_for_process_termination(self):
         self._process.wait()
