@@ -217,7 +217,6 @@ class Program:
 
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)
-        self.reset()
         self._callback = callback
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"program_{self._name}"

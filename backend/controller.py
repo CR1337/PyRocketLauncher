@@ -120,6 +120,7 @@ class DeviceController:
         while Program.local_program is None:
             time.sleep(1)  # wait if local program is not fully built yet
         program = Program.local_program
+        program.reset()
         cls._state_machine.transition(cls.LOADED, program)
 
     @classmethod
