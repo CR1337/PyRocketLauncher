@@ -202,13 +202,13 @@ class Program:
         print("Adding ilda")
         self._has_ilda = True
         self._ilda_player = IldaPlayer(filename)
-        self._ilda_player.run()
+        # self._ilda_player.run()
 
     def add_dmx(self, filename: str):
         print("Adding dmx")
         self._has_dmx = True
         self._dmx_player = DmxPlayer(filename)
-        self._dmx_player.run()
+        # self._dmx_player.run()
 
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)

@@ -43,12 +43,11 @@ class AbstractPlayer(ABC):
         self._stop_event = Event()
         self._destroy_event = Event()
 
-        self._thread = Thread(target=self._mainloop, name="ilda_player")
-
     def destroy(self):
         if self._thread and self._thread.is_alive():
             self._destroy_event.set()
             self._thread.join()
+        self._thread = None
 
     def _next_item_index(self, timestamp: float) -> int:
         for i, item in enumerate(self._items):
@@ -98,9 +97,12 @@ class AbstractPlayer(ABC):
         raise NotImplementedError("@abstractmethod")
     
     def run(self):
+        self._thread = Thread(target=self._mainloop, name="abstract_player")
         self._thread.start()
             
     def play(self):
+        if self._thread is None:
+            self.run()
         dt = tu.timestamp_now() - self._pause_started_timestamp
         self._origin_timestamp += dt
         self._play_event.set()
