@@ -168,8 +168,7 @@ class Program:
     def __init__(self, name: str, zipfile_handler: ZipfileHandler = None):
         self._name = name
         self._command_list = []
-        self._thread = Thread(target=self._thread_handler)
-        self._thread.name = f"program_{self._name}"
+        self._thread = None
         self._pause_event = Event()
         self._paused = False
         self._continue_event = Event()
@@ -202,17 +201,17 @@ class Program:
         print("Adding ilda")
         self._has_ilda = True
         self._ilda_player = IldaPlayer(filename)
-        # self._ilda_player.run()
 
     def add_dmx(self, filename: str):
         print("Adding dmx")
         self._has_dmx = True
         self._dmx_player = DmxPlayer(filename)
-        # self._dmx_player.run()
 
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)
         self._callback = callback
+        self._thread = Thread(target=self._thread_handler)
+        self._thread.name = f"program_{self._name}"
         self._thread.start()
         if self._audio_player:
             self._audio_player.play()
@@ -252,6 +251,7 @@ class Program:
 
     def join(self):
         self._thread.join()
+        self._thread = None
         LedController.instance().load_preset('idle')
 
     @property

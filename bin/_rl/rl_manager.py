@@ -69,6 +69,7 @@ class RlManager:
         Output.info("Updating System...")
         if Status.is_running():
             cls.stop()
+        # TODO: save and restore config files
         commands = [
             Command(cmd) for cmd in [
                 f"git -C {Paths.HOME} pull",

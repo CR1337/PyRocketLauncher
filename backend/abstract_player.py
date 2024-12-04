@@ -23,7 +23,7 @@ class AbstractPlayer(ABC):
     _paused: bool
     _playing: bool
 
-    _thread: Thread = None
+    _thread: Thread
 
     _play_event: Event
     _pause_event: Event
@@ -37,6 +37,8 @@ class AbstractPlayer(ABC):
 
         self._paused = True
         self._playing = False
+
+        self._thread = None
 
         self._play_event = Event()
         self._pause_event = Event()
