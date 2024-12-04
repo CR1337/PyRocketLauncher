@@ -323,7 +323,7 @@ class Program:
 
     @property
     def is_running(self) -> bool:
-        return self._thread.is_alive()
+        return self._thread is not None and self._thread.is_alive()
 
     @property
     def name(self) -> str:
