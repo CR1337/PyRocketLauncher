@@ -80,6 +80,7 @@ class RlManager:
 
         commands = [
             Command(cmd) for cmd in [
+                f"git stash"
                 f"git -C {Paths.HOME} pull",
                 "apt update",
                 'apt -y install $(grep -vE "^\\s*#" '
