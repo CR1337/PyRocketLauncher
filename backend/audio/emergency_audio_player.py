@@ -33,7 +33,8 @@ class AudioPlayer:
 
     def __del__(self):
         self.stop()
-        self._thread.join()
+        if self._thread.is_alive():
+            self._thread.join()
 
     def play(self):
         if self._state != self.STATE_READY:
