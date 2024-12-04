@@ -31,19 +31,27 @@ class AbstractPlayer(ABC):
     _destroy_event: Event
 
     def __init__(self):
+        self._play_event = Event()
+        self._pause_event = Event()
+        self._stop_event = Event()
+        self._destroy_event = Event()
+
+        self.reset()
+
+    def reset(self):
         self._origin_timestamp = 0.0
         self._pause_started_timestamp = 0.0
-        self._current_item_index = 0  
+        self._current_item_index = 0
 
         self._paused = True
         self._playing = False
 
         self._thread = None
 
-        self._play_event = Event()
-        self._pause_event = Event()
-        self._stop_event = Event()
-        self._destroy_event = Event()
+        self._play_event.clear()
+        self._pause_event.clear()
+        self._stop_event.clear()
+        self._destroy_event.clear()
 
     def destroy(self):
         if self._thread and self._thread.is_alive():
@@ -78,6 +86,8 @@ class AbstractPlayer(ABC):
                 self._tick()
 
             tu.sleep(self.TIME_RESOLUTION)
+
+        self._destroy_event.clear()
 
     def _tick(self):
         if self._items[self._current_item_index].timestamp < tu.timestamp_now() - self._origin_timestamp:

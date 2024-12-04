@@ -214,6 +214,10 @@ class Program:
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)
         self._reset_commands()
+        if self._has_ilda:
+            self._ilda_player.reset()
+        if self._has_dmx:
+            self._dmx_player.reset()
         self._callback = callback
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"program_{self._name}"
