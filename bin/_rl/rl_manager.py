@@ -82,7 +82,7 @@ class RlManager:
         Output.info("Fetching latest version and updating dependencies...")
         commands = [
             Command(cmd) for cmd in [
-                f"git stash"
+                "git stash",
                 f"git -C {Paths.HOME} pull",
                 "apt update",
                 'apt -y install $(grep -vE "^\\s*#" '
