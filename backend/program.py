@@ -188,6 +188,10 @@ class Program:
         self._ilda_player = None
         self._dmx_player = None
 
+    def _reset_commands(self):
+        for command in self._command_list:
+            command.reset()
+
     def add_command(self, command: Command):
         self._has_fuses = True
         self._command_list.append(command)
@@ -209,6 +213,7 @@ class Program:
 
     def run(self, callback: Callable):
         self._command_list.sort(key=lambda c: c.timestamp)
+        self._reset_commands()
         self._callback = callback
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"program_{self._name}"

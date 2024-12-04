@@ -29,12 +29,7 @@ class Command:
         self._address = address
         self._timestamp = float(timestamp)
         self._name = name
-        self._thread = Thread(target=self._thread_handler)
-        self._thread.name = f"light_{self._address}"
-        self._fired = False
-        self._fireing = False
-        self._faulty = False
-        self._faulty_reason = ""
+        self.reset()
 
     def _thread_handler(self):
         self._fireing = True
@@ -51,15 +46,15 @@ class Command:
         self._fired = True
         self._fireing = False
 
+    def reset(self):
+        self._fired = False
+        self._fireing = False
+        self._faulty = False
+        self._faulty_reason = ""
+        
     def light(self):
         logger.debug(f"Light {self}")
-        if self._fired or self._fireing:
-            self._faulty = True
-            if self._fired:
-                self._faulty_reason = f"Already fired {self}"
-            if self._fireing:
-                self._faulty_reason = f"Already fireing {self}"
-            raise self.AlreadyFiredException(f"{self._address} already fired")
+        self._thread = Thread(target=self._thread_handler, name=f"light_{self._address}")
         self._thread.start()
 
     def increase_timestamp(self, offset: float):
