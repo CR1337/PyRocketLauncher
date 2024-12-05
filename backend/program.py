@@ -6,6 +6,8 @@ import shutil
 import json
 import os
 import io
+import hashlib
+import pickle
 
 import backend.time_util as tu
 from backend.address import Address
@@ -26,6 +28,8 @@ from backend.zipfile_handler import ZipfileHandler
 class Program:
 
     LOCAL_PROGRAM_PATH: str = "programs/local_program.zip"
+    LOCAL_PROGRAM_PKL_PATH: str = "programs/local_program.pkl"
+    LOCAL_PROGRAM_MD5_PATH: str = "programs/local_program.md5"
 
     class InvalidProgram(Exception):
         pass
@@ -99,14 +103,55 @@ class Program:
                 raise cls.InvalidProgram(
                     f"Element {idx}: 'timestamp' has to be a float!"
                 )
+
+    @classmethod
+    def _file_md5(cls, file_path: str) -> str:
+        hash_md5 = hashlib.md5()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    @classmethod
+    def _load_local_program_from_pickle(cls):
+        with open(cls.LOCAL_PROGRAM_PKL_PATH, 'rb') as local_program_file:
+            cls.local_program = pickle.load(local_program_file)
+
+    @classmethod
+    def _load_local_program_from_zip(cls):
+        with open(cls.LOCAL_PROGRAM_PATH, 'rb') as local_program_file:
+            local_program_data = local_program_file.read()
+            cls.local_program = cls.from_zip("Local-Program", local_program_data)
+
+        with open(cls.LOCAL_PROGRAM_PKL_PATH, 'wb') as local_program_file:
+            pickle.dump(cls.local_program, local_program_file)  # TODO: Check if program object is pickable 
+
+        computed_md5 = cls._file_md5(cls.LOCAL_PROGRAM_PATH)
+        with open(cls.LOCAL_PROGRAM_MD5_PATH, 'w') as md5_file:
+            md5_file.write(computed_md5)
             
     @classmethod
     def build_local_program(cls):
         def thread_target():
-            with open(cls.LOCAL_PROGRAM_PATH, 'rb') as local_program_file:
-                local_program_data = local_program_file.read()
-            cls.local_program = cls.from_zip("Local-Program", local_program_data)
+            if os.path.exists(cls.LOCAL_PROGRAM_PATH):
+                computed_md5 = cls._file_md5(cls.LOCAL_PROGRAM_PATH)
+
+                if os.path.exists(cls.LOCAL_PROGRAM_MD5_PATH):
+                    with open(cls.LOCAL_PROGRAM_MD5_PATH, 'r') as md5_file:
+                        stored_md5 = md5_file.read()
+                else:
+                    stored_md5 = None
+
+                if os.path.exists(cls.LOCAL_PROGRAM_PKL_PATH) and stored_md5 == computed_md5:
+                    cls._load_local_program_from_pickle()
+                else:
+                    cls._load_local_program_from_zip()
+                
+            else:
+                raise FileNotFoundError(f"Local program not found at {cls.LOCAL_PROGRAM_PATH}")
+
             print("Local program ready")
+
         thread = Thread(target=thread_target, name="local_program_builder")
         thread.start()
             

@@ -499,7 +499,7 @@ const master_component = {
             for (device_id in this.devices) {
                 const state = this.devices[device_id];
                 if (!state.is_remote) {
-                    if (!state.local_program_built) {
+                    if (!state.local_program_built || !state.controller.local_program_available) {
                         return false;
                     }
                 }

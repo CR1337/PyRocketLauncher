@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import time
+import os
 from typing import Any, Dict, List
 
 import backend.time_util as tu
@@ -245,7 +246,8 @@ class DeviceController:
             ),
             'update_needed': System.update_needed,
             'is_remote': False,
-            'local_program_built': Program.local_program is not None
+            'local_program_built': Program.local_program is not None,
+            'local_program_available': os.path.exists(Program.LOCAL_PROGRAM_PATH)
         }
 
 
