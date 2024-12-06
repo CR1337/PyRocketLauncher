@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Union
 import ctypes
+from tqdm import tqdm
 
 from backend.ilda.ilda import IldaInterface, HeliosPoint
 from backend.ilda.ildx import (
@@ -151,6 +152,7 @@ class IldaPlayer(AbstractPlayer):
     ) -> Tuple[IldaAnimation, int, bool]:
         try:
             header = IldxHeader.from_buffer_copy(data[offset:offset + self.HEADER_SIZE])
+            animation_name = header.frameOrPaletteName.decode('utf-8').strip('\x00')
         except ValueError:
             return None, offset, False
 
@@ -169,7 +171,11 @@ class IldaPlayer(AbstractPlayer):
             return None, offset + self.HEADER_SIZE, False
         
         frames = []
-        for i in range(total_frames):
+        for i in tqdm(
+            range(total_frames), 
+            desc=f"Reading ILDA frames for animation {animation_name}", 
+            total=total_frames
+        ):
             new_frames, offset = self._read_frame(data, offset, i == 0)
             if new_frames is not None:
                 frames.extend(new_frames)

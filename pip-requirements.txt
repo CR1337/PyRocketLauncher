@@ -7,3 +7,4 @@ smbus2==0.4.2
 RPi.GPIO==0.7.1
 pylibftdi==0.21.0
 pydub==0.25.1
+tqdm==4.66.4
