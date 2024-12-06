@@ -31,14 +31,14 @@ class AbstractPlayer(ABC):
     _destroy_event: Event
 
     def __init__(self):
-        self._play_event = Event()
-        self._pause_event = Event()
-        self._stop_event = Event()
-        self._destroy_event = Event()
-
         self.reset()
 
     def reset(self):
+        self._play_event = None
+        self._pause_event = None
+        self._stop_event = None
+        self._destroy_event = None
+        
         self._origin_timestamp = 0.0
         self._pause_started_timestamp = 0.0
         self._current_item_index = 0
@@ -47,11 +47,6 @@ class AbstractPlayer(ABC):
         self._playing = False
 
         self._thread = None
-
-        self._play_event.clear()
-        self._pause_event.clear()
-        self._stop_event.clear()
-        self._destroy_event.clear()
 
     def destroy(self):
         if self._thread and self._thread.is_alive():
@@ -109,6 +104,11 @@ class AbstractPlayer(ABC):
         raise NotImplementedError("@abstractmethod")
     
     def run(self):
+        self._play_event = Event()
+        self._pause_event = Event()
+        self._stop_event = Event()
+        self._destroy_event = Event()
+
         self._thread = Thread(target=self._mainloop, name="abstract_player")
         self._thread.start()
             

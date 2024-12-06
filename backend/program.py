@@ -8,6 +8,7 @@ import os
 import io
 import hashlib
 import pickle
+from itertools import chain
 
 import backend.time_util as tu
 from backend.address import Address
@@ -106,11 +107,9 @@ class Program:
 
     @classmethod
     def _file_md5(cls, file_path: str) -> str:
-        hash_md5 = hashlib.md5()
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
+        with open(file_path, 'rb') as file:
+            content = file.read()
+            return hashlib.md5(content).hexdigest()
 
     @classmethod
     def _load_local_program_from_pickle(cls):
@@ -135,22 +134,28 @@ class Program:
         def thread_target():
             if os.path.exists(cls.LOCAL_PROGRAM_PATH):
                 computed_md5 = cls._file_md5(cls.LOCAL_PROGRAM_PATH)
+                logger.info(f"Local program found at {cls.LOCAL_PROGRAM_PATH} with md5 {computed_md5}")
 
                 if os.path.exists(cls.LOCAL_PROGRAM_MD5_PATH):
                     with open(cls.LOCAL_PROGRAM_MD5_PATH, 'r') as md5_file:
                         stored_md5 = md5_file.read()
+                        logger.info(f"Stored md5 {stored_md5} found at {cls.LOCAL_PROGRAM_MD5_PATH}")
                 else:
+                    logger.info(f"No stored md5 not found at {cls.LOCAL_PROGRAM_MD5_PATH}")
                     stored_md5 = None
 
                 if os.path.exists(cls.LOCAL_PROGRAM_PKL_PATH) and stored_md5 == computed_md5:
+                    logger.info(f"Loading local program from pickle")
                     cls._load_local_program_from_pickle()
                 else:
+                    logger.info(f"Loading local program from zip")
                     cls._load_local_program_from_zip()
                 
             else:
+                logger.error(f"Local program not found at {cls.LOCAL_PROGRAM_PATH}")
                 raise FileNotFoundError(f"Local program not found at {cls.LOCAL_PROGRAM_PATH}")
 
-            print("Local program ready")
+            logger.info("Local program ready")
 
         thread = Thread(target=thread_target, name="local_program_builder")
         thread.start()
@@ -214,10 +219,10 @@ class Program:
         self._name = name
         self._command_list = []
         self._thread = None
-        self._pause_event = Event()
         self._paused = False
-        self._continue_event = Event()
-        self._stop_event = Event()
+        self._pause_event = None
+        self._continue_event = None
+        self._stop_event = None
         self._start_timestamp = None
         self._last_current_timestamp_before_pause = None
         self._callback = None
@@ -246,22 +251,28 @@ class Program:
         self._command_list.append(command)
 
     def add_music(self, filename: str):
-        print("Adding music")
+        logger.info("Adding music")
         self._has_music = True
         self._audio_player = AudioPlayer(filename)
 
     def add_ilda(self, filename: str):
-        print("Adding ilda")
+        logger.info("Adding ilda")
         self._has_ilda = True
         self._ilda_player = IldaPlayer(filename)
 
     def add_dmx(self, filename: str):
-        print("Adding dmx")
+        logger.info("Adding dmx")
         self._has_dmx = True
         self._dmx_player = DmxPlayer(filename)
 
+    def _command_sort_key(self, command: Command) -> float:
+        return command.timestamp
+
     def run(self, callback: Callable):
-        self._command_list.sort(key=lambda c: c.timestamp)
+        self._pause_event = Event()
+        self._continue_event = Event()
+        self._stop_event = Event()
+        self._command_list.sort(key=self._command_sort_key)
         self._callback = callback
         self._thread = Thread(target=self._thread_handler)
         self._thread.name = f"program_{self._name}"

@@ -17,17 +17,13 @@ class AudioPlayer:
     STATE_PLAYING: str = 'playing'
     STATE_PAUSED: str = 'paused'
 
-    _wav_file: tempfile.NamedTemporaryFile
+    _wav_filename: str
     _state: str
     _process: subprocess.Popen
     _thread: Thread
 
     def __init__(self, filename: str):
-        self._wav_file = tempfile.NamedTemporaryFile(
-            prefix=self.TEMP_FILE_PREFIX, suffix=f".{self.FILE_FORMAT}"
-        )
-        audio_segment = pydub.AudioSegment.from_file(filename)
-        audio_segment.export(self._wav_file.name, format=self.FILE_FORMAT)
+        self._wav_filename = filename
         self._state = self.STATE_READY
         self._thread = None
 
@@ -41,7 +37,7 @@ class AudioPlayer:
         if self._state != self.STATE_READY:
             return
         self._process = subprocess.Popen(
-            [self.APLAY_EXECUTABLE, self._wav_file.name],
+            [self.APLAY_EXECUTABLE, self._wav_filename],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
@@ -71,27 +67,3 @@ class AudioPlayer:
     def _wait_for_process_termination(self):
         self._process.wait()
         self._state = self.STATE_READY
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"USAGE: {sys.argv[0]} FILENAME")
-        exit(1)
-
-    filename = sys.argv[1]
-
-    print("Building WAV file...")
-    player = AudioPlayer(filename)
-    print("Done. Press [Enter] to play.")
-    input()
-    player.play()
-
-    while True:
-        choice = input("Enter 'p' to pause, 'c' to continue, 's' to stop: ")
-        if choice == 'p':
-            player.pause()
-        elif choice == 'c':
-            player.continue_()
-        elif choice == 's':
-            player.stop()
-            break

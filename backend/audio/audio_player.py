@@ -8,6 +8,7 @@ from functools import wraps
 import ctypes
 import tempfile
 import os
+from backend.logger import logger
 # import subprocess
 # import sys
 
@@ -55,121 +56,117 @@ def handle_error(func):
     return wrapper
 
 
-class AudioPlayer_OLD:
-    SOUND_DEVICE_NAME: str = "default"
-    TIME_RESOLUTION: int = 10
+# class AudioPlayer_OLD:
+#     SOUND_DEVICE_NAME: str = "default"
+#     TIME_RESOLUTION: int = 10
 
-    _audio_object: AudioObject = None
-    _temp_wav_filename: str = None
+#     _audio_object: AudioObject = None
+#     _temp_wav_filename: str = None
     
-    def __init__(self, wav_filename: str):
-        if wav_filename.endswith('.mp3'):
-            print("Converting to wav")
-            wav_filename = self._convert_to_wav(wav_filename)
+#     def __init__(self, wav_filename: str):
+#         if wav_filename.endswith('.mp3'):
+#             logger.info("Converting to wav")
+#             wav_filename = self._convert_to_wav(wav_filename)
 
-        os.chmod(wav_filename, 0o777)
+#         os.chmod(wav_filename, 0o777)
 
-        print("Opening wav file")
-        with open(wav_filename, 'rb') as file:
-            raw_data = file.read()
+#         with open(wav_filename, 'rb') as file:
+#             raw_data = file.read()
 
-        print("Creating configuration")
-        raw_data_buffer = ctypes.create_string_buffer(raw_data)
-        raw_data_buffer_pointer = ctypes.cast(
-            raw_data_buffer, ctypes.c_char_p
-        )
+#         raw_data_buffer = ctypes.create_string_buffer(raw_data)
+#         raw_data_buffer_pointer = ctypes.cast(
+#             raw_data_buffer, ctypes.c_char_p
+#         )
 
-        device_name_buffer = ctypes.create_string_buffer(
-            bytes(self.SOUND_DEVICE_NAME, encoding='utf-8')
-        )
-        device_name_buffer_pointer = ctypes.cast(
-            device_name_buffer, ctypes.c_char_p
-        )
+#         device_name_buffer = ctypes.create_string_buffer(
+#             bytes(self.SOUND_DEVICE_NAME, encoding='utf-8')
+#         )
+#         device_name_buffer_pointer = ctypes.cast(
+#             device_name_buffer, ctypes.c_char_p
+#         )
 
-        configuration = AudioConfiguration(
-            raw_data_buffer_pointer,
-            len(raw_data),
-            device_name_buffer_pointer,
-            len(self.SOUND_DEVICE_NAME) + 1,
-            self.TIME_RESOLUTION
-        )
-        ConfigurationPointer = ctypes.POINTER(AudioConfiguration)
-        configuration_pointer = ConfigurationPointer(configuration)
+#         configuration = AudioConfiguration(
+#             raw_data_buffer_pointer,
+#             len(raw_data),
+#             device_name_buffer_pointer,
+#             len(self.SOUND_DEVICE_NAME) + 1,
+#             self.TIME_RESOLUTION
+#         )
+#         ConfigurationPointer = ctypes.POINTER(AudioConfiguration)
+#         configuration_pointer = ConfigurationPointer(configuration)
 
-        print("Initializing audio")
-        self._audio_object = AudioInterface.audioInit(
-            configuration_pointer
-        )
-        if self._audio_object is None:
-            raise RuntimeError("Failed to initialize audio")
+#         self._audio_object = AudioInterface.audioInit(
+#             configuration_pointer
+#         )
+#         if self._audio_object is None:
+#             raise RuntimeError("Failed to initialize audio")
         
-        self._keep_alive = (
-            ctypes.cast(self._audio_object, ctypes.py_object),
-            ctypes.cast(configuration_pointer, ctypes.py_object),
-            ctypes.cast(raw_data_buffer_pointer, ctypes.py_object),
-            ctypes.cast(device_name_buffer_pointer, ctypes.py_object)
-        )
+#         self._keep_alive = (
+#             ctypes.cast(self._audio_object, ctypes.py_object),
+#             ctypes.cast(configuration_pointer, ctypes.py_object),
+#             ctypes.cast(raw_data_buffer_pointer, ctypes.py_object),
+#             ctypes.cast(device_name_buffer_pointer, ctypes.py_object)
+#         )
 
-        print("Checking for errors")
-        error = AudioInterface.audioGetError(self._audio_object).contents
-        if error.level == AudioErrorLevel.AUDIO_ERROR_LEVEL_ERROR.value:
-            raise AudioErrorException(error)
+#         error = AudioInterface.audioGetError(self._audio_object).contents
+#         if error.level == AudioErrorLevel.AUDIO_ERROR_LEVEL_ERROR.value:
+#             raise AudioErrorException(error)
         
-    def _convert_to_wav(self, filename: str) -> str:
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        self._temp_wav_filename = temp_file.name
-        temp_file.close()
+#     def _convert_to_wav(self, filename: str) -> str:
+#         temp_file = tempfile.NamedTemporaryFile(delete=False)
+#         self._temp_wav_filename = temp_file.name
+#         temp_file.close()
 
-        audio_segment = AudioSegment.from_mp3(filename)
-        audio_segment.export(self._temp_wav_filename, format='wav')
+#         audio_segment = AudioSegment.from_mp3(filename)
+#         audio_segment.export(self._temp_wav_filename, format='wav')
 
-        return self._temp_wav_filename
+#         return self._temp_wav_filename
 
-    def __del__(self):
-        if self._audio_object is not None:
-            AudioInterface.audioDestroy(self._audio_object)
-        if self._temp_wav_filename is not None:
-            os.remove(self._temp_wav_filename)
+#     def __del__(self):
+#         if self._audio_object is not None:
+#             AudioInterface.audioDestroy(self._audio_object)
+#         if self._temp_wav_filename is not None:
+#             os.remove(self._temp_wav_filename)
 
-    @handle_error
-    def play(self) -> bool:
-        return AudioInterface.audioPlay(self._audio_object, None)
+#     @handle_error
+#     def play(self) -> bool:
+#         return AudioInterface.audioPlay(self._audio_object, None)
 
-    @handle_error
-    def pause(self) -> bool:
-        return AudioInterface.audioPause(self._audio_object, None)
+#     @handle_error
+#     def pause(self) -> bool:
+#         return AudioInterface.audioPause(self._audio_object, None)
 
-    @handle_error
-    def stop(self):
-        AudioInterface.audioStop(self._audio_object, None)
+#     @handle_error
+#     def stop(self):
+#         AudioInterface.audioStop(self._audio_object, None)
 
-    @handle_error
-    def jump(self, timestamp: int) -> bool:
-        return AudioInterface.audioJump(self._audio_object, None, timestamp)
+#     @handle_error
+#     def jump(self, timestamp: int) -> bool:
+#         return AudioInterface.audioJump(self._audio_object, None, timestamp)
 
-    @handle_error
-    def is_playing(self) -> bool:
-        return AudioInterface.audioGetIsPlaying(self._audio_object)
+#     @handle_error
+#     def is_playing(self) -> bool:
+#         return AudioInterface.audioGetIsPlaying(self._audio_object)
 
-    @handle_error
-    def is_paused(self) -> bool:
-        return AudioInterface.audioGetIsPaused(self._audio_object)
+#     @handle_error
+#     def is_paused(self) -> bool:
+#         return AudioInterface.audioGetIsPaused(self._audio_object)
 
-    @handle_error
-    def current_time(self) -> int:
-        return AudioInterface.audioGetCurrentTime(self._audio_object)
+#     @handle_error
+#     def current_time(self) -> int:
+#         return AudioInterface.audioGetCurrentTime(self._audio_object)
 
-    @handle_error
-    def total_duration(self) -> int:
-        return AudioInterface.audioGetTotalDuration(self._audio_object)
+#     @handle_error
+#     def total_duration(self) -> int:
+#         return AudioInterface.audioGetTotalDuration(self._audio_object)
 
-    @handle_error
-    def get_volume(self) -> int:
-        return AudioInterface.audioGetVolume(self._audio_object)
+#     @handle_error
+#     def get_volume(self) -> int:
+#         return AudioInterface.audioGetVolume(self._audio_object)
 
-    @handle_error
-    def set_volume(self, value: int) -> bool:
-        return AudioInterface.audioSetVolume(self._audio_object, value)
+#     @handle_error
+#     def set_volume(self, value: int) -> bool:
+#         return AudioInterface.audioSetVolume(self._audio_object, value)
     
 
 class AudioPlayer:
@@ -180,7 +177,7 @@ class AudioPlayer:
     
     def __init__(self, wav_filename: str):
         if wav_filename.endswith('.mp3'):
-            print("Converting to wav")
+            logger.info("Converting to wav")
             wav_filename = self._convert_to_wav(wav_filename)
 
         self._paused = False
@@ -217,7 +214,7 @@ class AudioPlayer:
         self._paused = False
 
     def jump(self, timestamp: int) -> bool:
-        print("jump NOT IMPLEMENTED")
+        # jump NOT IMPLEMENTED
         return True
 
     def is_playing(self) -> bool:
@@ -227,28 +224,17 @@ class AudioPlayer:
         return self._paused
 
     def current_time(self) -> int:
-        print("current_time NOT IMPLEMENTED")
+        # current_time NOT IMPLEMENTED
         return 0
 
     def total_duration(self) -> int:
-        print("total_duration NOT IMPLEMENTED")
+        # total_duration NOT IMPLEMENTED
         return 0
 
     def get_volume(self) -> int:
-        print("get_volume NOT IMPLEMENTED")
+        # get_volume NOT IMPLEMENTED
         return 0
 
     def set_volume(self, value: int) -> bool:
-        print("set_volume NOT IMPLEMENTED")
+        # set_volume NOT IMPLEMENTED
         return True
-
-
-if __name__ == '__main__':
-    import sys
-    import time
-    print("Instantiating AudioPlayer")
-    player = AudioPlayer(sys.argv[1])
-    print("Playing audio")
-    player.play()
-    while player.is_playing():
-        time.sleep(1)

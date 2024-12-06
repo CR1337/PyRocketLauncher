@@ -23,9 +23,6 @@ class DmxPlayer(AbstractPlayer):
         with open(dmx_filename, 'rb') as file:
             dmx_data = file.read()
         self._read_dmx_data(dmx_data)
-
-        self._interface.initialize()
-
         super().__init__()
 
     def __del__(self):
@@ -57,7 +54,7 @@ class DmxPlayer(AbstractPlayer):
         self._interface.render()
 
     def _start_playing(self):
-        pass
+        self._interface.initialize()
 
     def _end_playing(self):
         self._interface.blackout()
