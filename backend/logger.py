@@ -26,7 +26,7 @@ class Logger:
         stream_handler = logging.StreamHandler()
         file_handler = logging.FileHandler(filename)
 
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(logging.WARNING)
         file_handler.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(
