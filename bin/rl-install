@@ -38,6 +38,14 @@ if [ -d "$BASE_DIR/$APP_NAME" ]; then
     exit 1
 fi
 
+info "Updating apt repositories..."
+apt -y update
+check_success $?
+
+info "Installing git..."
+apt -y install git
+check_success $?
+
 info "Creating base directory..."
 mkdir -p $BASE_DIR
 check_success $?
@@ -52,10 +60,6 @@ check_success $?
 
 info "Changing to app directory..."
 cd $APP_NAME
-check_success $?
-
-info "Updating apt repositories..."
-apt -y update
 check_success $?
 
 info "Installing dependencies via apt..."
