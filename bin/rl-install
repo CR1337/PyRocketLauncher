@@ -46,6 +46,18 @@ info "Installing git..."
 apt -y install git
 check_success $?
 
+info "Installing ntp..."
+apt -y install ntp
+check_success $?
+
+info "Restarting ntp service..."
+systemctl restart ntp
+check_success $?
+
+info "Enable ntp service..."
+systemctl enable ntp
+check_success $?
+
 info "Creating base directory..."
 mkdir -p $BASE_DIR
 check_success $?
