@@ -3,7 +3,7 @@ python3
 python3-pip
 i2c-tools
 ntp
-nmap=7.93
+nmap
 libasound2-dev
 make
 ffmpeg
