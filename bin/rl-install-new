@@ -108,14 +108,6 @@ if ! [ $ret_val -ne 0 ]; then
     check_success $?
 fi
 
-info "Enbaling NTP service..."
-systemctl enable ntp
-check_success $?
-
-info "Starting NTP service..."
-systemctl start ntp
-check_success $?
-
 info "Starting rl setup..."
 ./bin/rl setup
 check_success $?

@@ -54,9 +54,9 @@ info "Restarting ntp service..."
 systemctl restart ntp
 check_success $?
 
-info "Enable ntp service..."
-systemctl enable ntp
-check_success $?
+# info "Enable ntp service..."
+# systemctl enable ntp
+# check_success $?
 
 info "Creating base directory..."
 mkdir -p $BASE_DIR
@@ -107,14 +107,6 @@ if ! [ $ret_val -ne 0 ]; then
     python3 ./bin/zero_wifi_off.py
     check_success $?
 fi
-
-# info "Enbaling NTP service..."
-# systemctl enable ntp
-# check_success $?
-
-info "Starting NTP service..."
-systemctl start ntp
-check_success $?
 
 info "Starting rl setup..."
 ./bin/rl setup
