@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple, Union
 import io
+import json
 
 import requests
 
@@ -152,10 +153,10 @@ class Device:
         if self.is_remote:
             # Remotes cannot handle zip files. Only send the fuses data
             fuses_data = [
-                c for c in zipfile_handler.fuses_data
+                c for c in json.loads(zipfile_handler.fuses_data)
                 if c['device_id'] == self._device_id
             ]
-            return self.load_program(name, fuses_data)
+            return self.load_program(name, json.dumps(fuses_data))
         else:
             return self._post("program", io.BytesIO(zip_data), True, name)
 
