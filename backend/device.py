@@ -156,7 +156,7 @@ class Device:
                 c for c in json.loads(zipfile_handler.fuses_data)
                 if c['device_id'] == self._device_id
             ]
-            return self.load_program(name, json.dumps(fuses_data))
+            return self.load_program(name, fuses_data)
         else:
             return self._post("program", io.BytesIO(zip_data), True, name)
 
