@@ -1,3 +1,5 @@
+import os
+
 from _rl.command import Command
 from _rl.constants import Paths
 from _rl.inout import Output
@@ -79,6 +81,8 @@ class Network:
 
     @classmethod
     def is_ip_static(cls) -> bool:
+        if not os.path.exists(Paths.DHCPCD_CONF):
+            return False
         with open(Paths.DHCPCD_CONF, 'r', encoding='ascii') as file:
             lines = file.readlines()
         for line in lines:
