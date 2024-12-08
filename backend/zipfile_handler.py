@@ -109,7 +109,7 @@ class ZipfileHandler:
         return os.path.join(self._temp_directory, 'dmx.bin')
 
     @property
-    def fuses_data(self) -> List[Dict[str, Any]]:
+    def fuses_data(self) -> str:
         return self._fuses_data
 
     def __del__(self):
