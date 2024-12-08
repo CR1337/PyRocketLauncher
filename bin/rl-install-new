@@ -1,0 +1,123 @@
+#!/bin/bash
+
+export RED="\e[1;31m"
+export CYAN="\e[1;36m"
+export GREEN="\e[1;92m"
+export RESET="\e[1;0m"
+
+export BASE_DIR=/opt/rl
+export APP_NAME="PyRocketLauncher"
+export GITHUB_USER="CR1337"
+
+info () {
+    echo -e "${CYAN}INFO> $1 ${RESET}"
+}
+error () {
+    >&2 echo -e "${RED}ERROR> $1 ${RESET}"
+}
+success() {
+    echo -e "${GREEN}SUCCESS> $1 ${RESET}"
+}
+unexpected_error() {
+    error "Unexpected error!"
+    exit $1
+}
+check_success() {
+    if [ $1 -ne 0 ]; then
+        unexpected_error $1
+    fi
+}
+
+if [ "$EUID" -ne 0 ]; then
+    error "Please execute as root!"
+    exit 1
+fi
+
+if [ -d "$BASE_DIR/$APP_NAME" ]; then
+    error "$APP_NAME is already installed!"
+    exit 1
+fi
+
+info "Updating apt repositories..."
+apt -y update
+check_success $?
+
+info "Installing git..."
+apt -y install git
+check_success $?
+
+info "Installing ntp..."
+apt -y install ntp
+check_success $?
+
+info "Restarting ntp service..."
+systemctl restart ntp
+check_success $?
+
+info "Enable ntp service..."
+systemctl enable ntp
+check_success $?
+
+info "Creating base directory..."
+mkdir -p $BASE_DIR
+check_success $?
+
+info "Changing to base directory..."
+cd $BASE_DIR
+check_success $?
+
+info "Cloning $APP_NAME repository from GitHub..."
+git clone "https://github.com/$GITHUB_USER/$APP_NAME.git"
+check_success $?
+
+info "Changing to app directory..."
+cd $APP_NAME
+check_success $?
+
+info "Installing dependencies via apt..."
+apt -y install $(grep -vE "^\s*#" apt-requirements.txt  | tr "\n" " ")
+check_success $?
+
+info "Enabling i²c..."
+raspi-config nonint do_i2c 0
+check_success $?
+
+info "Installing dependencies via pip..."
+python3 -m pip install -r pip-requirements.txt --break-system-packages
+check_success $?
+
+info "Making logs directory..."
+mkdir -p logs
+check_success $?
+
+info "Adding bin directory to SECURE_PATH..."
+SECURE_PATH=$(grep -oP 'secure_path="\K.*?(?=")' /etc/sudoers)
+echo "Defaults	secure_path=\"$SECURE_PATH:$BASE_DIR/$APP_NAME/bin\"" >> /etc/sudoers.d/rl
+check_success $?
+
+info "Adding bin directory to PATH..."
+PATH=$PATH:$BASE_DIR/$APP_NAME/bin
+echo "export PATH=\"\$PATH:$BASE_DIR/$APP_NAME/bin\"" >> /home/rl/.bashrc
+check_success $?
+
+python3 ./bin/on_zero_w.py
+ret_val=$?
+if ! [ $ret_val -ne 0 ]; then
+    info "Disabling onboard WiFi if on Pi Zero W (reboot needed)..."
+    python3 ./bin/zero_wifi_off.py
+    check_success $?
+fi
+
+info "Enbaling NTP service..."
+systemctl enable ntp
+check_success $?
+
+info "Starting NTP service..."
+systemctl start ntp
+check_success $?
+
+info "Starting rl setup..."
+./bin/rl setup
+check_success $?
+
+success "Installation done."
