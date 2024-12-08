@@ -151,7 +151,11 @@ class Device:
         zip_data = zipfile_handler.pack_for(self._device_id)
         if self.is_remote:
             # Remotes cannot handle zip files. Only send the fuses data
-            return self.load_program(name, zipfile_handler.fuses_data)
+            fuses_data = [
+                c for c in zipfile_handler.fuses_data
+                if c['device_id'] == self._device_id
+            ]
+            return self.load_program(name, fuses_data)
         else:
             return self._post("program", io.BytesIO(zip_data), True, name)
 
