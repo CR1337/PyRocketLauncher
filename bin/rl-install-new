@@ -54,9 +54,9 @@ info "Restarting ntp service..."
 systemctl restart ntp
 check_success $?
 
-info "Enable ntp service..."
-systemctl enable ntp
-check_success $?
+# info "Enable ntp service..."
+# systemctl enable ntp
+# check_success $?
 
 info "Creating base directory..."
 mkdir -p $BASE_DIR
