@@ -78,12 +78,12 @@ class ZipfileHandler:
         return self._metadata['fuses_device_ids']
     
     @property
-    def music_device_id(self) -> str:
-        return self._metadata['music_device_id']
+    def music_device_ids(self) -> str:
+        return self._metadata['music_device_ids']
     
     @property
-    def ilda_device_id(self) -> str:
-        return self._metadata['ilda_device_id']
+    def ilda_device_ids(self) -> str:
+        return self._metadata['ilda_device_ids']
     
     @property
     def dmx_device_ids(self) -> List[str]:
@@ -122,11 +122,11 @@ class ZipfileHandler:
             zip_file.writestr('metadata.json', metadata_bytes)
             if self._fuses_data and device_id in self.fuses_device_ids:
                 zip_file.writestr('fuses.json', self._fuses_data)
-            if self._music_data and device_id == self.music_device_id:
+            if self._music_data and device_id == self.music_device_ids:
                 zip_file.writestr(
                     self._metadata['music_filename'], self._music_data
                 )
-            if self._ilda_data and device_id == self.ilda_device_id:
+            if self._ilda_data and device_id == self.ilda_device_ids:
                 zip_file.writestr('ilda.ildx', self._ilda_data)
             if self._dmx_data and device_id in self.dmx_device_ids:
                 zip_file.writestr('dmx.bin', self._dmx_data)

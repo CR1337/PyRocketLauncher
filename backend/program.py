@@ -172,10 +172,10 @@ class Program:
         else:
             program = cls(name, zipfile_handler)
 
-        if zipfile_handler.has_music and device_id == zipfile_handler.music_device_id:
+        if zipfile_handler.has_music and device_id in zipfile_handler.music_device_ids:
             program.add_music(zipfile_handler.music_filename)
 
-        if zipfile_handler.has_ilda and device_id == zipfile_handler.ilda_device_id:
+        if zipfile_handler.has_ilda and device_id in zipfile_handler.ilda_device_ids:
             program.add_ilda(zipfile_handler.ilda_filename)
 
         if zipfile_handler.has_dmx and device_id in zipfile_handler.dmx_device_ids:
