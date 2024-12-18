@@ -203,6 +203,8 @@ class IldaPlayer(AbstractPlayer):
         except ValueError:
             return None, offset + self.HEADER_SIZE
         
+        offset += self.HEADER_SIZE
+        
         format_code = IldxFormatCode(header.formatCode)
         number_of_points = header.numberOfRecords
         if is_first_frame:
@@ -227,15 +229,15 @@ class IldaPlayer(AbstractPlayer):
             point_size = ctypes.sizeof(Ildx2dTrueColorRecord)
             converter_func = self._convert_true_color_point
 
-        raw_points = (
+        raw_points = [
             point_type.from_buffer_copy(
                 data[offset + i * point_size:offset + (i + 1) * point_size]
             )
             for i in range(number_of_points)
-        )
+        ]
         points = [converter_func(point) for point in raw_points]
 
-        return [IldaFrame(None, points) for _ in range(repetitions)], offset + self.HEADER_SIZE + number_of_points * point_size
+        return [IldaFrame(None, points) for _ in range(repetitions)], offset + number_of_points * point_size
     
     def _rescale_point(self, x: int, y: int) -> Tuple[int, int]:
         return (x + 0xFFFF // 2) * 0xFFF // 0xFFFF, (y + 0xFFFF // 2) * 0xFFF // 0xFFFF
@@ -258,7 +260,6 @@ class IldaPlayer(AbstractPlayer):
     
     def _attach_timestamps(self):
         for start_timestamp, animation in self._animations.items():
-            start_timestamp = start_timestamp / 1000.0
             ms_per_frame = 1000.0 / animation.fps
             for i, frame in enumerate(animation.frames):
                 if frame.points is None:
@@ -290,7 +291,8 @@ class IldaPlayer(AbstractPlayer):
         IldaInterface.WriteFrame(
             self.DAC_INDEX, 
             frame.points_per_second, 
-            self.OUTPUT_IMMEADIATELY | self.PLAY_ONLY_ONCE,
+            # self.OUTPUT_IMMEADIATELY | self.PLAY_ONLY_ONCE,
+            self.PLAY_ONLY_ONCE,
             points_array, 
             len(frame.points)
         )
