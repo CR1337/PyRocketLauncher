@@ -82,7 +82,7 @@ class Ildx2dTrueColorRecord(ctypes.BigEndianStructure):
 
 def decode_start_timestamp(header: IldxHeader) -> int:
     return (
-        header.startTimestamp[0] 
-        << 16 | header.startTimestamp[1] 
-        << 8 | header.startTimestamp[2]
+        (header.startTimestamp[0] << 16) 
+        | (header.startTimestamp[1] << 8)
+        | (header.startTimestamp[2] << 0)
     )
