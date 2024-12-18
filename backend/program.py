@@ -388,15 +388,20 @@ class Program:
     @property
     def is_running(self) -> bool:
         result = False
+        print(result)
 
         if self._has_music:
             result = result or self._audio_player.is_playing or self._audio_player.is_paused
+            print(result)
         if self._has_ilda:
             result = result or self._ilda_player.is_playing or self._ilda_player.is_paused
+            print(result)
         if self._has_dmx:
             result = result or self._dmx_player.is_playing or self._dmx_player.is_paused
+            print(result)
         
         result = result or (self._thread is not None and self._thread.is_alive())
+        print(result)
 
         return result
 
