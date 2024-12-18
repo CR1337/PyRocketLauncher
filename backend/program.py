@@ -387,7 +387,18 @@ class Program:
 
     @property
     def is_running(self) -> bool:
-        return self._thread is not None and self._thread.is_alive()
+        result = False
+
+        if self._has_music:
+            result = result or self._audio_player.is_playing or self._audio_player.is_paused
+        if self._has_ilda:
+            result = result or self._ilda_player.is_playing or self._ilda_player.is_paused
+        if self._has_dmx:
+            result = result or self._dmx_player.is_playing or self._dmx_player.is_paused
+        
+        result = result or (self._thread is not None and self._thread.is_alive())
+
+        return result
 
     @property
     def name(self) -> str:
