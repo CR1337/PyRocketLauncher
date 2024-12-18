@@ -360,6 +360,8 @@ class Program:
                 tu.sleep(Config.get_constant('ignition_duration') * 2)
                 Hardware.lock()
 
+        while self._other_players_running():
+            tu.sleep(tu.TIME_RESOLUTION * 10)
         self._callback()
 
     def _program_mainloop(self):
@@ -385,23 +387,24 @@ class Program:
                 if self._command_idx >= len(self._command_list):
                     break
 
-    @property
-    def is_running(self) -> bool:
+    def _other_players_running(self) -> bool:
         result = False
-        print(result)
 
         if self._has_music:
             result = result or self._audio_player.is_playing() or self._audio_player.is_paused()
-            print(result)
         if self._has_ilda:
             result = result or self._ilda_player.is_playing() or self._ilda_player.is_paused()
-            print(result)
         if self._has_dmx:
             result = result or self._dmx_player.is_playing() or self._dmx_player.is_paused()
-            print(result)
-        
+
+        return result
+
+    @property
+    def is_running(self) -> bool:
+        result = False
+
+        result = result or self._other_players_running()
         result = result or (self._thread is not None and self._thread.is_alive())
-        print(result)
 
         return result
 
