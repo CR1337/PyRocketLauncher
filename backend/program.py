@@ -162,6 +162,7 @@ class Program:
             
     @classmethod
     def from_zip(cls, name: str, zip_data: bytes) -> 'Program':
+        logger.info(f"Building program from zip {name}")
         zipfile_handler = ZipfileHandler(zip_data)
         device_id = Config.get_value('device_id')
 
