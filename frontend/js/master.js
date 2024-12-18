@@ -498,10 +498,9 @@ const master_component = {
         load_local_button_enabled() {
             for (device_id in this.devices) {
                 const state = this.devices[device_id];
-                if (!state.is_remote) {
-                    if (!state.local_program_built || !state.controller.local_program_available) {
-                        return false;
-                    }
+                if (state.is_remote) continue;
+                if (!state.local_program_built || !state.local_program_available) {
+                    return false;
                 }
             }
             for (device_id in this.devices) {
