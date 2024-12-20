@@ -118,9 +118,7 @@ class Program:
 
     @classmethod
     def _load_local_program_from_zip(cls):
-        with open(cls.LOCAL_PROGRAM_PATH, 'rb') as local_program_file:
-            local_program_data = local_program_file.read()
-            cls.local_program = cls.from_zip("Local-Program", local_program_data)
+        cls.local_program = cls.from_zip("Local-Program", cls.LOCAL_PROGRAM_PATH)
 
         with open(cls.LOCAL_PROGRAM_PKL_PATH, 'wb') as local_program_file:
             pickle.dump(cls.local_program, local_program_file)  # TODO: Check if program object is pickable 
@@ -161,9 +159,9 @@ class Program:
         thread.start()
             
     @classmethod
-    def from_zip(cls, name: str, zip_data: bytes) -> 'Program':
+    def from_zip(cls, name: str, zip_filename: str) -> 'Program':
         logger.info(f"Building program from zip {name}")
-        zipfile_handler = ZipfileHandler(zip_data)
+        zipfile_handler = ZipfileHandler(zip_filename)
         device_id = Config.get_value('device_id')
 
         if zipfile_handler.has_fuses and device_id in zipfile_handler.fuses_device_ids:

@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple, Union
 import io
+import os
 import json
 
 import requests
@@ -85,12 +86,14 @@ class Device:
         try:
             if method == 'post':
                 if has_zip_file:
-                    response = requests.post(
-                        address,
-                        files={'file': (zip_filename, data, 'application/zip')},
-                        data={},
-                        timeout=self.REQUEST_TIMEOUT
-                    )
+                    with open(zip_filename, 'rb') as file:
+                        response = requests.post(
+                            address,
+                            files={'file': (zip_filename, file, 'application/zip')},
+                            data={},
+                            timeout=self.REQUEST_TIMEOUT
+                        )
+                    os.remove(zip_filename)
                 else:
                     response = requests.post(
                         address,
@@ -123,7 +126,7 @@ class Device:
             return {'error': 'request'}, None
 
     def _post(
-        self, url: str, data: Union[Dict[str, Any], io.BytesIO], has_zip_file: bool = False, zip_filename: str = None
+        self, url: str, data: Union[Dict[str, Any], str], has_zip_file: bool = False, zip_filename: str = None
     ) -> Tuple[Dict[str, Any], int]:
         return self._request('post', url, data, has_zip_file, zip_filename)
 
@@ -149,7 +152,7 @@ class Device:
     
     def load_zip_program(self, name: str, zipfile_handler: ZipfileHandler):
         logger.debug(f"{self._device_id}: load zip program {name}")
-        zip_data = zipfile_handler.pack_for(self._device_id)
+        packed_filename = zipfile_handler.pack_for(self._device_id)
         if self.is_remote:
             # Remotes cannot handle zip files. Only send the fuses data
             fuses_data = [
@@ -158,7 +161,7 @@ class Device:
             ]
             return self.load_program(name, fuses_data)
         else:
-            return self._post("program", io.BytesIO(zip_data), True, name)
+            return self._post("program", packed_filename, True, name)
 
     def unload_program(self):
         logger.debug(f"{self._device_id}: unload program")

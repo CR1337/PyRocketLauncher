@@ -366,9 +366,7 @@ class MasterController:
     @lock
     def load_local_program(cls):
         name = "Local Program"
-        with open(Program.LOCAL_PROGRAM_PATH, 'rb') as file:
-            data = file.read()
-        zipfile_handler = ZipfileHandler(data)
+        zipfile_handler = ZipfileHandler(Program.LOCAL_PROGRAM_PATH)
         return cls._call_device_method("load_local_program", name, zipfile_handler)
 
     @classmethod

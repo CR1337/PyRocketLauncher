@@ -3,6 +3,9 @@ from flask import (Blueprint, Response, make_response, redirect, request,
 from flask_api import status
 from flask_cors import CORS
 
+import tempfile
+from werkzeug.utils import secure_filename
+
 from backend.config import Config
 from backend.controller import Controller
 from backend.endpoints.util import handle_exceptions, log_request
@@ -57,15 +60,21 @@ def route_program():
         if request.content_type in ('application/json', 'text/plain'):
             json_data = request.get_json(force=True)
             Controller.load_program(json_data['name'], json_data['event_list'], is_zip=False)
+            
         elif request.content_type.startswith('multipart/form-data'):
             if 'file' not in request.files:
                 return make_response((
                     {}, status.HTTP_400_BAD_REQUEST
                 ))
             file = request.files['file']
-            zip_data = file.read()
-            filename = file.filename
-            Controller.load_program(filename, zip_data, is_zip=True)
+            name = file.filename
+            filename = secure_filename(name)
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = f"{temp_dir}/{filename}"
+                file.save(temp_path)
+                Controller.load_program(name, temp_path, is_zip=True)
+
         else:
             return make_response((
                 {}, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE

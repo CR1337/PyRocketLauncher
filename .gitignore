@@ -9,3 +9,4 @@ config/constants.json
 config/run_config.json
 backend/audio/test.wav
 backend/audio/test_audio.py
+programs/**
