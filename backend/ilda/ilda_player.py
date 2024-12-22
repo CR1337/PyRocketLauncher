@@ -155,6 +155,8 @@ class IldaPlayer(AbstractPlayer):
             animation_name = header.frameOrPaletteName.decode('utf-8').strip('\x00')
         except ValueError:
             return None, offset, False
+        
+        offset += self.HEADER_SIZE
 
         fps = header.framesPerSecondOrFrameAmount
         if fps == 0:
@@ -168,7 +170,7 @@ class IldaPlayer(AbstractPlayer):
 
         total_frames = header.totalFrames
         if total_frames == 0:
-            return None, offset + self.HEADER_SIZE, False
+            return None, offset, False
         
         frames = []
         for i in tqdm(
@@ -176,17 +178,20 @@ class IldaPlayer(AbstractPlayer):
             desc=f"Reading ILDA frames for animation {animation_name}", 
             total=total_frames
         ):
+        # for i in range(total_frames):
             new_frames, offset = self._read_frame(data, offset, i == 0)
             if new_frames is not None:
                 frames.extend(new_frames)
             else:
-                return None, offset, False
+                break
 
         return IldaAnimation(frames, start_timestamp, fps), offset, False
     
     def _read_palette(self, data: bytes, offset: int) -> Tuple[ColorPalette, int]:
         header = IldxHeader.from_buffer_copy(data[offset:offset + self.HEADER_SIZE])
         number_of_colors = header.numberOfRecords
+
+        offset += self.HEADER_SIZE
 
         palette = []
         for i in range(number_of_colors):
@@ -195,7 +200,7 @@ class IldaPlayer(AbstractPlayer):
             )
             palette.append((color.red, color.green, color.blue))
         
-        return palette, offset + self.HEADER_SIZE + number_of_colors * self.COLOR_SIZE
+        return palette, offset + number_of_colors * self.COLOR_SIZE
 
     def _read_frame(self, data: bytes, offset: int, is_first_frame: bool = False) -> Tuple[List[IldaFrame], int]:
         try:
@@ -235,27 +240,29 @@ class IldaPlayer(AbstractPlayer):
             )
             for i in range(number_of_points)
         ]
-        points = [converter_func(point) for point in raw_points]
+        points = [converter_func(point, i==0 or i==(len(raw_points)-1)) for i, point in enumerate(raw_points)]
 
         return [IldaFrame(None, points) for _ in range(repetitions)], offset + number_of_points * point_size
     
     def _rescale_point(self, x: int, y: int) -> Tuple[int, int]:
-        return (x + 0xFFFF // 2) * 0xFFF // 0xFFFF, (y + 0xFFFF // 2) * 0xFFF // 0xFFFF
+        return -(x + 0xFFFF // 2) * 0xFFF // 0xFFFF, (y + 0xFFFF // 2) * 0xFFF // 0xFFFF
 
-    def _convert_indexed_point(self, point: Union[Ildx2dIndexedRecord, Ildx3dIndexedRecord]) -> HeliosPoint:
+    def _convert_indexed_point(self, point: Union[Ildx2dIndexedRecord, Ildx3dIndexedRecord], is_end_point: bool) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),
             *self._color_palette[point.colorIndex],
-            0 if blanked else 255
+            0 if (blanked or is_end_point) else 255
         )
 
-    def _convert_true_color_point(self, point: Union[Ildx3dTrueColorRecord, Ildx2dTrueColorRecord]) -> HeliosPoint:
+    def _convert_true_color_point(self, point: Union[Ildx3dTrueColorRecord, Ildx2dTrueColorRecord], is_end_point: bool) -> HeliosPoint:
         blanked = bool(point.statusCode & ILDX_STATUS_CODE_BLANKING_MASK)
         return HeliosPoint(
             *self._rescale_point(point.x, point.y),
-            point.r, point.g, point.b,
-            0 if blanked else 255
+            0 if (blanked or is_end_point) else point.r, 
+            0 if (blanked or is_end_point) else point.g, 
+            0 if (blanked or is_end_point) else point.b,
+            0 if (blanked or is_end_point) else 255
         )
     
     def _attach_timestamps(self):
@@ -291,8 +298,8 @@ class IldaPlayer(AbstractPlayer):
         IldaInterface.WriteFrame(
             self.DAC_INDEX, 
             frame.points_per_second, 
-            # self.OUTPUT_IMMEADIATELY | self.PLAY_ONLY_ONCE,
-            self.PLAY_ONLY_ONCE,
+            self.OUTPUT_IMMEADIATELY | self.PLAY_ONLY_ONCE,
+            #self.PLAY_ONLY_ONCE,
             points_array, 
             len(frame.points)
         )
