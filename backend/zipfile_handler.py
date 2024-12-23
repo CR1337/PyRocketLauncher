@@ -28,7 +28,7 @@ class ZipfileHandler:
         if self._metadata['has_fuses']:
             fuses_filename = os.path.join(self._temp_directory, 'fuses.json')
             with open(fuses_filename, 'r') as fuses_file:
-                self._fuses_data = fuses_file.read()
+                self._fuses_data = json.load(fuses_file)
         else:
             self._fuses_data = None
 
