@@ -88,7 +88,8 @@ class ZipfileHandler:
         return self._fuses_data
 
     def __del__(self):
-        shutil.rmtree(self._temp_directory)
+        if os.path.exists(self._temp_directory):
+            shutil.rmtree(self._temp_directory)
 
     def pack_for(self, device_id: str) -> str:
         packed_file = tempfile.NamedTemporaryFile('w', delete=False, suffix='.zip')
