@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Union
 import ctypes
-from tqdm import tqdm
+# from tqdm import tqdm
 
 from backend.ilda.ilda import IldaInterface, HeliosPoint
 from backend.ilda.ildx import (
@@ -155,8 +155,6 @@ class IldaPlayer(AbstractPlayer):
             animation_name = header.frameOrPaletteName.decode('utf-8').strip('\x00')
         except ValueError:
             return None, offset, False
-        
-        offset += self.HEADER_SIZE
 
         fps = header.framesPerSecondOrFrameAmount
         if fps == 0:
@@ -173,12 +171,12 @@ class IldaPlayer(AbstractPlayer):
             return None, offset, False
         
         frames = []
-        for i in tqdm(
-            range(total_frames), 
-            desc=f"Reading ILDA frames for animation {animation_name}", 
-            total=total_frames
-        ):
-        # for i in range(total_frames):
+        # for i in tqdm(
+        #     range(total_frames), 
+        #     desc=f"Reading ILDA frames for animation {animation_name}", 
+        #     total=total_frames
+        # ):
+        for i in range(total_frames):
             new_frames, offset = self._read_frame(data, offset, i == 0)
             if new_frames is not None:
                 frames.extend(new_frames)
